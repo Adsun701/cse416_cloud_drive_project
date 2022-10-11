@@ -1,0 +1,28 @@
+{
+  "name": "cdsm",
+  "version": "1.0.0",
+  "description": "Cloud Drive Sharing Manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adsun701/cse416_cloud_drive_project.git"
+  },
+  "keywords": [
+    "cloud",
+    "drive",
+    "onedrive",
+    "googledrive",
+    "mongodb",
+    "nodejs",
+    "react"
+  ],
+  "author": "Andrew Sun",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Adsun701/cse416_cloud_drive_project/issues"
+  },
+  "homepage": "https://github.com/Adsun701/cse416_cloud_drive_project#readme"
+}
