@@ -34,7 +34,8 @@ class GoogleFileSharingSnapshot {
 				}
 			}
 		})
-		return snapshot;
+		snapshotTimeStamp = new Date().toLocaleString();
+		return [snapshot, snapshotTimeStamp];
     }
 
 }
