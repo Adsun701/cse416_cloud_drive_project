@@ -6,34 +6,35 @@ const { google } = require('googleapis');
 
 class GoogleFileSharingSnapshot {
 	client = null;
-	service = null;
+	drive = null;
 
 	GoogleFileSharingSnapshot(client) {
-		this.service = google.drive('v3');
+		this.drive = google.drive({version: 'v3', auth: client});
 		this.client = client;
 	}
 
     
     takeSnapshot = () => {
-		service.files.list({
-			auth: client,
-			resource: { parents: [ "root" ] },
-			fields: 'nextPageToken, files(id, name, webContentLink, webViewLink, mimeType, parents)'
-			}, (err, res) => {
-				if (err) {
-					console.error('The API returned an error.');
-					throw err;
+		snapshot = "";
+		drive.files.list({ }, (err, res) => {
+			if (err) {
+				console.error('The API returned an error.');
+				throw err;
+			}
+			const files = res.data.files;
+			if (files.length === 0) {
+				console.log('No files found.');
+				return null;
+			} else {
+				console.log('Files Found!');
+				// stringify each file into json and add them to a compiled string.
+				for (const file of files) {
+					console.log(`${file.name} (${file.id})`);
+					snapshot += JSON.stringify(file) + "\n";
 				}
-				const files = res.data.files;
-				if (files.length === 0) {
-					console.log('No files found.');
-				} else {
-					console.log('Files Found!');
-					for (const file of files) {
-						console.log(`${file.name} (${file.id})`);
-					}
-				}
-			})
+			}
+		})
+		return snapshot;
     }
 
 }
