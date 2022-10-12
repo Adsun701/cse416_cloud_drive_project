@@ -1,5 +1,5 @@
 {
-  "name": "Cloud Drive Manager",
+  "name": "cloud-drive-manager",
   "version": "1.0.0",
   "description": "CSE 416 Project",
   "main": "src/server/index.js",
@@ -14,8 +14,10 @@
   "license": "ISC",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "dotenv": "^16.0.3",
     "express": "^4.16.3",
     "googleapis": "^108.0.0",
+    "mongoose": "^6.6.5",
     "onedrive-api": "^1.0.4",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
