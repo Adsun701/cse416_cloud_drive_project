@@ -18,7 +18,8 @@
     "googleapis": "^108.0.0",
     "onedrive-api": "^1.0.4",
     "react": "^16.5.2",
-    "react-dom": "^16.5.2"
+    "react-dom": "^16.5.2",
+    "react-router-dom": "^6.4.2"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
