@@ -36,7 +36,7 @@ class GoogleGroupMembershipSnapshot {
 			}
 		})
 		groupSnapshot = new GroupSnapshot({files: snapshotMap});
-		return groupSnapshot;
+		groupSnapshot.save();
     }
 
 }

@@ -31,7 +31,7 @@ class GoogleFileSharingSnapshot {
 			}
 		})
 		fileSnapshot = new FileSnapshot({files: snapshotMap});
-		return fileSnapshot;
+		fileSnapshot.save();
     }
 }
 
