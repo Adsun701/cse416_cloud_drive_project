@@ -9,8 +9,8 @@ var { GRAPH_ME_ENDPOINT } = require('../authConfig');
 
 // custom middleware to check auth state
 function isAuthenticated(req, res, next) {
-    if (!req.session.isAuthenticated) {
-        return res.redirect('/auth/signin'); // redirect to sign-in route
+    if (!req.session.googleToken) {
+        return res.redirect('/google/auth'); // redirect to sign-in route
     }
     next();
 };
