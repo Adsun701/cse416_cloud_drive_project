@@ -61,6 +61,44 @@ router.get('/file', async function(req, res, next) {
   res.render('google',{files:result.data.files});
 });
 
+router.get('/file/:id', async function(req,res,next) {
+  let fileid = req.params.id;
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.permissions.list({
+    access_token: req.session.googleToken,
+    fileId: fileid,
+  });
+  res.send(result.data);
+});
+
+router.get('/addperm', function(req, res, next) {
+  res.render('googleperm');
+})
+
+router.post('/addfilepermission', async function(req, res, next) {
+  let files = JSON.parse(req.body.files) // list of files with new ids
+  let value = req.body.value // email address for new permission
+  let type =  req.body.type // user, group, etc
+  let role = req.body.role // new role for the new permissions
+  let body = {
+    'emailAddress': value,
+    'type': type,
+    'role': role
+  };
+  const drive = google.drive({version: 'v3'});
+  let ret = []
+  for (let i = 0; i < files.length; i++) {
+    const result = await drive.permissions.create({
+      access_token: req.session.googleToken,
+      fileId: files[i],
+      resource: body,
+      emailMessage: "Hello!"
+    });
+    ret.push(result);
+  }
+  res.send(ret);
+});
+
 router.get('/allfiles', async function (req, res, next) {
   if (req.session.googleToken) {
     const result = await getAllFiles(req.session.googleToken);
