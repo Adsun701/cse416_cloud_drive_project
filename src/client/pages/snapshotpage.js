@@ -1,9 +1,14 @@
 import React from 'react';
+import Container from 'react-bootstrap/Container';
+import SideBar from '../components/sidebar';
 
-export default function Navbar() {
+export default function SnapshotPage() {
   return (
-    <div>
+    <Container style={{ width: '100%' }}>
       Snapshot Page
-    </div>
+      <Container className="flex-left" style={{ width: '20%' }}>
+        <SideBar />
+      </Container>
+    </Container>
   );
 }

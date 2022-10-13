@@ -1,9 +1,14 @@
 import React from 'react';
+import Container from 'react-bootstrap/Container';
+import SideBar from '../components/sidebar';
 
-export default function Navbar() {
+export default function SearchPage() {
   return (
-    <div>
+    <Container style={{ width: '100%' }}>
       Search Page
-    </div>
+      <Container className="flex-left" style={{ width: '20%' }}>
+        <SideBar />
+      </Container>
+    </Container>
   );
 }

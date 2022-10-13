@@ -1,14 +1,14 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 
-import Navbar from './components/navbar';
+import Header from './components/header';
 import LoginPage from './pages/loginpage';
 import SearchPage from './pages/searchpage';
 import SnapshotPage from './pages/snapshotpage';
 
 const App = () => (
   <div>
-    <Navbar />
+    <Header />
     <Routes>
       <Route exact path="/" element={<LoginPage />} />
       <Route path="/search" element={<SearchPage />} />
