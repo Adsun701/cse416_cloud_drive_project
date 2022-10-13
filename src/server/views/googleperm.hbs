@@ -1,0 +1,11 @@
+<form action="/google/addfilepermission", method="post">
+    {{!-- let files = JSON.parse(req.body.files) // list of files with new ids
+  let value = req.body.value // email address for new permission
+  let type =  req.body.type // user, group, etc
+  let role = req.body.role  --}}
+  <input type="files" id="files" name="files">
+  <input type="text" id="value" name="value">
+  <input type="text" id="type" name="type">
+  <input type="text" id="role" name="role">
+  <input type="submit" value="Submit">
+</form>
