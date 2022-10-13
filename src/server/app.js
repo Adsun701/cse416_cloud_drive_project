@@ -16,6 +16,8 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
 var googleRouter = require('./routes/googleauth');
+var googleFileSnapshotRouter = require('./routes/googlefilesnapshot.js');
+var googleGroupSnapshotRouter = require('./routes/googlegroupsnapshot.js');
 
 // initialize express
 var app = express();
@@ -52,6 +54,8 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/google', googleRouter);
+app.use('/googlefilesnapshot', googleFileSnapshotRouter);
+app.use('/googlegroupsnapshot', googleGroupSnapshotRouter);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     next(createError(404));

@@ -2,8 +2,7 @@ const { authenticate } = require('@google-cloud/local-auth');
 var express = require('express');
 var router = express.Router();
 const { google } = require('googleapis');
-const Schema = mongoose.Schema
-const GroupSnapshot = require('../group-snapshot-model')
+const FileSnapshot = require('../model/file-snapshot-model')
 
 var fetch = require('./fetch');
 var { GRAPH_ME_ENDPOINT } = require('../authConfig');
@@ -16,12 +15,12 @@ function isAuthenticated(req, res, next) {
     next();
 };
 
-router.get('/snapshot/group/google',
+router.get('/snapshot',
 	isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
         try {
 			snapshotMap = new Map();
-			drive.files.list({ access_token: req.session.googleToken }, (err, res) => {
+			google.drive.files.list({ access_token: req.session.googleToken }, (err, res) => {
 				if (err) {
 					//console.error('The API returned an error.');
 					throw err;
@@ -33,19 +32,12 @@ router.get('/snapshot/group/google',
 				} else {
 					//console.log('Files Found!');
 					for (const file of files) {
-						permissions = file.permissions;
-						permissionAddresses = new Array();
-						for (permission in permissions) {
-							if (permission.type == "group") {
-								permissionAddresses.push(permission.emailAddress);
-							}
-						}
-						snapshotMap.set(file.id, permissionAddresses);
+						snapshotMap.set(file.id, file.permissions);
 					}
 				}
 			})
-			groupSnapshot = new GroupSnapshot({files: snapshotMap});
-			groupSnapshot.save();
+			fileSnapshot = new FileSnapshot({files: snapshotMap});
+			fileSnapshot.save();
 		}
 		catch (error) {
 			next(error);
