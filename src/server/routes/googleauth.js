@@ -47,18 +47,51 @@ router.get('/authorize', async function (req, res, next) {
   console.log(code);
   const {tokens} = await Oauth2Client.getToken(code)
   Oauth2Client.setCredentials(tokens);
+  google.options({auth: Oauth2Client})
   req.session.googleToken = tokens.access_token;
   listFiles(OAuth2Client, tokens.access_token);
   res.send("Hello");
 });
 
-router.get('/files', function (req, res, next) {
+router.get('/file', async function(req, res, next) {
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.files.list({
+    access_token: req.session.googleToken
+  });
+  res.render('google',{files:result.data.files});
+});
+
+router.get('/allfiles', async function (req, res, next) {
   if (req.session.googleToken) {
-    res.send("files");
+    const result = await getAllFiles(req.session.googleToken);
+    res.send(result);
   } else {
     res.send("nope");
   }
 });
+
+async function getAllFiles(token) {
+  const drive = google.drive({version: 'v3'});
+  let files = [];
+  let nextPage = null;
+  const result = await drive.files.list({
+    access_token: token
+  });
+  nextPage = result.data.nextPageToken;
+  console.log(nextPage);
+  files.push(result.data.files);
+  while(nextPage) {
+    const result = await drive.files.list({
+      access_token: token,
+      pageToken: nextPage, 
+    });
+    //console.log(nextPage);
+    nextPage = result.data.nextPageToken;
+    files.push(result.data.files);
+  }
+  return files;
+}
+
 
 /**
  * Lists the names and IDs of up to 10 files.
