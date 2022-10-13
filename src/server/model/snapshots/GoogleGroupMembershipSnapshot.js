@@ -1,7 +1,7 @@
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
 const Schema = mongoose.Schema
-const FileSnapshot = require('../file-snapshot-model').schema
+const GroupSnapshot = require('../group-snapshot-model').schema
 
 class GoogleGroupMembershipSnapshot {
     client = null;
