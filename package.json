@@ -14,11 +14,8 @@
   "license": "ISC",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-<<<<<<< HEAD
     "bootstrap": "^5.2.2",
-=======
     "dotenv": "^16.0.3",
->>>>>>> refs/remotes/origin/main
     "express": "^4.16.3",
     "googleapis": "^108.0.0",
     "mongoose": "^6.6.5",
