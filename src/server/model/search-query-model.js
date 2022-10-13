@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const SearchQuerySchema = new Schema(
     {
-        query: { type: String, required: true }
+        query: { type: String }
     },
     { timestamps: true },
 )

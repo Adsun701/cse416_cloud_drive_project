@@ -4,7 +4,7 @@ const Permission = require('./permission-model').schema
 
 const FileSnapshotSchema = new Schema(
     {
-        files: { type: Map, of: [Permission], required: true }
+        files: { type: Map, of: [Permission] }
     },
     { timestamps: true },
 )

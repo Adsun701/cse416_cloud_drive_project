@@ -29,9 +29,11 @@ const msalConfig = {
 
 const REDIRECT_URI = process.env.REDIRECT_URI;
 const POST_LOGOUT_REDIRECT_URI = process.env.POST_LOGOUT_REDIRECT_URI;
+const GRAPH_ME_ENDPOINT = process.env.GRAPH_API_ENDPOINT + "v1.0/me/drive/root/children";
 
 module.exports = {
     msalConfig,
     REDIRECT_URI,
-    POST_LOGOUT_REDIRECT_URI
+    POST_LOGOUT_REDIRECT_URI,
+    GRAPH_ME_ENDPOINT
 };

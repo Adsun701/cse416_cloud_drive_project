@@ -47,15 +47,17 @@ router.get('/authorize', async function (req, res, next) {
   console.log(code);
   const {tokens} = await Oauth2Client.getToken(code)
   Oauth2Client.setCredentials(tokens);
+  req.session.googleToken = tokens.access_token;
   listFiles(OAuth2Client, tokens.access_token);
   res.send("Hello");
 });
 
 router.get('/files', function (req, res, next) {
-  let authClient = OAuth2Client;
-  let tokens = authClient.access_token
-  listFiles(OAuth2Client, tokens.access_token);
-  res.send("files");
+  if (req.session.googleToken) {
+    res.send("files");
+  } else {
+    res.send("nope");
+  }
 });
 
 /**

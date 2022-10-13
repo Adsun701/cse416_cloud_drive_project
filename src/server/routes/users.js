@@ -1,6 +1,9 @@
 var express = require('express');
 var router = express.Router();
 
+var fetch = require('./fetch');
+var { GRAPH_ME_ENDPOINT } = require('../authConfig');
+
 // custom middleware to check auth state
 function isAuthenticated(req, res, next) {
     if (!req.session.isAuthenticated) {
@@ -21,7 +24,10 @@ router.get('/profile',
     isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
         try {
-            res.render('profile', { profile: "HELLO" });
+            const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
+            const files = graphResponse.value;
+            res.render('profile', { profile: graphResponse });
+            //res.render('profile', { profile: "HELLO" });
         } catch (error) {
             next(error);
         }

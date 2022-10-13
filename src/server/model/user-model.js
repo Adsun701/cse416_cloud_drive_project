@@ -1,20 +1,21 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
+const ObjectId = Schema.Types.ObjectId
 const File = require('./file-model').schema
-const AccessPolicy = require('./access-policy-model').schema
-const FileSnapshot = require('./file-snapshot-model').schema
-const GroupSnapshot = require('./group-snapshot-model').schema
-const SearchQuery = require('./search-query-model').schema
+const AccessPolicy = require('./access-policy-model')
+const FileSnapshot = require('./file-snapshot-model')
+const GroupSnapshot = require('./group-snapshot-model')
+const SearchQuery = require('./search-query-model')
 
 const UserSchema = new Schema(
     {
-        name: { type: String, required: true },
-        email: { type: String, required: true },
-        files: { type: [File], required: true },
-        accessPolicies: { type: [AccessPolicy], required: true },
-        fileSnapshots: { type: [FileSnapshot], required: true },
-        groupSnapshots: { type: [GroupSnapshot], required: true },
-        recentQueries: { type: [SearchQuery], required: true }
+        name: { type: String },
+        email: { type: String },
+        files: { type: [File] },
+        accessPolicies: [{ type: ObjectId, ref: AccessPolicy }],
+        fileSnapshots: [{ type: ObjectId, ref: FileSnapshot }],
+        groupSnapshots: [{ type: ObjectId, ref: GroupSnapshot }],
+        recentQueries: [{ type: ObjectId, ref: SearchQuery }]
     },
     { timestamps: true },
 )

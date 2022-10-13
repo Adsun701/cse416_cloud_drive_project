@@ -4,12 +4,12 @@ const File = require('./file-model').schema
 
 const PermissionSchema = new Schema(
     {
-        id: { type: String, required: true },
-        type: { type: String, required: true },
-        email: {type: String, required: true},
-        displayName: { type: String, required: true },
-        role: { type: String, required: true },
-        inheritedFrom: { type: File, required: true }
+        id: { type: String },
+        type: { type: String },
+        email: {type: String },
+        displayName: { type: String },
+        role: { type: String },
+        inheritedFrom: { type: File }
     },
     { timestamps: true },
 )

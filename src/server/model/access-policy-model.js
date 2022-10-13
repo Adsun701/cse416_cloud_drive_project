@@ -3,11 +3,11 @@ const Schema = mongoose.Schema
 
 const AccessPolicySchema = new Schema(
     {
-        requirement: { type: String, required: true },
-        ar: { type: [String], required: true },
-        dr: {type: [String], required: true},
-        aw: { type: [String], required: true },
-        dw: { type: [String], required: true }
+        requirement: { type: String },
+        ar: { type: [String] },
+        dr: {type: [String] },
+        aw: { type: [String] },
+        dw: { type: [String] }
     },
     { timestamps: true },
 )

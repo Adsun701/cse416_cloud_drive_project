@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const GroupSnapshotSchema = new Schema(
     {
-        files: { type: String, of: [String], required: true }
+        files: { type: String, of: [String] }
     },
     { timestamps: true },
 )
