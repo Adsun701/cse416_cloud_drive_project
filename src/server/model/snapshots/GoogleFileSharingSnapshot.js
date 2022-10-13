@@ -1,8 +1,7 @@
-const fs = require('fs').promises;
-const path = require('path');
-const process = require('process');
 const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
+const Schema = mongoose.Schema
+const FileSnapshot = require('../file-snapshot-model').schema
 
 class GoogleFileSharingSnapshot {
 	client = null;
@@ -12,32 +11,28 @@ class GoogleFileSharingSnapshot {
 		this.drive = google.drive({version: 'v3', auth: client});
 		this.client = client;
 	}
-
     
     takeSnapshot = () => {
-		snapshot = "";
+		snapshotMap = new Map();
 		drive.files.list({ }, (err, res) => {
 			if (err) {
-				console.error('The API returned an error.');
+				//console.error('The API returned an error.');
 				throw err;
 			}
 			const files = res.data.files;
 			if (files.length === 0) {
-				console.log('No files found.');
+				//console.log('No files found.');
 				return null;
 			} else {
-				console.log('Files Found!');
-				// stringify each file into json and add them to a compiled string.
+				//console.log('Files Found!');
 				for (const file of files) {
-					console.log(`${file.name} (${file.id})`);
-					snapshot += JSON.stringify(file) + "\n";
+					snapshotMap.set(file.id, file.permissions);
 				}
 			}
 		})
-		snapshotTimeStamp = new Date().toLocaleString();
-		return [snapshot, snapshotTimeStamp];
+		fileSnapshot = new FileSnapshot({files: snapshotMap});
+		return fileSnapshot;
     }
-
 }
 
 export { GoogleFileSharingSnapshot };
