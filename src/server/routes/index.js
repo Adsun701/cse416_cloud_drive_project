@@ -1,6 +1,7 @@
 
 
 var express = require('express');
+const { route } = require('./users');
 var router = express.Router();
 
 router.get('/', function (req, res, next) {
@@ -9,6 +10,10 @@ router.get('/', function (req, res, next) {
         isAuthenticated: req.session.isAuthenticated,
         username: req.session.account?.username,
     });
+});
+
+router.get('/goog', function (req, res, next) {
+    res.render('google');
 });
 
 module.exports = router;

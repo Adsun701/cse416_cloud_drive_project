@@ -1,8 +1,3 @@
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
-
 var express = require('express');
 var msal = require('@azure/msal-node');
 
@@ -65,6 +60,7 @@ async function redirectToAuthCodeUrl(req, res, next, authCodeUrlRequestParams, a
         next(error);
     }
 };
+
 
 router.get('/signin', async function (req, res, next) {
 
