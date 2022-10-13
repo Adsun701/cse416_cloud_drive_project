@@ -1,5 +1,5 @@
 var express = require('express');
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client, auth } = require('google-auth-library');
 const router = express.Router();
 const { google } = require('googleapis');
 const { redirect } = require('react-router-dom');
@@ -24,7 +24,7 @@ function getConnectionUrl() {
       prompt: 'consent',
       scope: ['https://www.googleapis.com/auth/drive.metadata.readonly',
         'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/plus.me',
+        'https://www.googleapis.com/auth/plus.me', 'https://www.googleapis.com/auth/drive'
     ]
   });
 }
@@ -40,9 +40,16 @@ router.get('/authorize', async function (req, res, next) {
   console.log(code);
   const {tokens} = await Oauth2Client.getToken(code)
   Oauth2Client.setCredentials(tokens);
-  const usr_info = await oauth2.userinfo.get({auth: Oauth2Client});
-  console.log(usr_info);
+  listFiles(OAuth2Client);
   res.send("HI");
+});
+
+router.get('/files', function (req, res, next) {
+  let authClient = OAuth2Client;
+  console.log("AUTH CLIENT");
+  console.log(authClient);
+  listFiles(authClient);
+  res.send("files");
 });
 
 /**
@@ -52,8 +59,7 @@ router.get('/authorize', async function (req, res, next) {
 async function listFiles(authClient) {
   const drive = google.drive({version: 'v3', auth: authClient});
   const res = await drive.files.list({
-    pageSize: 10,
-    fields: 'nextPageToken, files(id, name)',
+    key: "AIzaSyB_vwp4J8ASKdS7PSwgjOkJRDukxNSP9L4"
   });
   const files = res.data.files;
   if (files.length === 0) {
