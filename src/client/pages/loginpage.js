@@ -8,11 +8,11 @@ import '../app.css';
 
 export default function LoginPage() {
   const handleGoogle = () => {
-    console.log('Google');
+    window.open("http://localhost:8080/google/auth", "_blank");
   };
 
   const handleMicrosoft = () => {
-    console.log('Microsoft');
+    window.open("http://localhost:8080/", "_blank");
   };
 
   return (
