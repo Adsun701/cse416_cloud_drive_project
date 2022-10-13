@@ -20,7 +20,8 @@ router.get('/snapshot',
     async function (req, res, next) {
         try {
 			snapshotMap = new Map();
-			google.drive.files.list({ access_token: req.session.googleToken }, (err, res) => {
+			const drive = google.drive({version: 'v3'});
+			drive.files.list({ access_token: req.session.googleToken }, (err, res) => {
 				if (err) {
 					//console.error('The API returned an error.');
 					throw err;
