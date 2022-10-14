@@ -155,6 +155,16 @@ async function getFileData(token, fileid) {
   return fileData;
 }
 
+async function getFilePermData(token, fileid, permid) {
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.permissions.get({
+    access_token: token,
+    fileId: fileid,
+    permissionId: permid,
+    fields:"*",
+  });
+  res.send(result.data);
+}
 
 /**
  * Lists the names and IDs of up to 10 files.
