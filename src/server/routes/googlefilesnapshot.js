@@ -4,6 +4,7 @@ var router = express.Router();
 const { google } = require('googleapis');
 const FileSnapshot = require('../model/file-snapshot-model')
 const Permission = require('../model/permission-model')
+const User = require('../model/user-model')
 
 var fetch = require('./fetch');
 var { GRAPH_ME_ENDPOINT } = require('../authConfig');
@@ -45,57 +46,57 @@ async function getSnapshot(token) {
 	const drive = google.drive({version: 'v3'});
 	let files = {};
 	let nextPage = null;
-	const result = await drive.files.list({
-	  access_token: token,
-	  fields: "files(id, name, permissions), nextPageToken"
-	});
-	nextPage = result.data.nextPageToken;
-	console.log(nextPage);
-	let f = result.data.files;
-	f.forEach(element => {
-		let newPermsList = [];
-		if (element.permissions) {
-			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = new Permission({
-					"id": element.permissions[i].id,
-					"email": element.permissions[i].emailAddress,
-					"displayName": element.permissions[i].displayName,
-					"roles": [element.permissions[i].role],
-					"inheritedFrom": null
-				});
-				newPermission.save();
-				newPermsList.push(newPermission);
-			}
-		}
-		files[element.id] = newPermsList;
-	});
-	while(nextPage) {
-	  const result = await drive.files.list({
-		access_token: token,
-		pageToken: nextPage, 
-		fields: "files(id, name, permissions), nextPageToken"
-	  });
-	  console.log(nextPage);
-	  nextPage = result.data.nextPageToken;
-	  f = result.data.files;
-	  f.forEach(element => {
-		let newPermsList = [];
-		if (element.permissions) {
-			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = new Permission({
-					"id": element.permissions[i].id,
-					"email": element.permissions[i].emailAddress,
-					"displayName": element.permissions[i].displayName,
-					"roles": [element.permissions[i].role],
-					"inheritedFrom": null
-				});
-				newPermission.save();
-				newPermsList.push(newPermission);
-			}
-		}
-		files[element.id] = newPermsList;
-	  });
-	}
+ 	const result = await drive.files.list({
+ 	  access_token: token,
+ 	  fields: "files(id, name, permissions), nextPageToken"
+ 	});
+ 	nextPage = result.data.nextPageToken;
+ 	console.log(nextPage);
+ 	let f = result.data.files;
+ 	f.forEach(element => {
+ 		let newPermsList = [];
+ 		if (element.permissions) {
+ 			for (let i = 0; i < element.permissions.length; i++) {
+ 				let newPermission = new Permission({
+ 					"id": element.permissions[i].id,
+ 					"email": element.permissions[i].emailAddress,
+ 					"displayName": element.permissions[i].displayName,
+ 					"roles": [element.permissions[i].role],
+ 					"inheritedFrom": null
+ 				});
+ 				newPermission.save();
+ 				newPermsList.push(newPermission);
+ 			}
+ 		}
+ 		files[element.id] = newPermsList;
+ 	});
+ 	while(nextPage) {
+ 	  const result = await drive.files.list({
+ 		access_token: token,
+ 		pageToken: nextPage, 
+ 		fields: "files(id, name, permissions), nextPageToken"
+ 	  });
+ 	  console.log(nextPage);
+ 	  nextPage = result.data.nextPageToken;
+ 	  f = result.data.files;
+ 	  f.forEach(element => {
+ 		let newPermsList = [];
+ 		if (element.permissions) {
+ 			for (let i = 0; i < element.permissions.length; i++) {
+ 				let newPermission = new Permission({
+ 					"id": element.permissions[i].id,
+ 					"email": element.permissions[i].emailAddress,
+ 					"displayName": element.permissions[i].displayName,
+ 					"roles": [element.permissions[i].role],
+ 					"inheritedFrom": null
+ 				});
+ 				newPermission.save();
+ 				newPermsList.push(newPermission);
+ 			}
+ 		}
+ 		files[element.id] = newPermsList;
+ 	  });
+ 	}
 	return files;
   }
 
@@ -103,12 +104,17 @@ async function getSnapshot(token) {
 router.get('/snapshot',
 	isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
-			const result = await getSnapshot(req.session.googleToken);
-			let fileSnapshot = new FileSnapshot({
-				files: result
-			});
-			fileSnapshot.save();
-			res.send(result);
+		console.log("test");
+		console.log(req);
+		const result = await getSnapshot(req.session.googleToken);
+		let fileSnapshot = new FileSnapshot({
+			files: result
 		});
+		fileSnapshot.save();
+		// User.update(
+		// 	{email: email}, {$push: { fileSnapshots: fileSnapshot }})
+		// 	.then(() => console.log("user file snapshot updated in db"));
+		res.send(result); 
+	});
 
 module.exports = router;

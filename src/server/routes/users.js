@@ -9,6 +9,8 @@ const User = require('../model/user-model');
 const File = require('../model/file-model');
 const Permission = require('../model/permission-model');
 const FileSnapshot = require('../model/file-snapshot-model');
+const AccessPolicy = require('../model/access-policy-model');
+const SearchQuery = require('../model/search-query-model');
 
 
 // custom middleware to check auth state
@@ -116,6 +118,62 @@ router.post('/microsoft/addpermission', isAuthenticated, async function(req, res
     }
 });
 
+router.get('/microsoft/addaccess', function(req, res, next) {
+    res.render('microsoftaccesspolicy');
+});
+
+router.post('/microsoft/addaccesspolicy', isAuthenticated, async function(req, res, next) {
+    try {
+        const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+        const email = emailResponse.mail;
+
+        let requirement = req.body.requirement;
+        let ar = req.body.ar.split(", "); 
+        let dr =  req.body.dr.split(", "); 
+        let aw = req.body.aw.split(", ");
+        let dw =  req.body.dw.split(", ");
+      
+        let accessPolicy = new AccessPolicy({
+          requirement: requirement,
+          ar: ar,
+          dr: dr,
+          aw: aw,
+          dw: dw
+        })
+        accessPolicy.save().then(() => console.log("access policy saved in db"));
+        User.update(
+            {email: email}, {$push: { accessPolicies: accessPolicy }})
+            .then(() => console.log("user access policies updated in db"));
+        res.send(accessPolicy);
+    } catch(error) {
+        next(error);
+    }
+});
+
+router.get('/microsoft/search', function(req, res, next) {
+    res.render('microsoftsearch');
+});
+
+router.post('/microsoft/searchquery', isAuthenticated, async function(req, res, next) {
+    try {
+        const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+        const email = emailResponse.mail;
+
+        let query = req.body.query;
+      
+        let searchQuery = new SearchQuery({
+          query: query
+        })
+        searchQuery.save().then(() => console.log("search query saved in db"));
+        User.update(
+            {email: email}, {$push: { recentQueries: searchQuery }})
+            .then(() => console.log("user recent queries updated in db"));
+        res.send(searchQuery);
+    } catch(error) {
+        next(error);
+    }
+});
+
 router.get('/profile',
     isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
@@ -198,7 +256,7 @@ router.get('/profile',
             })
             User.exists({ email: email }).then(exists => {
                 if (exists) {
-                  User.update({email: email}, {$set: { files: list_files}}).then(() => console.log("user updated in db"));
+                  User.update({email: email}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
                 } else {
                   newUser.save().then(() => console.log("user saved in db"));
                 }

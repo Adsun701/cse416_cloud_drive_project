@@ -8,6 +8,8 @@ const oauth2 = google.oauth2('v2');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
 const Permission = require('../model/permission-model');
+const AccessPolicy = require('../model/access-policy-model');
+const SearchQuery = require('../model/search-query-model');
 
 const Oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -53,7 +55,7 @@ router.get('/authorize', async function (req, res, next) {
   let user = await getUserDetails(Oauth2Client);
   let email = user.data.email;
   let filesMap = await getFilesAndPerms(req.session.googleToken);
-  let list_files = []
+  let list_files = [];
   for (const [key, value] of Object.entries(filesMap)) {
     let fileData = await getFileData(req.session.googleToken, key);
     fileData = fileData.data;
@@ -76,7 +78,13 @@ router.get('/authorize', async function (req, res, next) {
     groupSnapshots: [],
     recentQueries: []
   })
-  newUser.save()
+  User.exists({ email: email }).then(exists => {
+    if (exists) {
+      User.update({email: email}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
+    } else {
+      newUser.save().then(() => console.log("user saved in db"));
+    }
+  })
   res.send(user.data);
 });
 
@@ -124,6 +132,48 @@ router.post('/addfilepermission', async function(req, res, next) {
     ret.push(result);
   }
   res.send(ret);
+});
+
+router.get('/addaccess', function(req, res, next) {
+  res.render('googleaccesspolicy');
+})
+
+router.post('/addaccesspolicy', async function(req, res, next) {
+  let requirement = req.body.requirement;
+  let ar = req.body.ar.split(", "); 
+  let dr =  req.body.dr.split(", "); 
+  let aw = req.body.aw.split(", ");
+  let dw =  req.body.dw.split(", ");
+
+  let accessPolicy = new AccessPolicy({
+    requirement: requirement,
+    ar: ar,
+    dr: dr,
+    aw: aw,
+    dw: dw
+  })
+  accessPolicy.save().then(() => console.log("access policy saved in db"));
+  // add to User db - get email
+  res.send(accessPolicy);
+});
+
+router.get('/search', function(req, res, next) {
+  res.render('googlesearch');
+});
+
+router.post('/searchquery', async function(req, res, next) {
+  try {
+      let query = req.body.query;
+    
+      let searchQuery = new SearchQuery({
+        query: query
+      })
+      searchQuery.save().then(() => console.log("search query saved in db"));
+      // add to User db - get email
+      res.send(searchQuery);
+  } catch(error) {
+      next(error);
+  }
 });
 
 router.get('/allfiles', async function (req, res, next) {
