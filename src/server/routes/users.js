@@ -66,29 +66,40 @@ router.get('/profile',
                 const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
                 const permissions = permissionResponse.value;
                 let permissions_list = []
+                // console.log(permissions);
                 for (let j = 0; j < permissions.length; j++) {
                     if (permissions[j].grantedToV2) {
-                        let perm = new Permission({
-                            id: permissions[j].id,
-                            email: permissions[j].grantedToV2.user.email,
-                            displayName: permissions[j].grantedToV2.user.displayName,
-                            roles: permissions[j].roles,
-                            inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                        Permission.exists({ id: permissions[j].id, roles: permissions[j].roles }).then(exists => {
+                            if (!exists) {
+                                let perm = new Permission({
+                                    id: permissions[j].id,
+                                    email: permissions[j].grantedToV2.user.email,
+                                    displayName: permissions[j].grantedToV2.user.displayName,
+                                    roles: permissions[j].roles,
+                                    inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                                })
+                                perm.save().then(() => console.log("perm saved"));
+                                permissions_list.push(perm);
+                            }
                         })
-                        perm.save().then(() => console.log("perm saved"));
-                        permissions_list.push(perm);
                     }
                     if (permissions[j].grantedToIdentitiesV2) {
+                        console.log(permissions[j].grantedToIdentitiesV2)
                         for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
-                            let perm = new Permission({
-                                id: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.id : permissions[j].grantedToIdentitiesV2[k].siteUser.id,
-                                email: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.email : permissions[j].grantedToIdentitiesV2[k].siteUser.email,
-                                displayName: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.displayName : permissions[j].grantedToIdentitiesV2[k].siteUser.displayName,
-                                roles: permissions[j].roles,
-                                inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                            let currentPermission = permissions[j].grantedToIdentitiesV2[k];
+                            Permission.exists({ id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id, roles: permissions[j].roles }).then(exists => {
+                                if (!exists) {
+                                    let perm = new Permission({
+                                        id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
+                                        email: currentPermission.user? currentPermission.user.email : currentPermission.siteUser.email,
+                                        displayName: currentPermission.user? currentPermission.user.displayName : currentPermission.siteUser.displayName,
+                                        roles: permissions[j].roles,
+                                        inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                                    })
+                                    perm.save().then(() => console.log("perm saved"));
+                                    permissions_list.push(perm);
+                                }
                             })
-                            perm.save().then(() => console.log("perm saved"));
-                            permissions_list.push(perm);
                         }
                     }
                 }
