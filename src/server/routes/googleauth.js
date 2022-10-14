@@ -365,6 +365,12 @@ async function getFilePermData(token, fileid, permid) {
   res.send(result.data);
 }
 
+router.get('/signout', function (req, res, next) {
+  req.session.destroy(() => {
+    res.redirect('/');
+});
+});
+
 /**
  * Lists the names and IDs of up to 10 files.
  * @param {OAuth2Client} authClient An authorized OAuth2 client.

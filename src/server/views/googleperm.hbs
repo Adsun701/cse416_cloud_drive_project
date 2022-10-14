@@ -3,9 +3,18 @@
   let value = req.body.value // email address for new permission
   let type =  req.body.type // user, group, etc
   let role = req.body.role  --}}
-  <input type="files" id="files" name="files">
+  Representing post call to backend
+  <br>
+  Add new permissions for files (one or multiple) in the form ["fileid_here", "fileid_here"]
+  <br>
+  Files:<br>
+  <input type="text" id="files" name="files">
+  <br>value (email)<br>
   <input type="text" id="value" name="value">
+  <br>Type (user, group)<br>
   <input type="text" id="type" name="type">
+  <br>Role (read, write)<br>
   <input type="text" id="role" name="role">
+  <br>Submit<br>
   <input type="submit" value="Submit">
 </form>
