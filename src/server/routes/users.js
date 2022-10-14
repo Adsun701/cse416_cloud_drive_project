@@ -116,8 +116,8 @@ router.get('/microsoft/filesnapshot', async function(req, res, next) {
             if (permissions[j].grantedToV2) {
                 let perm = new Permission({
                     id: permissions[j].id,
-                    email: permissions[j].grantedToV2.user.email,
-                    displayName: permissions[j].grantedToV2.user.displayName,
+                    email: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.email : permissions[j].grantedToV2.siteUser.email,
+                    displayName: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.displayName : permissions[j].grantedToV2.siteUser.displayName,
                     roles: permissions[j].roles,
                     inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
                 })
@@ -268,8 +268,8 @@ router.get('/profile',
                     if (permissions[j].grantedToV2) {
                         let perm = new Permission({
                             id: permissions[j].id,
-                            email: permissions[j].grantedToV2.user.email,
-                            displayName: permissions[j].grantedToV2.user.displayName,
+                            email: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.email : permissions[j].grantedToV2.siteUser.email,
+                            displayName: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.displayName : permissions[j].grantedToV2.siteUser.displayName,
                             roles: permissions[j].roles,
                             inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
                         })
