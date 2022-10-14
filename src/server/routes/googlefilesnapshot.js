@@ -21,7 +21,9 @@ router.get('/snapshot',
         try {
 			snapshotMap = new Map();
 			const drive = google.drive({version: 'v3'});
-			drive.files.list({ access_token: req.session.googleToken }, (err, res) => {
+			drive.files.list({ access_token: req.session.googleToken,
+				fields: 'files(id, name, permissions)'
+			}, (err, res) => {
 				if (err) {
 					//console.error('The API returned an error.');
 					throw err;
@@ -31,9 +33,9 @@ router.get('/snapshot',
 					//console.log('No files found.');
 					return null;
 				} else {
-					//console.log('Files Found!');
-					for (const file of files) {
-						snapshotMap.set(file.id, file.permissions);
+					//console.log('Files Found! File length: ' + files.length);
+					for (i = 0; i < files.length; i++) {
+						snapshotMap.set(files[i].id, files[i].permissions);
 					}
 				}
 			})
