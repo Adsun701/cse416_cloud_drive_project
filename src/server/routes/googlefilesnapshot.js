@@ -62,6 +62,7 @@ async function getSnapshot(token) {
 					"roles": [element.permissions[i].role],
 					"inheritedFrom": null
 				}
+				newPermission.save();
 				newPermsList.push(newPermission);
 			}
 		}
@@ -87,6 +88,7 @@ async function getSnapshot(token) {
 					"roles": [element.permissions[i].role],
 					"inheritedFrom": null
 				}
+				newPermission.save();
 				newPermsList.push(newPermission);
 			}
 		}
@@ -101,6 +103,10 @@ router.get('/snapshot',
 	isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
 			const result = await getSnapshot(req.session.googleToken);
+			let fileSnapshot = new FileSnapshot({
+				files: result
+			});
+			fileSnapshot.save();
 			res.send(result);
 		});
 
