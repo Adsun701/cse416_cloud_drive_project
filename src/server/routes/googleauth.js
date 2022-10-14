@@ -5,6 +5,9 @@ const { google } = require('googleapis');
 const { token } = require('morgan');
 const { redirect } = require('react-router-dom');
 const oauth2 = google.oauth2('v2');
+const User = require('../model/user-model');
+const File = require('../model/file-model');
+const Permission = require('../model/permission-model');
 
 const Oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -48,6 +51,32 @@ router.get('/authorize', async function (req, res, next) {
   google.options({auth: Oauth2Client})
   req.session.googleToken = tokens.access_token;
   let user = await getUserDetails(Oauth2Client);
+  let email = user.data.email;
+  let filesMap = await getFilesAndPerms(req.session.googleToken);
+  let list_files = []
+  for (const [key, value] of Object.entries(filesMap)) {
+    let fileData = await getFileData(req.session.googleToken, key);
+    fileData = fileData.data;
+    let file = new File({
+      id: fileData.id,
+      name: fileData.name,
+      createdTime: fileData.createdTime,
+      modifiedTime: fileData.modifiedTime,
+      permissions: value
+    })
+    file.save();
+    list_files.push(file);
+  }
+  let newUser = new User({
+    name: user.data.name,
+    email: email,
+    files: list_files,
+    accessPolicies: [],
+    fileSnapshots: [],
+    groupSnapshots: [],
+    recentQueries: []
+  })
+  newUser.save()
   res.send(user.data);
 });
 
@@ -126,7 +155,11 @@ async function getAllFiles(token) {
   });
   nextPage = result.data.nextPageToken;
   console.log(nextPage);
-  files.push(result.data.files);
+  let f = result.data.files;
+  f.forEach(element => {
+    files.push(element);
+  });
+  //files.push(result.data.files);
   while(nextPage) {
     const result = await drive.files.list({
       access_token: token,
@@ -134,10 +167,81 @@ async function getAllFiles(token) {
     });
     //console.log(nextPage);
     nextPage = result.data.nextPageToken;
-    files.push(result.data.files);
+    f = result.data.files;
+    f.forEach(element => {
+      files.push(element);
+    });
+    //files.push(result.data.files);
   }
   return files;
 }
+
+async function getFilesAndPerms(token) {
+  const drive = google.drive({version: 'v3'});
+	let files = {};
+	let nextPage = null;
+	const result = await drive.files.list({
+	  access_token: token,
+	  fields: "files(id, name, permissions), nextPageToken"
+	});
+	nextPage = result.data.nextPageToken;
+	console.log(nextPage);
+	let f = result.data.files;
+	f.forEach(element => {
+		let newPermsList = [];
+		if (element.permissions) {
+			for (let i = 0; i < element.permissions.length; i++) {
+				let newPermission = new Permission({
+					"id": element.permissions[i].id,
+					"email": element.permissions[i].emailAddress,
+					"displayName": element.permissions[i].displayName,
+					"roles": [element.permissions[i].role],
+					"inheritedFrom": null
+				});
+				newPermission.save();
+				newPermsList.push(newPermission);
+			}
+		}
+		files[element.id] = newPermsList;
+	});
+	while(nextPage) {
+	  const result = await drive.files.list({
+		access_token: token,
+		pageToken: nextPage, 
+		fields: "files(id, name, permissions), nextPageToken"
+	  });
+	  console.log(nextPage);
+	  nextPage = result.data.nextPageToken;
+	  f = result.data.files;
+	  f.forEach(element => {
+		let newPermsList = [];
+		if (element.permissions) {
+			for (let i = 0; i < element.permissions.length; i++) {
+				let newPermission = new Permission({
+					"id": element.permissions[i].id,
+					"email": element.permissions[i].emailAddress,
+					"displayName": element.permissions[i].displayName,
+					"roles": [element.permissions[i].role],
+					"inheritedFrom": null
+				});
+				newPermission.save();
+				newPermsList.push(newPermission);
+			}
+		}
+		files[element.id] = newPermsList;
+	  });
+	}
+	return files;
+}
+
+async function getAllPermissions(fileId, token) {
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.permissions.list({
+    access_token: token,
+    fileId: fileId,
+  });
+  return result.data;
+};
 
 router.get('/filedata/:id', async function(req,res,next) {
   let fileid = req.params.id;
