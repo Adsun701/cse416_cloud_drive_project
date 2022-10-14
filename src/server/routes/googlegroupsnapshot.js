@@ -44,7 +44,7 @@ router.get('/snapshot',
 					}
 				}
 			})
-			groupSnapshot = new GroupSnapshot({files: snapshotMap});
+			groupSnapshot = new GroupSnapshot({groupMembers: snapshotMap});
 			groupSnapshot.save();
 		}
 		catch (error) {
