@@ -33,6 +33,11 @@ router.get('/microsoftupdateperm', function (req, res, next) {
     res.render('microsoftupdateperm');
 });
 
+router.get('/microsoft/viewaccesspolicy', function (req, res, next) {
+    let requirement = req.query.requirement;
+    res.render('existingaccesspolicy', {requirement: requirement, dr: "hello bob", ar: "oh no bob"});
+});
+
 router.post('/microsoft/updatepermission', async function (req, res, next) {
     let body = {
         "roles": [req.body.role]
