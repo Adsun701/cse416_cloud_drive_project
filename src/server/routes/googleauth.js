@@ -106,6 +106,16 @@ router.get('/allfiles', async function (req, res, next) {
   }
 });
 
+router.get('/file/:fileid/permission/:permid', async function (req, res, next) {
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.permissions.get({
+    access_token: req.session.googleToken,
+    fileId: req.params.fileid,
+    permissionId: req.params.permid,
+  });
+  res.send(result.data);
+});
+
 async function getAllFiles(token) {
   const drive = google.drive({version: 'v3'});
   let files = [];
@@ -126,6 +136,21 @@ async function getAllFiles(token) {
     files.push(result.data.files);
   }
   return files;
+}
+
+router.get('/filedata/:id', async function(req,res,next) {
+  let fileid = req.params.id;
+  const result = await getFileData(req.session.googleToken, fileid);
+  res.send(result.data);
+});
+
+async function getFileData(token, fileid) {
+  const drive = google.drive({version: 'v3'});
+  const fileData = await drive.files.get({
+    access_token: token,
+    fileId: fileid,
+  });
+  return fileData;
 }
 
 
