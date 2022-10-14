@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 var fetch = require('./fetch');
+var fetchpost = require('./post');
 var { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
@@ -22,6 +23,35 @@ router.get('/id',
         res.render('id', { idTokenClaims: req.session.account.idTokenClaims });
     }
 );
+
+router.get('/microsoft/addperm', function(req, res, next) {
+    res.render('microsoftperm');
+});
+
+router.post('/microsoft/addpermission', isAuthenticated, async function(req, res, next) {
+    try {
+        // post request sends files, value, and role
+        let files = JSON.parse(req.body.files);
+        let body = {
+            "recipients": [
+                {"email": req.body.value}
+            ],
+            "message": "Hello!",
+            "requireSignIn": true,
+            "sendInvitation": true,
+            "roles": [req.body.role]
+        }
+        let ans = []
+        for (let i = 0; i < files.length; i++) {
+            const update = await fetchpost(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i]+"/invite", req.session.accessToken, body);
+            ans.push(update.data);
+        }
+        console.log(ans);
+        res.send("SUCCCESS");
+    } catch(error) {
+        next(error);
+    }
+});
 
 router.get('/profile',
     isAuthenticated, // check if user is authenticated
@@ -47,6 +77,7 @@ router.get('/profile',
                     perm.save().then(() => console.log("perm saved"));
                     permissions_list.push(perm);
                 }
+                console.log(files[i].id);
                 let file = new File({
                     id: files[i].id,
                     name: files[i].name,
