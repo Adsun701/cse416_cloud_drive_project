@@ -2,7 +2,10 @@ var express = require('express');
 var router = express.Router();
 
 var fetch = require('./fetch');
-var { GRAPH_ME_ENDPOINT } = require('../authConfig');
+var { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
+const User = require('../model/user-model');
+const File = require('../model/file-model');
+const Permission = require('../model/permission-model');
 
 // custom middleware to check auth state
 function isAuthenticated(req, res, next) {
@@ -25,7 +28,45 @@ router.get('/profile',
     async function (req, res, next) {
         try {
             const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
+            const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+            const email = emailResponse.mail;
             const files = graphResponse.value;
+            const list_files = []
+            for (let i = 0; i < files.length; i++) {
+                const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
+                const permissions = permissionResponse.value;
+                let permissions_list = []
+                for (let j = 0; j < permissions.length; j++) {
+                    let perm = new Permission({
+                        id: permissions[j].id,
+                        email: permissions[j].grantedToV2.user.email,
+                        displayName: permissions[j].grantedToV2.user.displayName,
+                        roles: permissions[j].roles,
+                        inheritedFrom: permissions[j].inheritedFrom.id ? permissions[j].inheritedFrom.id : null
+                    })
+                    perm.save().then(() => console.log("perm saved"));
+                    permissions_list.push(perm);
+                }
+                let file = new File({
+                    id: files[i].id,
+                    name: files[i].name,
+                    createdTime: files[i].fileSystemInfo.createdDateTime,
+                    modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
+                    permissions: permissions_list
+                })
+                file.save().then(() => console.log("file saved"));
+                list_files.push(file);
+            }
+            const newUser = new User ({
+                name: req.session.account?.username,
+                email: email,
+                files: list_files,
+                accessPolicies: [],
+                fileSnapshots: [],
+                groupSnapshots: [],
+                recentQueries: []
+            })
+            newUser.save().then(() => console.log("user saved in db"));
             res.render('profile', { profile: graphResponse });
             //res.render('profile', { profile: "HELLO" });
         } catch (error) {
