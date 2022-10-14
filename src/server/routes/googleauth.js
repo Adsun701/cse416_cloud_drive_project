@@ -112,6 +112,7 @@ router.get('/file/:fileid/permission/:permid', async function (req, res, next) {
     access_token: req.session.googleToken,
     fileId: req.params.fileid,
     permissionId: req.params.permid,
+    fields:"*",
   });
   res.send(result.data);
 });
@@ -149,6 +150,7 @@ async function getFileData(token, fileid) {
   const fileData = await drive.files.get({
     access_token: token,
     fileId: fileid,
+    fields: "*",
   });
   return fileData;
 }
