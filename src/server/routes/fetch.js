@@ -1,10 +1,5 @@
 const axios = require('axios');
 
-/**
- * Attaches a given access token to a MS Graph API call
- * @param endpoint: REST API endpoint to call
- * @param accessToken: raw access token string
- */
 async function fetch(endpoint, accessToken) {
     const options = {
         headers: {
