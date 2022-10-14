@@ -2,8 +2,6 @@ var express = require('express');
 const { OAuth2Client, auth } = require('google-auth-library');
 const router = express.Router();
 const { google } = require('googleapis');
-const { token } = require('morgan');
-const { redirect } = require('react-router-dom');
 const oauth2 = google.oauth2('v2');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
@@ -14,7 +12,7 @@ const SearchQuery = require('../model/search-query-model');
 const Oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT, // this must match your google api settings
+    process.env.GOOGLE_REDIRECT, 
 );
 
 async function getUserDetails(auth) {
@@ -45,6 +43,26 @@ router.get('/auth', async function authorize(req,res,next) {
   res.redirect(url);
 });
 
+router.get('/adduserfiles', async function (req, res, next) {
+  let filesMap = await getFilesAndPerms(req.session.googleToken);
+  let list_files = [];
+  for (const [key, value] of Object.entries(filesMap)) {
+    let fileData = await getFileData(req.session.googleToken, key);
+    fileData = fileData.data;
+    let file = new File({
+      id: fileData.id,
+      name: fileData.name,
+      createdTime: fileData.createdTime,
+      modifiedTime: fileData.modifiedTime,
+      permissions: value
+    })
+    file.save();
+    list_files.push(file);
+  }
+  User.update({email: req.session.googleEmail}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
+  res.send("Successfully updated files in user db");
+});
+
 router.get('/authorize', async function (req, res, next) {
   let code = req.query.code;
   console.log(code);
@@ -55,25 +73,10 @@ router.get('/authorize', async function (req, res, next) {
   let user = await getUserDetails(Oauth2Client);
   let email = user.data.email;
   req.session.googleEmail = email;
-  // let filesMap = await getFilesAndPerms(req.session.googleToken);
-  let list_files = [];
-  // for (const [key, value] of Object.entries(filesMap)) {
-  //   let fileData = await getFileData(req.session.googleToken, key);
-  //   fileData = fileData.data;
-  //   let file = new File({
-  //     id: fileData.id,
-  //     name: fileData.name,
-  //     createdTime: fileData.createdTime,
-  //     modifiedTime: fileData.modifiedTime,
-  //     permissions: value
-  //   })
-  //   file.save();
-  //   list_files.push(file);
-  // }
   let newUser = new User({
     name: user.data.name,
     email: email,
-    files: list_files,
+    files: [],
     accessPolicies: [],
     fileSnapshots: [],
     groupSnapshots: [],
@@ -81,12 +84,12 @@ router.get('/authorize', async function (req, res, next) {
   })
   User.exists({ email: email }).then(exists => {
     if (exists) {
-      User.update({email: email}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
+      User.update({email: email}, {$set: { files: [] }}).then(() => console.log("user updated in db"));
     } else {
       newUser.save().then(() => console.log("user saved in db"));
     }
   })
-  res.send(user.data);
+  res.render('googleindex', {name: user.data.name, email:email});
 });
 
 router.get('/file', async function(req, res, next) {
