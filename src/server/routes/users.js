@@ -7,6 +7,8 @@ var { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
 const Permission = require('../model/permission-model');
+const FileSnapshot = require('../model/file-snapshot-model');
+
 
 // custom middleware to check auth state
 function isAuthenticated(req, res, next) {
@@ -27,7 +29,7 @@ router.get('/id',
 router.get('/microsoft/filesnapshot', async function(req, res, next) {
     const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
     const files = graphResponse.value;
-    const list_files = []
+    const filesMap = {};
     for (let i = 0; i < files.length; i++) {
         const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
         const permissions = permissionResponse.value;
@@ -58,31 +60,13 @@ router.get('/microsoft/filesnapshot', async function(req, res, next) {
                 }
             }
         }
-        console.log(files[i].id);
-        let file = new File({
-            id: files[i].id,
-            name: files[i].name,
-            createdTime: files[i].fileSystemInfo.createdDateTime,
-            modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
-            permissions: permissions_list
-        })
-        File.exists({ id: files[i].id }).then(exists => {
-            if (exists) {
-              File.update(
-                {id: files[i].id}, 
-                {$set: {
-                    name: files[i].name, 
-                    modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
-                    permissions: permissions_list
-                  } 
-                }).then(() => console.log("file updated in db"));
-            } else {
-                file.save().then(() => console.log("file saved in db"));
-            }
-        })
-        list_files.push(file);
+        filesMap[files[i].id] = permissions_list;
     }
-    res.send(list_files);
+    let fileSnapshot = new FileSnapshot({
+        files: filesMap
+    });
+    fileSnapshot.save();
+    res.send(filesMap);
 });
 
 router.get('/microsoft/addperm', function(req, res, next) {
