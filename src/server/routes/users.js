@@ -214,14 +214,20 @@ router.post('/microsoft/addaccesspolicy', isAuthenticated, async function(req, r
 router.get('/microsoft/search', async function(req, res, next) {
     const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
     const email = emailResponse.mail;
-    let user = User.find({email: email});
-    console.log(recentQueries);
-    res.render('microsoftsearch', {
-        recentQuery1: recentQueries[0],
-        recentQuery2: recentQueries[1],
-        recentQuery3: recentQueries[2],
-        recentQuery4: recentQueries[3],
-        recentQuery5: recentQueries[4]
+
+    let user = await User.find({ email: email });
+    let queries = user[0].recentQueries;
+    let ids = [];
+    queries.forEach((element) => {
+      ids.push(element._id);
+    });
+    let recentQueries = await SearchQuery.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).limit(5);
+    res.render("microsoftsearch", {
+      recentQuery1: recentQueries[0] ? recentQueries[0].query : null,
+      recentQuery2: recentQueries[1] ? recentQueries[1].query : null,
+      recentQuery3: recentQueries[2] ? recentQueries[2].query : null,
+      recentQuery4: recentQueries[3] ? recentQueries[3].query : null,
+      recentQuery5: recentQueries[4] ? recentQueries[4].query : null,
     });
 });
 

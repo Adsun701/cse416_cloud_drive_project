@@ -169,8 +169,24 @@ router.post('/addaccesspolicy', async function(req, res, next) {
   }
 });
 
-router.get('/search', function(req, res, next) {
-  res.render('googlesearch');
+router.get("/search", async function (req, res, next) {
+  let userDetails = await getUserDetails(Oauth2Client);
+  let email = userDetails.data.email;
+
+  let user = await User.find({ email: email });
+  let queries = user[0].recentQueries;
+  let ids = [];
+  queries.forEach((element) => {
+    ids.push(element._id);
+  });
+  let recentQueries = await SearchQuery.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).limit(5);
+  res.render("googlesearch", {
+    recentQuery1: recentQueries[0] ? recentQueries[0].query : null,
+    recentQuery2: recentQueries[1] ? recentQueries[1].query : null,
+    recentQuery3: recentQueries[2] ? recentQueries[2].query : null,
+    recentQuery4: recentQueries[3] ? recentQueries[3].query : null,
+    recentQuery5: recentQueries[4] ? recentQueries[4].query : null,
+  });
 });
 
 router.post('/searchquery', async function(req, res, next) {
