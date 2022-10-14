@@ -74,7 +74,6 @@ router.get('/authorize', async function (req, res, next) {
   let email = user.data.email;
   req.session.googleEmail = email;
   let newUser = new User({
-    name: user.data.name,
     email: email,
     files: [],
     accessPolicies: [],
@@ -89,7 +88,7 @@ router.get('/authorize', async function (req, res, next) {
       newUser.save().then(() => console.log("user saved in db"));
     }
   })
-  res.render('googleindex', {name: user.data.name, email:email});
+  res.render('googleindex', { email:email });
 });
 
 router.get('/file', async function(req, res, next) {

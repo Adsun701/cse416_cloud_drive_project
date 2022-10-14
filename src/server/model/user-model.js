@@ -9,7 +9,6 @@ const SearchQuery = require('./search-query-model')
 
 const UserSchema = new Schema(
     {
-        name: { type: String },
         email: { type: String },
         files: [{ type: ObjectId, ref: File }],
         accessPolicies: [{ type: ObjectId, ref: AccessPolicy }],
