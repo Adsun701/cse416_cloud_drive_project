@@ -15,37 +15,93 @@ function isAuthenticated(req, res, next) {
     next();
 };
 
+async function getAllFiles(token) {
+	const drive = google.drive({version: 'v3'});
+	let files = [];
+	let nextPage = null;
+	const result = await drive.files.list({
+	  access_token: token,
+	  fields: "files(id, name, permissions), nextPageToken"
+	});
+	console.log("RESULT");
+	console.log(result);
+	nextPage = result.data.nextPageToken;
+	console.log(nextPage);
+	files.push(result.data.files);
+	while(nextPage) {
+	  const result = await drive.files.list({
+		access_token: token,
+		pageToken: nextPage
+	  });
+	  console.log(nextPage);
+	  nextPage = result.data.nextPageToken;
+	  files.push(result.data.files);
+	}
+	return files;
+  }
+
+async function getSnapshot(token) {
+	const drive = google.drive({version: 'v3'});
+	let files = {};
+	let nextPage = null;
+	const result = await drive.files.list({
+	  access_token: token,
+	  fields: "files(id, name, permissions), nextPageToken"
+	});
+	nextPage = result.data.nextPageToken;
+	console.log(nextPage);
+	let f = result.data.files;
+	f.forEach(element => {
+		let newPermsList = [];
+		if (element.permissions) {
+			for (let i = 0; i < element.permissions.length; i++) {
+				let newPermission = {
+					"id": element.permissions[i].id,
+					"email": element.permissions[i].emailAddress,
+					"displayName": element.permissions[i].displayName,
+					"roles": [element.permissions[i].role],
+					"inheritedFrom": null
+				}
+				newPermsList.push(newPermission);
+			}
+		}
+		files[element.id] = newPermsList;
+	});
+	while(nextPage) {
+	  const result = await drive.files.list({
+		access_token: token,
+		pageToken: nextPage, 
+		fields: "files(id, name, permissions), nextPageToken"
+	  });
+	  console.log(nextPage);
+	  nextPage = result.data.nextPageToken;
+	  f = result.data.files;
+	  f.forEach(element => {
+		let newPermsList = [];
+		if (element.permissions) {
+			for (let i = 0; i < element.permissions.length; i++) {
+				let newPermission = {
+					"id": element.permissions[i].id,
+					"email": element.permissions[i].emailAddress,
+					"displayName": element.permissions[i].displayName,
+					"roles": [element.permissions[i].role],
+					"inheritedFrom": null
+				}
+				newPermsList.push(newPermission);
+			}
+		}
+		files[element.id] = newPermsList;
+	  });
+	}
+	return files;
+  }
+
+
 router.get('/snapshot',
 	isAuthenticated, // check if user is authenticated
     async function (req, res, next) {
-        try {
-			snapshotMap = new Map();
-			const drive = google.drive({version: 'v3'});
-			drive.files.list({ access_token: req.session.googleToken,
-				fields: 'files(id, name, permissions)'
-			}, (err, res) => {
-				if (err) {
-					//console.error('The API returned an error.');
-					throw err;
-				}
-				const files = res.data.files;
-				if (files.length === 0) {
-					//console.log('No files found.');
-					return null;
-				} else {
-					//console.log('Files Found! File length: ' + files.length);
-					for (i = 0; i < files.length; i++) {
-						snapshotMap.set(files[i].id, files[i].permissions);
-					}
-				}
-			})
-			fileSnapshot = new FileSnapshot({files: snapshotMap});
-			fileSnapshot.save();
-		}
-		catch (error) {
-			next(error);
-		}
-    }
-);
+			const result = await getSnapshot(req.session.googleToken);
+			res.send(result);
+		});
 
 module.exports = router;
