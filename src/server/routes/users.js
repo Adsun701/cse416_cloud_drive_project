@@ -51,7 +51,7 @@ router.get('/microsoft/filesnapshot', async function(req, res, next) {
             if (permissions[j].grantedToIdentitiesV2) {
                 for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
                     let perm = new Permission({
-                        id: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.id : permissions[j].grantedToIdentitiesV2[k].siteUser.id,
+                        id: permissions[j].id,//permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.id : permissions[j].grantedToIdentitiesV2[k].siteUser.id,
                         email: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.email : permissions[j].grantedToIdentitiesV2[k].siteUser.email,
                         displayName: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.displayName : permissions[j].grantedToIdentitiesV2[k].siteUser.displayName,
                         roles: permissions[j].roles,
@@ -136,7 +136,7 @@ router.get('/profile',
                         for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
                             let currentPermission = permissions[j].grantedToIdentitiesV2[k];
                             let perm = new Permission({
-                                id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
+                                id: permissions[j].id,//currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
                                 email: currentPermission.user? currentPermission.user.email : currentPermission.siteUser.email,
                                 displayName: currentPermission.user? currentPermission.user.displayName : currentPermission.siteUser.displayName,
                                 roles: permissions[j].roles,
