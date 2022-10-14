@@ -139,22 +139,31 @@ router.get('/addaccess', function(req, res, next) {
 })
 
 router.post('/addaccesspolicy', async function(req, res, next) {
-  let requirement = req.body.requirement;
-  let ar = req.body.ar.split(", "); 
-  let dr =  req.body.dr.split(", "); 
-  let aw = req.body.aw.split(", ");
-  let dw =  req.body.dw.split(", ");
-
-  let accessPolicy = new AccessPolicy({
-    requirement: requirement,
-    ar: ar,
-    dr: dr,
-    aw: aw,
-    dw: dw
-  })
-  accessPolicy.save().then(() => console.log("access policy saved in db"));
-  // add to User db - get email
-  res.send(accessPolicy);
+  try {
+    let user = await getUserDetails(Oauth2Client);
+    let email = user.data.email;
+  
+    let requirement = req.body.requirement;
+    let ar = req.body.ar.split(", "); 
+    let dr =  req.body.dr.split(", "); 
+    let aw = req.body.aw.split(", ");
+    let dw =  req.body.dw.split(", ");
+  
+    let accessPolicy = new AccessPolicy({
+      requirement: requirement,
+      ar: ar,
+      dr: dr,
+      aw: aw,
+      dw: dw
+    })
+    accessPolicy.save().then(() => console.log("access policy saved in db"));
+    User.update(
+      {email: email}, {$push: { accessPolicies: accessPolicy }})
+      .then(() => console.log("user access policies updated in db"));
+    res.send(accessPolicy);
+  } catch(error) {
+    next(error);
+  }
 });
 
 router.get('/search', function(req, res, next) {
@@ -163,13 +172,18 @@ router.get('/search', function(req, res, next) {
 
 router.post('/searchquery', async function(req, res, next) {
   try {
+      let user = await getUserDetails(Oauth2Client);
+      let email = user.data.email;
+
       let query = req.body.query;
     
       let searchQuery = new SearchQuery({
         query: query
       })
       searchQuery.save().then(() => console.log("search query saved in db"));
-      // add to User db - get email
+      User.update(
+        {email: email}, {$push: { recentQueries: searchQuery }})
+        .then(() => console.log("user recent queries updated in db"));
       res.send(searchQuery);
   } catch(error) {
       next(error);
