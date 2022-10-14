@@ -3,6 +3,7 @@ var router = express.Router();
 
 var fetch = require('./fetch');
 var fetchpost = require('./post');
+var fetchpatch = require('./patch');
 var { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
@@ -23,6 +24,18 @@ router.get('/id',
         res.render('id', { idTokenClaims: req.session.account.idTokenClaims });
     }
 );
+
+router.get('/microsoftupdateperm', function (req, res, next) {
+    res.render('microsoftupdateperm');
+});
+
+router.post('/microsoft/updatepermission', async function (req, res, next) {
+    let body = {
+        "roles": [req.body.role]
+    } 
+    const update = await fetchpatch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+req.body.fileid+"/permissions/"+req.body.permid, req.session.accessToken, body);
+    res.send(update);
+});
 
 router.get('/microsoft/filesnapshot', async function(req, res, next) {
     const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);

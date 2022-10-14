@@ -135,6 +135,22 @@ router.get('/allfiles', async function (req, res, next) {
   }
 });
 
+router.get('/f/updateperm', function (req, res, next) {
+  res.render('googleupdateperm');    
+}); 
+
+router.post('/f/updatepermission', async function (req, res, next) {
+  const drive = google.drive({version: 'v3'});
+  let data = JSON.parse(req.body.data);
+  const result = await drive.permissions.update({
+    access_token: req.session.googleToken,
+    fileId: req.body.fileid,
+    permissionId: req.body.permid,
+    requestBody: data,
+  });
+  res.send(result.data);
+});
+
 router.get('/file/:fileid/permission/:permid', async function (req, res, next) {
   const drive = google.drive({version: 'v3'});
   const result = await drive.permissions.get({
@@ -142,6 +158,15 @@ router.get('/file/:fileid/permission/:permid', async function (req, res, next) {
     fileId: req.params.fileid,
     permissionId: req.params.permid,
     fields:"*",
+  });
+  res.send(result.data);
+});
+
+router.post('/file', async function (req, res, next) {
+  const drive = google.drive({version: 'v3'});
+  const result = await drive.permissions.update({
+    access_token: req.session.googleToken,
+    
   });
   res.send(result.data);
 });
@@ -175,6 +200,8 @@ async function getAllFiles(token) {
   }
   return files;
 }
+
+
 
 async function getFilesAndPerms(token) {
   const drive = google.drive({version: 'v3'});
