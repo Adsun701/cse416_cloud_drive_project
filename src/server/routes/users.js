@@ -33,10 +33,66 @@ router.get('/microsoftupdateperm', function (req, res, next) {
     res.render('microsoftupdateperm');
 });
 
+router.post('/microsoft/updateaccesspolicy/:requirement/ar', function (req, res, next) {
+    let requirement = req.params.requirement;
+    let newar = req.body.ar;
+    AccessPolicy.update(
+        {requirement: requirement}, {$push: { ar: newar }})
+        .then(() => {
+            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+            res.redirect(redirecturl);
+        });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/dr', function (req, res, next) {
+    let requirement = req.params.requirement;
+    let newdr = req.body.dr;
+    AccessPolicy.update(
+        {requirement: requirement}, {$push: { dr: newdr }})
+        .then(() => {
+            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+            res.redirect(redirecturl);
+        });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/aw', function (req, res, next) {
+    let requirement = req.params.requirement;
+    let newaw = req.body.aw;
+    AccessPolicy.update(
+        {requirement: requirement}, {$push: { aw: newaw }})
+        .then(() => {
+            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+            res.redirect(redirecturl);
+        });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/dw', function (req, res, next) {
+    let requirement = req.params.requirement;
+    let newdw = req.body.dw;
+    AccessPolicy.update(
+        {requirement: requirement}, {$push: { dw: newdw }})
+        .then(() => {
+            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+            res.redirect(redirecturl);
+        });
+});
+
 router.get('/microsoft/viewaccesspolicy', function (req, res, next) {
     let requirement = req.query.requirement;
-    res.render('existingaccesspolicy', {requirement: requirement, dr: "hello bob", ar: "oh no bob"});
-});
+    AccessPolicy.findOne({requirement: requirement}).then((data) => {
+        console.log(data);
+        let ar = data.ar;
+        let dr = data.dr;
+        let aw = data.aw;
+        let dw = data.dw;
+        let maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
+        let accessdata = []
+        for (let i = 0; i < maxlength; i++) {
+            accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
+        }
+        res.render('existingaccesspolicy', {requirement: requirement, accessdata: accessdata});
+    });
+  });
 
 router.post('/microsoft/updatepermission', async function (req, res, next) {
     let body = {

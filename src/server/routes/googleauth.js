@@ -391,4 +391,65 @@ async function listFiles(authClient, tokens) {
   });
 }
 
+router.post('/updateaccesspolicy/:requirement/ar', function (req, res, next) {
+  let requirement = req.params.requirement;
+  let newar = req.body.ar;
+  AccessPolicy.update(
+      {requirement: requirement}, {$push: { ar: newar }})
+      .then(() => {
+          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+          res.redirect(redirecturl);
+      });
+});
+
+router.post('/updateaccesspolicy/:requirement/dr', function (req, res, next) {
+  let requirement = req.params.requirement;
+  let newdr = req.body.dr;
+  AccessPolicy.update(
+      {requirement: requirement}, {$push: { dr: newdr }})
+      .then(() => {
+          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+          res.redirect(redirecturl);
+      });
+});
+
+router.post('/updateaccesspolicy/:requirement/aw', function (req, res, next) {
+  let requirement = req.params.requirement;
+  let newaw = req.body.aw;
+  AccessPolicy.update(
+      {requirement: requirement}, {$push: { aw: newaw }})
+      .then(() => {
+          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+          res.redirect(redirecturl);
+      });
+});
+
+router.post('/updateaccesspolicy/:requirement/dw', function (req, res, next) {
+  let requirement = req.params.requirement;
+  let newdw = req.body.dw;
+  AccessPolicy.update(
+      {requirement: requirement}, {$push: { dw: newdw }})
+      .then(() => {
+          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
+          res.redirect(redirecturl);
+      });
+});
+
+router.get('/viewaccesspolicy', function (req, res, next) {
+  let requirement = req.query.requirement;
+  AccessPolicy.findOne({requirement: requirement}).then((data) => {
+      console.log(data);
+      let ar = data.ar;
+      let dr = data.dr;
+      let aw = data.aw;
+      let dw = data.dw;
+      let maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
+      let accessdata = []
+      for (let i = 0; i < maxlength; i++) {
+          accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
+      }
+      res.render('googleexistingaccesspolicy', {requirement: requirement, accessdata: accessdata});
+  });
+});
+
 module.exports = router;
