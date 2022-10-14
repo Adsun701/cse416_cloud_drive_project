@@ -1,10 +1,10 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-var fetch = require('./fetch');
-var fetchpost = require('./post');
-var fetchpatch = require('./patch');
-var { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
+const fetch = require('./fetch');
+const fetchpost = require('./post');
+const fetchpatch = require('./patch');
+const { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
 const Permission = require('../model/permission-model');

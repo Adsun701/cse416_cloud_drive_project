@@ -1,4 +1,4 @@
-var axios = require('axios');
+const axios = require('axios');
 
 /**
  * Attaches a given access token to a MS Graph API call

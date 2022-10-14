@@ -1,7 +1,7 @@
-var express = require('express');
-var msal = require('@azure/msal-node');
+const express = require('express');
+const msal = require('@azure/msal-node');
 
-var {
+const {
     msalConfig,
     REDIRECT_URI,
     POST_LOGOUT_REDIRECT_URI

@@ -1,7 +1,10 @@
-var express = require('express');
+const express = require('express');
+
 const { OAuth2Client, auth } = require('google-auth-library');
+
 const router = express.Router();
 const { google } = require('googleapis');
+
 const oauth2 = google.oauth2('v2');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
@@ -10,98 +13,97 @@ const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 
 const Oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT, 
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT,
 );
 
-async function getUserDetails(auth) {
-  const usr_info = await oauth2.userinfo.get({auth: auth});
-  return usr_info;
-} 
+async function getUserDetails(oauth) {
+  const userInfo = await oauth2.userinfo.get({ oauth });
+  return userInfo;
+}
 
 function getConnectionUrl() {
   return Oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: ['https://www.googleapis.com/auth/drive.metadata.readonly',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/plus.me', 'https://www.googleapis.com/auth/drive', 
-        'https://www.googleapis.com/auth/drive.appdata',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive.metadata',
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
-        'https://www.googleapis.com/auth/drive.photos.readonly',
-        'https://www.googleapis.com/auth/drive.readonly'
-    ]
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: ['https://www.googleapis.com/auth/drive.metadata.readonly',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/plus.me', 'https://www.googleapis.com/auth/drive',
+      'https://www.googleapis.com/auth/drive.appdata',
+      'https://www.googleapis.com/auth/drive.file',
+      'https://www.googleapis.com/auth/drive.metadata',
+      'https://www.googleapis.com/auth/drive.metadata.readonly',
+      'https://www.googleapis.com/auth/drive.photos.readonly',
+      'https://www.googleapis.com/auth/drive.readonly',
+    ],
   });
 }
 
-
-router.get('/auth', async function authorize(req,res,next) {
+router.get('/auth', async (req, res, next) => {
   const url = getConnectionUrl();
   res.redirect(url);
 });
 
-router.get('/adduserfiles', async function (req, res, next) {
-  let filesMap = await getFilesAndPerms(req.session.googleToken);
-  let list_files = [];
+router.get('/adduserfiles', async (req, res, next) => {
+  const filesMap = await getFilesAndPerms(req.session.googleToken);
+  const list_files = [];
   for (const [key, value] of Object.entries(filesMap)) {
     let fileData = await getFileData(req.session.googleToken, key);
     fileData = fileData.data;
-    let file = new File({
+    const file = new File({
       id: fileData.id,
       name: fileData.name,
       createdTime: fileData.createdTime,
       modifiedTime: fileData.modifiedTime,
-      permissions: value
-    })
+      permissions: value,
+    });
     file.save();
     list_files.push(file);
   }
-  User.update({email: req.session.googleEmail}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
-  res.send("Successfully updated files in user db");
+  User.update({ email: req.session.googleEmail }, { $set: { files: list_files } }).then(() => console.log('user updated in db'));
+  res.send('Successfully updated files in user db');
 });
 
-router.get('/authorize', async function (req, res, next) {
-  let code = req.query.code;
+router.get('/authorize', async (req, res, next) => {
+  const { code } = req.query;
   console.log(code);
-  const {tokens} = await Oauth2Client.getToken(code)
+  const { tokens } = await Oauth2Client.getToken(code);
   Oauth2Client.setCredentials(tokens);
-  google.options({auth: Oauth2Client})
+  google.options({ auth: Oauth2Client });
   req.session.googleToken = tokens.access_token;
-  let user = await getUserDetails(Oauth2Client);
-  let email = user.data.email;
+  const user = await getUserDetails(Oauth2Client);
+  const { email } = user.data;
   req.session.googleEmail = email;
-  let newUser = new User({
-    email: email,
+  const newUser = new User({
+    email,
     files: [],
     accessPolicies: [],
     fileSnapshots: [],
     groupSnapshots: [],
-    recentQueries: []
-  })
-  User.exists({ email: email }).then(exists => {
-    if (exists) {
-      User.update({email: email}, {$set: { files: [] }}).then(() => console.log("user updated in db"));
-    } else {
-      newUser.save().then(() => console.log("user saved in db"));
-    }
-  })
-  res.render('googleindex', { email:email });
-});
-
-router.get('/file', async function(req, res, next) {
-  const drive = google.drive({version: 'v3'});
-  const result = await drive.files.list({
-    access_token: req.session.googleToken
+    recentQueries: [],
   });
-  res.render('google',{files:result.data.files});
+  User.exists({ email }).then((exists) => {
+    if (exists) {
+      User.update({ email }, { $set: { files: [] } }).then(() => console.log('user updated in db'));
+    } else {
+      newUser.save().then(() => console.log('user saved in db'));
+    }
+  });
+  res.render('googleindex', { email });
 });
 
-router.get('/file/:id', async function(req,res,next) {
-  let fileid = req.params.id;
-  const drive = google.drive({version: 'v3'});
+router.get('/file', async (req, res, next) => {
+  const drive = google.drive({ version: 'v3' });
+  const result = await drive.files.list({
+    access_token: req.session.googleToken,
+  });
+  res.render('google', { files: result.data.files });
+});
+
+router.get('/file/:id', async (req, res, next) => {
+  const fileid = req.params.id;
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.list({
     access_token: req.session.googleToken,
     fileId: fileid,
@@ -109,78 +111,77 @@ router.get('/file/:id', async function(req,res,next) {
   res.send(result.data);
 });
 
-router.get('/addperm', function(req, res, next) {
+router.get('/addperm', (req, res, next) => {
   res.render('googleperm');
-})
+});
 
-router.post('/addfilepermission', async function(req, res, next) {
-  let files = JSON.parse(req.body.files) // list of files with new ids
-  let value = req.body.value // email address for new permission
-  let type =  req.body.type // user, group, etc
-  let role = req.body.role // new role for the new permissions
-  let body = {
-    'emailAddress': value,
-    'type': type,
-    'role': role
+router.post('/addfilepermission', async (req, res, next) => {
+  const files = JSON.parse(req.body.files); // list of files with new ids
+  const { value } = req.body; // email address for new permission
+  const { type } = req.body; // user, group, etc
+  const { role } = req.body; // new role for the new permissions
+  const body = {
+    emailAddress: value,
+    type,
+    role,
   };
-  const drive = google.drive({version: 'v3'});
-  let ret = []
+  const drive = google.drive({ version: 'v3' });
+  const ret = [];
   for (let i = 0; i < files.length; i++) {
     const result = await drive.permissions.create({
       access_token: req.session.googleToken,
       fileId: files[i],
       resource: body,
-      emailMessage: "Hello!"
+      emailMessage: 'Hello!',
     });
     ret.push(result);
   }
   res.send(ret);
 });
 
-router.get('/addaccess', function(req, res, next) {
+router.get('/addaccess', (req, res, next) => {
   res.render('googleaccesspolicy');
-})
+});
 
-router.post('/addaccesspolicy', async function(req, res, next) {
+router.post('/addaccesspolicy', async (req, res, next) => {
   try {
-    let user = await getUserDetails(Oauth2Client);
-    let email = user.data.email;
-  
-    let requirement = req.body.requirement;
-    let ar = req.body.ar.split(", "); 
-    let dr =  req.body.dr.split(", "); 
-    let aw = req.body.aw.split(", ");
-    let dw =  req.body.dw.split(", ");
-  
-    let accessPolicy = new AccessPolicy({
-      requirement: requirement,
-      ar: ar,
-      dr: dr,
-      aw: aw,
-      dw: dw
-    })
-    accessPolicy.save().then(() => console.log("access policy saved in db"));
-    User.update(
-      {email: email}, {$push: { accessPolicies: accessPolicy }})
-      .then(() => console.log("user access policies updated in db"));
+    const user = await getUserDetails(Oauth2Client);
+    const { email } = user.data;
+
+    const { requirement } = req.body;
+    const ar = req.body.ar.split(', ');
+    const dr = req.body.dr.split(', ');
+    const aw = req.body.aw.split(', ');
+    const dw = req.body.dw.split(', ');
+
+    const accessPolicy = new AccessPolicy({
+      requirement,
+      ar,
+      dr,
+      aw,
+      dw,
+    });
+    accessPolicy.save().then(() => console.log('access policy saved in db'));
+    User.update({ email }, { $push: { accessPolicies: accessPolicy } })
+      .then(() => console.log('user access policies updated in db'));
     res.send(accessPolicy);
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 });
 
-router.get("/search", async function (req, res, next) {
-  let userDetails = await getUserDetails(Oauth2Client);
-  let email = userDetails.data.email;
+router.get('/search', async (req, res, next) => {
+  const userDetails = await getUserDetails(Oauth2Client);
+  const { email } = userDetails.data;
 
-  let user = await User.find({ email: email });
-  let queries = user[0].recentQueries;
-  let ids = [];
+  const user = await User.find({ email });
+  const queries = user[0].recentQueries;
+  const ids = [];
   queries.forEach((element) => {
     ids.push(element._id);
   });
-  let recentQueries = await SearchQuery.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).limit(5);
-  res.render("googlesearch", {
+  const recentQueries = await SearchQuery.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).limit(5);
+  res.render('googlesearch', {
     recentQuery1: recentQueries[0] ? recentQueries[0].query : null,
     recentQuery2: recentQueries[1] ? recentQueries[1].query : null,
     recentQuery3: recentQueries[2] ? recentQueries[2].query : null,
@@ -189,42 +190,41 @@ router.get("/search", async function (req, res, next) {
   });
 });
 
-router.post('/searchquery', async function(req, res, next) {
+router.post('/searchquery', async (req, res, next) => {
   try {
-      let user = await getUserDetails(Oauth2Client);
-      let email = user.data.email;
+    const user = await getUserDetails(Oauth2Client);
+    const { email } = user.data;
 
-      let query = req.body.query;
-    
-      let searchQuery = new SearchQuery({
-        query: query
-      })
-      searchQuery.save().then(() => console.log("search query saved in db"));
-      User.update(
-        {email: email}, {$push: { recentQueries: searchQuery }})
-        .then(() => console.log("user recent queries updated in db"));
-      res.send(searchQuery);
-  } catch(error) {
-      next(error);
+    const { query } = req.body;
+
+    const searchQuery = new SearchQuery({
+      query,
+    });
+    searchQuery.save().then(() => console.log('search query saved in db'));
+    User.update({ email }, { $push: { recentQueries: searchQuery } })
+      .then(() => console.log('user recent queries updated in db'));
+    res.send(searchQuery);
+  } catch (error) {
+    next(error);
   }
 });
 
-router.get('/allfiles', async function (req, res, next) {
+router.get('/allfiles', async (req, res, next) => {
   if (req.session.googleToken) {
     const result = await getAllFiles(req.session.googleToken);
     res.send(result);
   } else {
-    res.send("nope");
+    res.send('nope');
   }
 });
 
-router.get('/f/updateperm', function (req, res, next) {
-  res.render('googleupdateperm');    
-}); 
+router.get('/f/updateperm', (req, res, next) => {
+  res.render('googleupdateperm');
+});
 
-router.post('/f/updatepermission', async function (req, res, next) {
-  const drive = google.drive({version: 'v3'});
-  let data = JSON.parse(req.body.data);
+router.post('/f/updatepermission', async (req, res, next) => {
+  const drive = google.drive({ version: 'v3' });
+  const data = JSON.parse(req.body.data);
   const result = await drive.permissions.update({
     access_token: req.session.googleToken,
     fileId: req.body.fileid,
@@ -234,156 +234,154 @@ router.post('/f/updatepermission', async function (req, res, next) {
   res.send(result.data);
 });
 
-router.get('/file/:fileid/permission/:permid', async function (req, res, next) {
-  const drive = google.drive({version: 'v3'});
+router.get('/file/:fileid/permission/:permid', async (req, res, next) => {
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.get({
     access_token: req.session.googleToken,
     fileId: req.params.fileid,
     permissionId: req.params.permid,
-    fields:"*",
+    fields: '*',
   });
   res.send(result.data);
 });
 
-router.post('/file', async function (req, res, next) {
-  const drive = google.drive({version: 'v3'});
+router.post('/file', async (req, res, next) => {
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.update({
     access_token: req.session.googleToken,
-    
+
   });
   res.send(result.data);
 });
 
 async function getAllFiles(token) {
-  const drive = google.drive({version: 'v3'});
-  let files = [];
+  const drive = google.drive({ version: 'v3' });
+  const files = [];
   let nextPage = null;
   const result = await drive.files.list({
-    access_token: token
+    access_token: token,
   });
   nextPage = result.data.nextPageToken;
   console.log(nextPage);
   let f = result.data.files;
-  f.forEach(element => {
+  f.forEach((element) => {
     files.push(element);
   });
-  //files.push(result.data.files);
-  while(nextPage) {
+  // files.push(result.data.files);
+  while (nextPage) {
     const result = await drive.files.list({
       access_token: token,
-      pageToken: nextPage, 
+      pageToken: nextPage,
     });
-    //console.log(nextPage);
+    // console.log(nextPage);
     nextPage = result.data.nextPageToken;
     f = result.data.files;
-    f.forEach(element => {
+    f.forEach((element) => {
       files.push(element);
     });
-    //files.push(result.data.files);
+    // files.push(result.data.files);
   }
   return files;
 }
 
-
-
 async function getFilesAndPerms(token) {
-  const drive = google.drive({version: 'v3'});
-	let files = {};
-	let nextPage = null;
-	const result = await drive.files.list({
+  const drive = google.drive({ version: 'v3' });
+  const files = {};
+  let nextPage = null;
+  const result = await drive.files.list({
 	  access_token: token,
-	  fields: "files(id, name, permissions), nextPageToken"
-	});
-	nextPage = result.data.nextPageToken;
-	console.log(nextPage);
-	let f = result.data.files;
-	f.forEach(element => {
-		let newPermsList = [];
-		if (element.permissions) {
-			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = new Permission({
-					"id": element.permissions[i].id,
-					"email": element.permissions[i].emailAddress,
-					"displayName": element.permissions[i].displayName,
-					"roles": [element.permissions[i].role],
-					"inheritedFrom": null
-				});
-				newPermission.save();
-				newPermsList.push(newPermission);
-			}
-		}
-		files[element.id] = newPermsList;
-	});
-	while(nextPage) {
+	  fields: 'files(id, name, permissions), nextPageToken',
+  });
+  nextPage = result.data.nextPageToken;
+  console.log(nextPage);
+  let f = result.data.files;
+  f.forEach((element) => {
+    const newPermsList = [];
+    if (element.permissions) {
+      for (let i = 0; i < element.permissions.length; i++) {
+        const newPermission = new Permission({
+          id: element.permissions[i].id,
+          email: element.permissions[i].emailAddress,
+          displayName: element.permissions[i].displayName,
+          roles: [element.permissions[i].role],
+          inheritedFrom: null,
+        });
+        newPermission.save();
+        newPermsList.push(newPermission);
+      }
+    }
+    files[element.id] = newPermsList;
+  });
+  while (nextPage) {
 	  const result = await drive.files.list({
-		access_token: token,
-		pageToken: nextPage, 
-		fields: "files(id, name, permissions), nextPageToken"
+      access_token: token,
+      pageToken: nextPage,
+      fields: 'files(id, name, permissions), nextPageToken',
 	  });
 	  console.log(nextPage);
 	  nextPage = result.data.nextPageToken;
 	  f = result.data.files;
-	  f.forEach(element => {
-		let newPermsList = [];
-		if (element.permissions) {
-			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = new Permission({
-					"id": element.permissions[i].id,
-					"email": element.permissions[i].emailAddress,
-					"displayName": element.permissions[i].displayName,
-					"roles": [element.permissions[i].role],
-					"inheritedFrom": null
-				});
-				newPermission.save();
-				newPermsList.push(newPermission);
-			}
-		}
-		files[element.id] = newPermsList;
+	  f.forEach((element) => {
+      const newPermsList = [];
+      if (element.permissions) {
+        for (let i = 0; i < element.permissions.length; i++) {
+          const newPermission = new Permission({
+            id: element.permissions[i].id,
+            email: element.permissions[i].emailAddress,
+            displayName: element.permissions[i].displayName,
+            roles: [element.permissions[i].role],
+            inheritedFrom: null,
+          });
+          newPermission.save();
+          newPermsList.push(newPermission);
+        }
+      }
+      files[element.id] = newPermsList;
 	  });
-	}
-	return files;
+  }
+  return files;
 }
 
 async function getAllPermissions(fileId, token) {
-  const drive = google.drive({version: 'v3'});
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.list({
     access_token: token,
-    fileId: fileId,
+    fileId,
   });
   return result.data;
-};
+}
 
-router.get('/filedata/:id', async function(req,res,next) {
-  let fileid = req.params.id;
+router.get('/filedata/:id', async (req, res, next) => {
+  const fileid = req.params.id;
   const result = await getFileData(req.session.googleToken, fileid);
   res.send(result.data);
 });
 
 async function getFileData(token, fileid) {
-  const drive = google.drive({version: 'v3'});
+  const drive = google.drive({ version: 'v3' });
   const fileData = await drive.files.get({
     access_token: token,
     fileId: fileid,
-    fields: "*",
+    fields: '*',
   });
   return fileData;
 }
 
 async function getFilePermData(token, fileid, permid) {
-  const drive = google.drive({version: 'v3'});
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.get({
     access_token: token,
     fileId: fileid,
     permissionId: permid,
-    fields:"*",
+    fields: '*',
   });
   res.send(result.data);
 }
 
-router.get('/signout', function (req, res, next) {
+router.get('/signout', (req, res, next) => {
   req.session.destroy(() => {
     res.redirect('/');
-});
+  });
 });
 
 /**
@@ -391,11 +389,11 @@ router.get('/signout', function (req, res, next) {
  * @param {OAuth2Client} authClient An authorized OAuth2 client.
  */
 async function listFiles(authClient, tokens) {
-  const drive = google.drive({version: 'v3', auth: authClient});
+  const drive = google.drive({ version: 'v3', auth: authClient });
   const res = await drive.files.list({
-    access_token: tokens
+    access_token: tokens,
   });
-  const files = res.data.files;
+  const { files } = res.data;
   if (files.length === 0) {
     console.log('No files found.');
     return;
@@ -407,64 +405,60 @@ async function listFiles(authClient, tokens) {
   });
 }
 
-router.post('/updateaccesspolicy/:requirement/ar', function (req, res, next) {
-  let requirement = req.params.requirement;
-  let newar = req.body.ar;
-  AccessPolicy.update(
-      {requirement: requirement}, {$push: { ar: newar }})
-      .then(() => {
-          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-          res.redirect(redirecturl);
-      });
+router.post('/updateaccesspolicy/:requirement/ar', (req, res, next) => {
+  const { requirement } = req.params;
+  const newar = req.body.ar;
+  AccessPolicy.update({ requirement }, { $push: { ar: newar } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
 });
 
-router.post('/updateaccesspolicy/:requirement/dr', function (req, res, next) {
-  let requirement = req.params.requirement;
-  let newdr = req.body.dr;
-  AccessPolicy.update(
-      {requirement: requirement}, {$push: { dr: newdr }})
-      .then(() => {
-          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-          res.redirect(redirecturl);
-      });
+router.post('/updateaccesspolicy/:requirement/dr', (req, res, next) => {
+  const { requirement } = req.params;
+  const newdr = req.body.dr;
+  AccessPolicy.update({ requirement }, { $push: { dr: newdr } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
 });
 
-router.post('/updateaccesspolicy/:requirement/aw', function (req, res, next) {
-  let requirement = req.params.requirement;
-  let newaw = req.body.aw;
-  AccessPolicy.update(
-      {requirement: requirement}, {$push: { aw: newaw }})
-      .then(() => {
-          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-          res.redirect(redirecturl);
-      });
+router.post('/updateaccesspolicy/:requirement/aw', (req, res, next) => {
+  const { requirement } = req.params;
+  const newaw = req.body.aw;
+  AccessPolicy.update({ requirement }, { $push: { aw: newaw } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
 });
 
-router.post('/updateaccesspolicy/:requirement/dw', function (req, res, next) {
-  let requirement = req.params.requirement;
-  let newdw = req.body.dw;
-  AccessPolicy.update(
-      {requirement: requirement}, {$push: { dw: newdw }})
-      .then(() => {
-          let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-          res.redirect(redirecturl);
-      });
+router.post('/updateaccesspolicy/:requirement/dw', (req, res, next) => {
+  const { requirement } = req.params;
+  const newdw = req.body.dw;
+  AccessPolicy.update({ requirement }, { $push: { dw: newdw } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
 });
 
-router.get('/viewaccesspolicy', function (req, res, next) {
-  let requirement = req.query.requirement;
-  AccessPolicy.findOne({requirement: requirement}).then((data) => {
-      console.log(data);
-      let ar = data.ar;
-      let dr = data.dr;
-      let aw = data.aw;
-      let dw = data.dw;
-      let maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
-      let accessdata = []
-      for (let i = 0; i < maxlength; i++) {
-          accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
-      }
-      res.render('googleexistingaccesspolicy', {requirement: requirement, accessdata: accessdata});
+router.get('/viewaccesspolicy', (req, res, next) => {
+  const { requirement } = req.query;
+  AccessPolicy.findOne({ requirement }).then((data) => {
+    console.log(data);
+    const { ar } = data;
+    const { dr } = data;
+    const { aw } = data;
+    const { dw } = data;
+    const maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
+    const accessdata = [];
+    for (let i = 0; i < maxlength; i++) {
+      accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
+    }
+    res.render('googleexistingaccesspolicy', { requirement, accessdata });
   });
 });
 

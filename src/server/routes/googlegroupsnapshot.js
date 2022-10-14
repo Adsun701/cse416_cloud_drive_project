@@ -1,11 +1,11 @@
 const { authenticate } = require('@google-cloud/local-auth');
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 const { google } = require('googleapis');
 const GroupSnapshot = require('../model/group-snapshot-model')
 
-var fetch = require('./fetch');
-var { GRAPH_ME_ENDPOINT } = require('../authConfig');
+const fetch = require('./fetch');
+const { GRAPH_ME_ENDPOINT } = require('../authConfig');
 
 // custom middleware to check auth state
 function isAuthenticated(req, res, next) {
