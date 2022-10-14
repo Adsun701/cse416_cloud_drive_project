@@ -3,6 +3,7 @@ var express = require('express');
 var router = express.Router();
 const { google } = require('googleapis');
 const FileSnapshot = require('../model/file-snapshot-model')
+const Permission = require('../model/permission-model')
 
 var fetch = require('./fetch');
 var { GRAPH_ME_ENDPOINT } = require('../authConfig');
@@ -55,13 +56,13 @@ async function getSnapshot(token) {
 		let newPermsList = [];
 		if (element.permissions) {
 			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = {
+				let newPermission = new Permission({
 					"id": element.permissions[i].id,
 					"email": element.permissions[i].emailAddress,
 					"displayName": element.permissions[i].displayName,
 					"roles": [element.permissions[i].role],
 					"inheritedFrom": null
-				}
+				});
 				newPermission.save();
 				newPermsList.push(newPermission);
 			}
@@ -81,13 +82,13 @@ async function getSnapshot(token) {
 		let newPermsList = [];
 		if (element.permissions) {
 			for (let i = 0; i < element.permissions.length; i++) {
-				let newPermission = {
+				let newPermission = new Permission({
 					"id": element.permissions[i].id,
 					"email": element.permissions[i].emailAddress,
 					"displayName": element.permissions[i].displayName,
 					"roles": [element.permissions[i].role],
 					"inheritedFrom": null
-				}
+				});
 				newPermission.save();
 				newPermsList.push(newPermission);
 			}
