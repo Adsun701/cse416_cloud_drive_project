@@ -54,21 +54,22 @@ router.get('/authorize', async function (req, res, next) {
   req.session.googleToken = tokens.access_token;
   let user = await getUserDetails(Oauth2Client);
   let email = user.data.email;
-  let filesMap = await getFilesAndPerms(req.session.googleToken);
+  req.session.googleEmail = email;
+  // let filesMap = await getFilesAndPerms(req.session.googleToken);
   let list_files = [];
-  for (const [key, value] of Object.entries(filesMap)) {
-    let fileData = await getFileData(req.session.googleToken, key);
-    fileData = fileData.data;
-    let file = new File({
-      id: fileData.id,
-      name: fileData.name,
-      createdTime: fileData.createdTime,
-      modifiedTime: fileData.modifiedTime,
-      permissions: value
-    })
-    file.save();
-    list_files.push(file);
-  }
+  // for (const [key, value] of Object.entries(filesMap)) {
+  //   let fileData = await getFileData(req.session.googleToken, key);
+  //   fileData = fileData.data;
+  //   let file = new File({
+  //     id: fileData.id,
+  //     name: fileData.name,
+  //     createdTime: fileData.createdTime,
+  //     modifiedTime: fileData.modifiedTime,
+  //     permissions: value
+  //   })
+  //   file.save();
+  //   list_files.push(file);
+  // }
   let newUser = new User({
     name: user.data.name,
     email: email,

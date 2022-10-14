@@ -150,8 +150,18 @@ router.post('/microsoft/addaccesspolicy', isAuthenticated, async function(req, r
     }
 });
 
-router.get('/microsoft/search', function(req, res, next) {
-    res.render('microsoftsearch');
+router.get('/microsoft/search', async function(req, res, next) {
+    const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+    const email = emailResponse.mail;
+    let user = User.find({email: email});
+    console.log(recentQueries);
+    res.render('microsoftsearch', {
+        recentQuery1: recentQueries[0],
+        recentQuery2: recentQueries[1],
+        recentQuery3: recentQueries[2],
+        recentQuery4: recentQueries[3],
+        recentQuery5: recentQueries[4]
+    });
 });
 
 router.post('/microsoft/searchquery', isAuthenticated, async function(req, res, next) {

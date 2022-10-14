@@ -111,9 +111,9 @@ router.get('/snapshot',
 			files: result
 		});
 		fileSnapshot.save();
-		// User.update(
-		// 	{email: email}, {$push: { fileSnapshots: fileSnapshot }})
-		// 	.then(() => console.log("user file snapshot updated in db"));
+		User.update(
+			{email: req.session.googleEmail}, {$push: { fileSnapshots: fileSnapshot }})
+			.then(() => console.log("user file snapshot updated in db"));
 		res.send(result); 
 	});
 

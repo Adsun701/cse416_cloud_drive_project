@@ -1,6 +1,13 @@
 <h2>Search</h2>
 
-<form action="/users/microsoft/searchquery", method="post">
-    <input type="text" name="query" placeholder="Search files">
+<form action="/users/microsoft/searchquery" , method="post">
+    <input list="recentQueries" type="text" name="query" placeholder="Search files">
+    {{!-- <datalist id="recentQueries">
+        <option value={{recentQuery1}}>
+        <option value={{recentQuery2}}>
+        <option value={{recentQuery3}}>
+        <option value={{recentQuery4}}>
+        <option value={{recentQuery5}}>
+    </datalist> --}}
     <input type="submit" value="Search">
 </form>
