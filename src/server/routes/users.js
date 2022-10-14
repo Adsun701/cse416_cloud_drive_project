@@ -85,7 +85,20 @@ router.get('/profile',
                     modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
                     permissions: permissions_list
                 })
-                file.save().then(() => console.log("file saved"));
+                File.exists({ id: files[i].id }).then(exists => {
+                    if (exists) {
+                      File.update(
+                        {id: files[i].id}, 
+                        {$set: {
+                            name: files[i].name, 
+                            modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
+                            permissions: permissions_list
+                          } 
+                        }).then(() => console.log("file updated in db"));
+                    } else {
+                        file.save().then(() => console.log("file saved in db"));
+                    }
+                })
                 list_files.push(file);
             }
             const newUser = new User ({
@@ -97,9 +110,22 @@ router.get('/profile',
                 groupSnapshots: [],
                 recentQueries: []
             })
-            newUser.save().then(() => console.log("user saved in db"));
+            User.exists({ email: email }).then(exists => {
+                if (exists) {
+                  User.update(
+                    {email: email}, 
+                    {$set: {
+                        files: list_files, 
+                        accessPolicies: [], 
+                        fileSnapshots: [], 
+                        groupSnapshots: []
+                      } 
+                    }).then(() => console.log("user updated in db"));
+                } else {
+                  newUser.save().then(() => console.log("user saved in db"));
+                }
+            })
             res.render('profile', { profile: graphResponse });
-            //res.render('profile', { profile: "HELLO" });
         } catch (error) {
             next(error);
         }
