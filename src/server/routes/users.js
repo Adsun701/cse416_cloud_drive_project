@@ -256,7 +256,6 @@ router.get('/profile',
                 list_files.push(file);
             }
             const newUser = new User ({
-                name: req.session.account?.username,
                 email: email,
                 files: list_files,
                 accessPolicies: [],
