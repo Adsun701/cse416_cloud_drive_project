@@ -67,15 +67,30 @@ router.get('/profile',
                 const permissions = permissionResponse.value;
                 let permissions_list = []
                 for (let j = 0; j < permissions.length; j++) {
-                    let perm = new Permission({
-                        id: permissions[j].id,
-                        email: permissions[j].grantedToV2.user.email,
-                        displayName: permissions[j].grantedToV2.user.displayName,
-                        roles: permissions[j].roles,
-                        inheritedFrom: permissions[j].inheritedFrom.id ? permissions[j].inheritedFrom.id : null
-                    })
-                    perm.save().then(() => console.log("perm saved"));
-                    permissions_list.push(perm);
+                    if (permissions[j].grantedToV2) {
+                        let perm = new Permission({
+                            id: permissions[j].id,
+                            email: permissions[j].grantedToV2.user.email,
+                            displayName: permissions[j].grantedToV2.user.displayName,
+                            roles: permissions[j].roles,
+                            inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                        })
+                        perm.save().then(() => console.log("perm saved"));
+                        permissions_list.push(perm);
+                    }
+                    if (permissions[j].grantedToIdentitiesV2) {
+                        for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
+                            let perm = new Permission({
+                                id: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.id : permissions[j].grantedToIdentitiesV2[k].siteUser.id,
+                                email: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.email : permissions[j].grantedToIdentitiesV2[k].siteUser.email,
+                                displayName: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.displayName : permissions[j].grantedToIdentitiesV2[k].siteUser.displayName,
+                                roles: permissions[j].roles,
+                                inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                            })
+                            perm.save().then(() => console.log("perm saved"));
+                            permissions_list.push(perm);
+                        }
+                    }
                 }
                 console.log(files[i].id);
                 let file = new File({
