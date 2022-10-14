@@ -28,12 +28,14 @@ router.get('/id',
 
 router.get('/microsoft/filesnapshot', async function(req, res, next) {
     const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
+    const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+    const email = emailResponse.mail;
     const files = graphResponse.value;
     const filesMap = {};
     for (let i = 0; i < files.length; i++) {
         const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
         const permissions = permissionResponse.value;
-        let permissions_list = []
+        const permissions_list = [];
         for (let j = 0; j < permissions.length; j++) {
             if (permissions[j].grantedToV2) {
                 let perm = new Permission({
@@ -66,6 +68,9 @@ router.get('/microsoft/filesnapshot', async function(req, res, next) {
         files: filesMap
     });
     fileSnapshot.save();
+    User.update(
+        {email: email}, {$push: { fileSnapshots: fileSnapshot }})
+        .then(() => console.log("user file snapshot updated in db"));
     res.send(filesMap);
 });
 
@@ -106,49 +111,46 @@ router.get('/profile',
             const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
             const email = emailResponse.mail;
             const files = graphResponse.value;
-            const list_files = []
+            const list_files = [];
             for (let i = 0; i < files.length; i++) {
                 const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
                 const permissions = permissionResponse.value;
-                let permissions_list = []
-                // console.log(permissions);
+                const permissions_list = [];
                 for (let j = 0; j < permissions.length; j++) {
                     if (permissions[j].grantedToV2) {
+                        let perm = new Permission({
+                            id: permissions[j].id,
+                            email: permissions[j].grantedToV2.user.email,
+                            displayName: permissions[j].grantedToV2.user.displayName,
+                            roles: permissions[j].roles,
+                            inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                        })
                         Permission.exists({ id: permissions[j].id, roles: permissions[j].roles }).then(exists => {
                             if (!exists) {
-                                let perm = new Permission({
-                                    id: permissions[j].id,
-                                    email: permissions[j].grantedToV2.user.email,
-                                    displayName: permissions[j].grantedToV2.user.displayName,
-                                    roles: permissions[j].roles,
-                                    inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                                })
                                 perm.save().then(() => console.log("perm saved"));
-                                permissions_list.push(perm);
                             }
                         })
+                        permissions_list.push(perm);
                     }
                     if (permissions[j].grantedToIdentitiesV2) {
-                        console.log(permissions[j].grantedToIdentitiesV2)
                         for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
                             let currentPermission = permissions[j].grantedToIdentitiesV2[k];
+                            let perm = new Permission({
+                                id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
+                                email: currentPermission.user? currentPermission.user.email : currentPermission.siteUser.email,
+                                displayName: currentPermission.user? currentPermission.user.displayName : currentPermission.siteUser.displayName,
+                                roles: permissions[j].roles,
+                                inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
+                            })
                             Permission.exists({ id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id, roles: permissions[j].roles }).then(exists => {
                                 if (!exists) {
-                                    let perm = new Permission({
-                                        id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
-                                        email: currentPermission.user? currentPermission.user.email : currentPermission.siteUser.email,
-                                        displayName: currentPermission.user? currentPermission.user.displayName : currentPermission.siteUser.displayName,
-                                        roles: permissions[j].roles,
-                                        inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                                    })
                                     perm.save().then(() => console.log("perm saved"));
-                                    permissions_list.push(perm);
                                 }
                             })
+                            permissions_list.push(perm);
                         }
                     }
                 }
-                console.log(files[i].id);
                 let file = new File({
                     id: files[i].id,
                     name: files[i].name,
@@ -183,15 +185,7 @@ router.get('/profile',
             })
             User.exists({ email: email }).then(exists => {
                 if (exists) {
-                  User.update(
-                    {email: email}, 
-                    {$set: {
-                        files: list_files, 
-                        accessPolicies: [], 
-                        fileSnapshots: [], 
-                        groupSnapshots: []
-                      } 
-                    }).then(() => console.log("user updated in db"));
+                  User.update({email: email}, {$set: { files: list_files}}).then(() => console.log("user updated in db"));
                 } else {
                   newUser.save().then(() => console.log("user saved in db"));
                 }
