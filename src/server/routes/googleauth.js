@@ -12,10 +12,8 @@ const Oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_REDIRECT, // this must match your google api settings
 );
 
-async function getUserDetails(code) {
-  const {tokens} = await Oauth2Client.getToken(code);
-  Oauth2Client.setCredentials(tokens);
-  const usr_info = await oauth2.userinfo.get({auth: Oauth2Client});
+async function getUserDetails(auth) {
+  const usr_info = await oauth2.userinfo.get({auth: auth});
   return usr_info;
 } 
 
@@ -49,8 +47,8 @@ router.get('/authorize', async function (req, res, next) {
   Oauth2Client.setCredentials(tokens);
   google.options({auth: Oauth2Client})
   req.session.googleToken = tokens.access_token;
-  listFiles(OAuth2Client, tokens.access_token);
-  res.send("Hello");
+  let user = await getUserDetails(Oauth2Client);
+  res.send(user.data);
 });
 
 router.get('/file', async function(req, res, next) {
