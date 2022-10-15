@@ -1,10 +1,11 @@
+/* eslint-disable no-undef */
+const { MongoClient } = require('mongodb');
 const supertest = require('supertest');
-const server = require('../app.js');
-const dotenv = require('dotenv')
+const dotenv = require('dotenv');
+const server = require('../app');
+
 dotenv.config();
 const requestWithSupertest = supertest(server);
-
-const {MongoClient} = require('mongodb');
 
 describe('MongoDB insertion test', () => {
   let connection;
@@ -25,15 +26,15 @@ describe('MongoDB insertion test', () => {
   it('should insert a doc into collection', async () => {
     const users = db.collection('test');
 
-    const mockUser = {_id: 'some-user-id', name: 'John'};
+    const mockUser = { _id: 'some-user-id', name: 'John' };
     await users.insertOne(mockUser);
 
-    const insertedUser = await users.findOne({_id: 'some-user-id'});
+    const insertedUser = await users.findOne({ _id: 'some-user-id' });
     expect(insertedUser).toEqual(mockUser);
   });
 });
 
-describe('Basic Endpoints', ()=> {
+describe('Basic Endpoints', () => {
   it('GET /', async () => {
     const res = await requestWithSupertest.get('/');
     expect(res.status).toEqual(200);
@@ -63,7 +64,7 @@ describe('Basic Google Endpoints', () => {
   });
 });
 
-describe('Basic Microsoft Endpoints', ()=> {
+describe('Basic Microsoft Endpoints', () => {
   it('GET /users/microsoftupdateperm test', async () => {
     const res = await requestWithSupertest.get('/users/microsoftupdateperm');
     expect(res.status).toEqual(200);
@@ -78,6 +79,4 @@ describe('Basic Microsoft Endpoints', ()=> {
     const res = await requestWithSupertest.get('/users/microsoft/addaccess');
     expect(res.status).toEqual(200);
   });
-
-  
 });

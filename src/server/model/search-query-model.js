@@ -1,11 +1,12 @@
-const mongoose = require('mongoose')
-const Schema = mongoose.Schema
+const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
 
 const SearchQuerySchema = new Schema(
-    {
-        query: { type: String }
-    },
-    { timestamps: true },
-)
+  {
+    query: { type: String },
+  },
+  { timestamps: true },
+);
 
-module.exports = mongoose.model('SearchQuery', SearchQuerySchema)
+module.exports = mongoose.model('SearchQuery', SearchQuerySchema);

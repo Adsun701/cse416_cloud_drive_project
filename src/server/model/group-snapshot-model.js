@@ -1,11 +1,12 @@
-const mongoose = require('mongoose')
-const Schema = mongoose.Schema
+const mongoose = require('mongoose');
+
+const { Schema } = mongoose;
 
 const GroupSnapshotSchema = new Schema(
-    {
-        groupMembers: { type: Map, of: [String] }
-    },
-    { timestamps: true },
-)
+  {
+    groupMembers: { type: Map, of: [String] },
+  },
+  { timestamps: true },
+);
 
-module.exports = mongoose.model('GroupSnapshot', GroupSnapshotSchema)
+module.exports = mongoose.model('GroupSnapshot', GroupSnapshotSchema);

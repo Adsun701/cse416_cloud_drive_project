@@ -1,6 +1,6 @@
 const express = require('express');
-const router = express.Router();
 
+const router = express.Router();
 const fetch = require('./fetch');
 const fetchpost = require('./post');
 const fetchpatch = require('./patch');
@@ -12,336 +12,353 @@ const FileSnapshot = require('../model/file-snapshot-model');
 const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 
-
 // custom middleware to check auth state
+// eslint-disable-next-line consistent-return
 function isAuthenticated(req, res, next) {
-    if (!req.session.isAuthenticated) {
-        return res.redirect('/auth/signin'); // redirect to sign-in route
-    }
+  if (!req.session.isAuthenticated) {
+    return res.redirect('/auth/signin'); // redirect to sign-in route
+  }
 
-    next();
-};
+  next();
+}
 
-router.get('/id',
-    isAuthenticated, // check if user is authenticated
-    async function (req, res, next) {
-        res.render('id', { idTokenClaims: req.session.account.idTokenClaims });
-    }
+router.get(
+  '/id',
+  isAuthenticated, // check if user is authenticated
+  async (req, res) => {
+    res.render('id', { idTokenClaims: req.session.account.idTokenClaims });
+  },
 );
 
-router.get('/microsoftupdateperm', function (req, res, next) {
-    res.render('microsoftupdateperm');
+router.get('/microsoftupdateperm', (req, res) => {
+  res.render('microsoftupdateperm');
 });
 
-router.post('/microsoft/updateaccesspolicy/:requirement/ar', function (req, res, next) {
-    let requirement = req.params.requirement;
-    let newar = req.body.ar;
-    AccessPolicy.update(
-        {requirement: requirement}, {$push: { ar: newar }})
-        .then(() => {
-            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-            res.redirect(redirecturl);
-        });
-});
-
-router.post('/microsoft/updateaccesspolicy/:requirement/dr', function (req, res, next) {
-    let requirement = req.params.requirement;
-    let newdr = req.body.dr;
-    AccessPolicy.update(
-        {requirement: requirement}, {$push: { dr: newdr }})
-        .then(() => {
-            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-            res.redirect(redirecturl);
-        });
-});
-
-router.post('/microsoft/updateaccesspolicy/:requirement/aw', function (req, res, next) {
-    let requirement = req.params.requirement;
-    let newaw = req.body.aw;
-    AccessPolicy.update(
-        {requirement: requirement}, {$push: { aw: newaw }})
-        .then(() => {
-            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-            res.redirect(redirecturl);
-        });
-});
-
-router.post('/microsoft/updateaccesspolicy/:requirement/dw', function (req, res, next) {
-    let requirement = req.params.requirement;
-    let newdw = req.body.dw;
-    AccessPolicy.update(
-        {requirement: requirement}, {$push: { dw: newdw }})
-        .then(() => {
-            let redirecturl = '/users/microsoft/viewaccesspolicy?requirement='+requirement;
-            res.redirect(redirecturl);
-        });
-});
-
-router.get('/microsoft/viewaccesspolicy', function (req, res, next) {
-    let requirement = req.query.requirement;
-    AccessPolicy.findOne({requirement: requirement}).then((data) => {
-        console.log(data);
-        let ar = data.ar;
-        let dr = data.dr;
-        let aw = data.aw;
-        let dw = data.dw;
-        let maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
-        let accessdata = []
-        for (let i = 0; i < maxlength; i++) {
-            accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
-        }
-        res.render('existingaccesspolicy', {requirement: requirement, accessdata: accessdata});
+router.post('/microsoft/updateaccesspolicy/:requirement/ar', (req, res) => {
+  const { requirement } = req.params;
+  const newar = req.body.ar;
+  AccessPolicy.update({ requirement }, { $push: { ar: newar } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
     });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/dr', (req, res) => {
+  const { requirement } = req.params;
+  const newdr = req.body.dr;
+  AccessPolicy.update({ requirement }, { $push: { dr: newdr } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/aw', (req, res) => {
+  const { requirement } = req.params;
+  const newaw = req.body.aw;
+  AccessPolicy.update({ requirement }, { $push: { aw: newaw } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
+});
+
+router.post('/microsoft/updateaccesspolicy/:requirement/dw', (req, res) => {
+  const { requirement } = req.params;
+  const newdw = req.body.dw;
+  AccessPolicy.update({ requirement }, { $push: { dw: newdw } })
+    .then(() => {
+      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      res.redirect(redirecturl);
+    });
+});
+
+router.get('/microsoft/viewaccesspolicy', (req, res) => {
+  const { requirement } = req.query;
+  AccessPolicy.findOne({ requirement }).then((data) => {
+    const { ar } = data;
+    const { dr } = data;
+    const { aw } = data;
+    const { dw } = data;
+    const maxlength = Math.max(Math.max(Math.max(ar.length, dr.length), aw.length), dw.length);
+    const accessdata = [];
+    for (let i = 0; i < maxlength; i += 1) {
+      accessdata.push([ar[i], dr[i], aw[i], dw[i]]);
+    }
+    res.render('existingaccesspolicy', { requirement, accessdata });
   });
-
-router.post('/microsoft/updatepermission', async function (req, res, next) {
-    let body = {
-        "roles": [req.body.role]
-    } 
-    const update = await fetchpatch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+req.body.fileid+"/permissions/"+req.body.permid, req.session.accessToken, body);
-    res.send(update);
 });
 
-router.get('/microsoft/filesnapshot', async function(req, res, next) {
-    const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
-    const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
+router.post('/microsoft/updatepermission', async (req, res) => {
+  const body = {
+    roles: [req.body.role],
+  };
+  const update = await fetchpatch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${req.body.fileid}/permissions/${req.body.permid}`, req.session.accessToken, body);
+  res.send(update);
+});
+
+router.get('/microsoft/filesnapshot', async (req, res) => {
+  const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
+  const emailResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me`, req.session.accessToken);
+  const email = emailResponse.mail;
+  const files = graphResponse.value;
+  const filesMap = {};
+  for (let i = 0; i < files.length; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i].id}/permissions/`, req.session.accessToken);
+    const permissions = permissionResponse.value;
+    const permissionsList = [];
+    for (let j = 0; j < permissions.length; j += 1) {
+      if (permissions[j].grantedToV2) {
+        const perm = new Permission({
+          id: permissions[j].id,
+          email: permissions[j].grantedToV2.user ? permissions[j].grantedToV2.user.email
+            : permissions[j].grantedToV2.siteUser.email,
+          displayName: permissions[j].grantedToV2.user ? permissions[j].grantedToV2.user.displayName
+            : permissions[j].grantedToV2.siteUser.displayName,
+          roles: permissions[j].roles,
+          inheritedFrom: permissions[j].inheritedFrom ? permissions[j].inheritedFrom.id : null,
+        });
+        perm.save().then(() => {});
+        permissionsList.push(perm);
+      }
+      if (permissions[j].grantedToIdentitiesV2) {
+        for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k += 1) {
+          const perm = new Permission({
+            id: permissions[j].id,
+            email: permissions[j].grantedToIdentitiesV2[k].user
+              ? permissions[j].grantedToIdentitiesV2[k].user.email
+              : permissions[j].grantedToIdentitiesV2[k].siteUser.email,
+            displayName: permissions[j].grantedToIdentitiesV2[k].user
+              ? permissions[j].grantedToIdentitiesV2[k].user.displayName
+              : permissions[j].grantedToIdentitiesV2[k].siteUser.displayName,
+            roles: permissions[j].roles,
+            inheritedFrom: permissions[j].inheritedFrom ? permissions[j].inheritedFrom.id : null,
+          });
+          perm.save().then(() => {});
+          permissionsList.push(perm);
+        }
+      }
+    }
+    filesMap[files[i].id] = permissionsList;
+  }
+  const fileSnapshot = new FileSnapshot({
+    files: filesMap,
+  });
+  fileSnapshot.save();
+  User.update({ email }, { $push: { fileSnapshots: fileSnapshot } })
+    .then(() => {});
+  res.send(filesMap);
+});
+
+router.get('/microsoft/addperm', (req, res) => {
+  res.render('microsoftperm');
+});
+
+router.post('/microsoft/addpermission', isAuthenticated, async (req, res, next) => {
+  try {
+    // post request sends files, value, and role
+    const files = JSON.parse(req.body.files);
+    const body = {
+      recipients: [
+        { email: req.body.value },
+      ],
+      message: 'Hello!',
+      requireSignIn: true,
+      sendInvitation: true,
+      roles: [req.body.role],
+    };
+    const ans = [];
+    for (let i = 0; i < files.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const update = await fetchpost(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i]}/invite`, req.session.accessToken, body);
+      ans.push(update.data);
+    }
+    res.send('SUCCCESS');
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/microsoft/addaccess', (req, res) => {
+  res.render('microsoftaccesspolicy');
+});
+
+router.post('/microsoft/addaccesspolicy', isAuthenticated, async (req, res, next) => {
+  try {
+    const emailResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me`, req.session.accessToken);
     const email = emailResponse.mail;
-    const files = graphResponse.value;
-    const filesMap = {};
-    for (let i = 0; i < files.length; i++) {
-        const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
+
+    const { requirement } = req.body;
+    const ar = req.body.ar.split(', ');
+    const dr = req.body.dr.split(', ');
+    const aw = req.body.aw.split(', ');
+    const dw = req.body.dw.split(', ');
+
+    const accessPolicy = new AccessPolicy({
+      requirement,
+      ar,
+      dr,
+      aw,
+      dw,
+    });
+    accessPolicy.save().then(() => {});
+    User.update({ email }, { $push: { accessPolicies: accessPolicy } })
+      .then(() => {});
+    res.send(accessPolicy);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/microsoft/search', async (req, res) => {
+  const emailResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me`, req.session.accessToken);
+  const email = emailResponse.mail;
+
+  const user = await User.find({ email });
+  const queries = user[0].recentQueries;
+  const ids = [];
+  queries.forEach((element) => {
+    // eslint-disable-next-line no-underscore-dangle
+    ids.push(element._id);
+  });
+  const recentQueries = await SearchQuery.find({ _id: { $in: ids } })
+    .sort({ createdAt: -1 }).limit(5);
+  res.render('microsoftsearch', {
+    recentQuery1: recentQueries[0] ? recentQueries[0].query : null,
+    recentQuery2: recentQueries[1] ? recentQueries[1].query : null,
+    recentQuery3: recentQueries[2] ? recentQueries[2].query : null,
+    recentQuery4: recentQueries[3] ? recentQueries[3].query : null,
+    recentQuery5: recentQueries[4] ? recentQueries[4].query : null,
+  });
+});
+
+router.post('/microsoft/searchquery', isAuthenticated, async (req, res, next) => {
+  try {
+    const emailResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me`, req.session.accessToken);
+    const email = emailResponse.mail;
+
+    const { query } = req.body;
+
+    const searchQuery = new SearchQuery({
+      query,
+    });
+    searchQuery.save().then(() => {});
+    User.update({ email }, { $push: { recentQueries: searchQuery } })
+      .then(() => {});
+    res.send(searchQuery);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get(
+  '/profile',
+  isAuthenticated, // check if user is authenticated
+  async (req, res, next) => {
+    try {
+      const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
+      const emailResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me`, req.session.accessToken);
+      const email = emailResponse.mail;
+      const files = graphResponse.value;
+      const listFiles = [];
+      for (let i = 0; i < files.length; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i].id}/permissions/`, req.session.accessToken);
         const permissions = permissionResponse.value;
-        const permissions_list = [];
-        for (let j = 0; j < permissions.length; j++) {
-            if (permissions[j].grantedToV2) {
-                let perm = new Permission({
-                    id: permissions[j].id,
-                    email: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.email : permissions[j].grantedToV2.siteUser.email,
-                    displayName: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.displayName : permissions[j].grantedToV2.siteUser.displayName,
-                    roles: permissions[j].roles,
-                    inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                })
-                perm.save().then(() => console.log("perm saved"));
-                permissions_list.push(perm);
-            }
-            if (permissions[j].grantedToIdentitiesV2) {
-                for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
-                    let perm = new Permission({
-                        id: permissions[j].id,//permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.id : permissions[j].grantedToIdentitiesV2[k].siteUser.id,
-                        email: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.email : permissions[j].grantedToIdentitiesV2[k].siteUser.email,
-                        displayName: permissions[j].grantedToIdentitiesV2[k].user? permissions[j].grantedToIdentitiesV2[k].user.displayName : permissions[j].grantedToIdentitiesV2[k].siteUser.displayName,
-                        roles: permissions[j].roles,
-                        inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                    })
-                    perm.save().then(() => console.log("perm saved"));
-                    permissions_list.push(perm);
+        const permissionsList = [];
+        for (let j = 0; j < permissions.length; j += 1) {
+          if (permissions[j].grantedToV2) {
+            const perm = new Permission({
+              id: permissions[j].id,
+              email: permissions[j].grantedToV2.user ? permissions[j].grantedToV2.user.email
+                : permissions[j].grantedToV2.siteUser.email,
+              displayName: permissions[j].grantedToV2.user
+                ? permissions[j].grantedToV2.user.displayName
+                : permissions[j].grantedToV2.siteUser.displayName,
+              roles: permissions[j].roles,
+              inheritedFrom: permissions[j].inheritedFrom ? permissions[j].inheritedFrom.id : null,
+            });
+            Permission.exists({ id: permissions[j].id, roles: permissions[j].roles })
+              .then((exists) => {
+                if (!exists) {
+                  perm.save().then(() => {});
                 }
-            }
-        }
-        filesMap[files[i].id] = permissions_list;
-    }
-    let fileSnapshot = new FileSnapshot({
-        files: filesMap
-    });
-    fileSnapshot.save();
-    User.update(
-        {email: email}, {$push: { fileSnapshots: fileSnapshot }})
-        .then(() => console.log("user file snapshot updated in db"));
-    res.send(filesMap);
-});
-
-router.get('/microsoft/addperm', function(req, res, next) {
-    res.render('microsoftperm');
-});
-
-router.post('/microsoft/addpermission', isAuthenticated, async function(req, res, next) {
-    try {
-        // post request sends files, value, and role
-        let files = JSON.parse(req.body.files);
-        let body = {
-            "recipients": [
-                {"email": req.body.value}
-            ],
-            "message": "Hello!",
-            "requireSignIn": true,
-            "sendInvitation": true,
-            "roles": [req.body.role]
-        }
-        let ans = []
-        for (let i = 0; i < files.length; i++) {
-            const update = await fetchpost(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i]+"/invite", req.session.accessToken, body);
-            ans.push(update.data);
-        }
-        console.log(ans);
-        res.send("SUCCCESS");
-    } catch(error) {
-        next(error);
-    }
-});
-
-router.get('/microsoft/addaccess', function(req, res, next) {
-    res.render('microsoftaccesspolicy');
-});
-
-router.post('/microsoft/addaccesspolicy', isAuthenticated, async function(req, res, next) {
-    try {
-        const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
-        const email = emailResponse.mail;
-
-        let requirement = req.body.requirement;
-        let ar = req.body.ar.split(", "); 
-        let dr =  req.body.dr.split(", "); 
-        let aw = req.body.aw.split(", ");
-        let dw =  req.body.dw.split(", ");
-      
-        let accessPolicy = new AccessPolicy({
-          requirement: requirement,
-          ar: ar,
-          dr: dr,
-          aw: aw,
-          dw: dw
-        })
-        accessPolicy.save().then(() => console.log("access policy saved in db"));
-        User.update(
-            {email: email}, {$push: { accessPolicies: accessPolicy }})
-            .then(() => console.log("user access policies updated in db"));
-        res.send(accessPolicy);
-    } catch(error) {
-        next(error);
-    }
-});
-
-router.get('/microsoft/search', async function(req, res, next) {
-    const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
-    const email = emailResponse.mail;
-
-    let user = await User.find({ email: email });
-    let queries = user[0].recentQueries;
-    let ids = [];
-    queries.forEach((element) => {
-      ids.push(element._id);
-    });
-    let recentQueries = await SearchQuery.find({ _id: { $in: ids } }).sort({ createdAt: -1 }).limit(5);
-    res.render("microsoftsearch", {
-      recentQuery1: recentQueries[0] ? recentQueries[0].query : null,
-      recentQuery2: recentQueries[1] ? recentQueries[1].query : null,
-      recentQuery3: recentQueries[2] ? recentQueries[2].query : null,
-      recentQuery4: recentQueries[3] ? recentQueries[3].query : null,
-      recentQuery5: recentQueries[4] ? recentQueries[4].query : null,
-    });
-});
-
-router.post('/microsoft/searchquery', isAuthenticated, async function(req, res, next) {
-    try {
-        const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
-        const email = emailResponse.mail;
-
-        let query = req.body.query;
-      
-        let searchQuery = new SearchQuery({
-          query: query
-        })
-        searchQuery.save().then(() => console.log("search query saved in db"));
-        User.update(
-            {email: email}, {$push: { recentQueries: searchQuery }})
-            .then(() => console.log("user recent queries updated in db"));
-        res.send(searchQuery);
-    } catch(error) {
-        next(error);
-    }
-});
-
-router.get('/profile',
-    isAuthenticated, // check if user is authenticated
-    async function (req, res, next) {
-        try {
-            const graphResponse = await fetch(GRAPH_ME_ENDPOINT, req.session.accessToken);
-            const emailResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me", req.session.accessToken);
-            const email = emailResponse.mail;
-            const files = graphResponse.value;
-            const list_files = [];
-            for (let i = 0; i < files.length; i++) {
-                const permissionResponse = await fetch(GRAPH_API_ENDPOINT+"v1.0/me/drive/items/"+files[i].id+"/permissions/", req.session.accessToken);
-                const permissions = permissionResponse.value;
-                const permissions_list = [];
-                for (let j = 0; j < permissions.length; j++) {
-                    if (permissions[j].grantedToV2) {
-                        let perm = new Permission({
-                            id: permissions[j].id,
-                            email: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.email : permissions[j].grantedToV2.siteUser.email,
-                            displayName: permissions[j].grantedToV2.user? permissions[j].grantedToV2.user.displayName : permissions[j].grantedToV2.siteUser.displayName,
-                            roles: permissions[j].roles,
-                            inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                        })
-                        Permission.exists({ id: permissions[j].id, roles: permissions[j].roles }).then(exists => {
-                            if (!exists) {
-                                perm.save().then(() => console.log("perm saved"));
-                            }
-                        })
-                        permissions_list.push(perm);
-                    }
-                    if (permissions[j].grantedToIdentitiesV2) {
-                        for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k++) {
-                            let currentPermission = permissions[j].grantedToIdentitiesV2[k];
-                            let perm = new Permission({
-                                id: permissions[j].id,//currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id,
-                                email: currentPermission.user? currentPermission.user.email : currentPermission.siteUser.email,
-                                displayName: currentPermission.user? currentPermission.user.displayName : currentPermission.siteUser.displayName,
-                                roles: permissions[j].roles,
-                                inheritedFrom: permissions[j].inheritedFrom? permissions[j].inheritedFrom.id : null
-                            })
-                            Permission.exists({ id: currentPermission.user? currentPermission.user.id : currentPermission.siteUser.id, roles: permissions[j].roles }).then(exists => {
-                                if (!exists) {
-                                    perm.save().then(() => console.log("perm saved"));
-                                }
-                            })
-                            permissions_list.push(perm);
-                        }
-                    }
+              });
+            permissionsList.push(perm);
+          }
+          if (permissions[j].grantedToIdentitiesV2) {
+            for (let k = 0; k < permissions[j].grantedToIdentitiesV2.length; k += 1) {
+              const currentPermission = permissions[j].grantedToIdentitiesV2[k];
+              const perm = new Permission({
+                id: permissions[j].id,
+                email: currentPermission.user ? currentPermission.user.email
+                  : currentPermission.siteUser.email,
+                displayName: currentPermission.user ? currentPermission.user.displayName
+                  : currentPermission.siteUser.displayName,
+                roles: permissions[j].roles,
+                inheritedFrom: permissions[j].inheritedFrom ? permissions[j].inheritedFrom.id
+                  : null,
+              });
+              Permission.exists({
+                id: currentPermission.user ? currentPermission.user.id
+                  : currentPermission.siteUser.id,
+                roles: permissions[j].roles,
+              }).then((exists) => {
+                if (!exists) {
+                  perm.save().then(() => {});
                 }
-                let file = new File({
-                    id: files[i].id,
-                    name: files[i].name,
-                    createdTime: files[i].fileSystemInfo.createdDateTime,
-                    modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
-                    permissions: permissions_list
-                })
-                File.exists({ id: files[i].id }).then(exists => {
-                    if (exists) {
-                      File.update(
-                        {id: files[i].id}, 
-                        {$set: {
-                            name: files[i].name, 
-                            modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
-                            permissions: permissions_list
-                          } 
-                        }).then(() => console.log("file updated in db"));
-                    } else {
-                        file.save().then(() => console.log("file saved in db"));
-                    }
-                })
-                list_files.push(file);
+              });
+              permissionsList.push(perm);
             }
-            const newUser = new User ({
-                email: email,
-                files: list_files,
-                accessPolicies: [],
-                fileSnapshots: [],
-                groupSnapshots: [],
-                recentQueries: []
-            })
-            User.exists({ email: email }).then(exists => {
-                if (exists) {
-                  User.update({email: email}, {$set: { files: list_files }}).then(() => console.log("user updated in db"));
-                } else {
-                  newUser.save().then(() => console.log("user saved in db"));
-                }
-            })
-            res.render('profile', { profile: graphResponse });
-        } catch (error) {
-            next(error);
+          }
         }
+        const file = new File({
+          id: files[i].id,
+          name: files[i].name,
+          createdTime: files[i].fileSystemInfo.createdDateTime,
+          modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
+          permissions: permissionsList,
+        });
+        File.exists({ id: files[i].id }).then((exists) => {
+          if (exists) {
+            File.update(
+              { id: files[i].id },
+              {
+                $set: {
+                  name: files[i].name,
+                  modifiedTime: files[i].fileSystemInfo.lastModifiedDateTime,
+                  permissions: permissionsList,
+                },
+              },
+            ).then(() => {});
+          } else {
+            file.save().then(() => {});
+          }
+        });
+        listFiles.push(file);
+      }
+      const newUser = new User({
+        email,
+        files: listFiles,
+        accessPolicies: [],
+        fileSnapshots: [],
+        groupSnapshots: [],
+        recentQueries: [],
+      });
+      User.exists({ email }).then((exists) => {
+        if (exists) {
+          User.update({ email }, { $set: { files: listFiles } }).then(() => {});
+        } else {
+          newUser.save().then(() => {});
+        }
+      });
+      res.render('profile', { profile: graphResponse });
+    } catch (error) {
+      next(error);
     }
+  },
 );
 
 module.exports = router;
