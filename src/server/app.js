@@ -48,7 +48,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const db = require('./db/db')
 db.on('error', console.error.bind(console, 'MongoDB connection error:'))
-db.once("open", () => {console.log("MongoDB connected successfully")})
+db.once("open", () => {})//console.log("MongoDB connected successfully")})
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
