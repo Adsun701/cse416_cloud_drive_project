@@ -464,4 +464,8 @@ router.get('/viewaccesspolicy', (req, res) => {
   });
 });
 
+router.get('/googlegroupsnapshot', (req, res) => {
+  res.render('googlegroupsnapshot');
+});
+
 module.exports = router;
