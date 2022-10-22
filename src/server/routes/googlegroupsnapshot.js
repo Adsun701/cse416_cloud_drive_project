@@ -6,6 +6,7 @@ const router = express.Router();
 const multer  = require('multer');
 const { google } = require('googleapis');
 const GroupSnapshot = require('../model/group-snapshot-model');
+const { waitForDebugger } = require('inspector');
 const upload = multer({ dest: '../../public/data/uploads/' });
 
 // custom middleware to check auth state
@@ -25,23 +26,19 @@ router.post(
     const groupname = req.body.groupname;
     const groupaddress = req.body.groupaddress;
     const timestamp = req.body.timestamp;
-    //console.log(req.file);
-    let memberpagehtml = fs.createReadStream(req.file.path, 'utf8'); // use "Profile image for " as indexOf
-    console.log("groupname is : " + groupname);
-    console.log("groupaddress is : " + groupaddress);
-    console.log("timestamp is : " + timestamp);
-    console.log("memberpagehtml is : " + memberpagehtml);
-
-    const memberarray = new Array();
+    let memberarray = new Array();
     let start = 0;
     const profileprefix = "Profile image for ";
     const prefixlength = profileprefix.length;
     let user = "";
-    while (start = memberpagehtml.indexOf(profileprefix, start) > -1) {
-      start = start + prefixlength;
-      user = memberpagehtml.substring(start, memberpagehtml.indexOf('\"', start));
+    
+    var data = fs.readFileSync(req.file.path).toString('utf-8');
+    while (data.indexOf(profileprefix, start) > -1) {
+      start = data.indexOf(profileprefix, start) + prefixlength;
+      user = data.substring(start, data.indexOf('\"', start));
       memberarray.push(user);
     }
+    
     const groupSnapshot = new GroupSnapshot({ groupName: groupname, groupAddress: groupaddress, groupMembers: memberarray, timestamp: timestamp });
     groupSnapshot.save();
   }
