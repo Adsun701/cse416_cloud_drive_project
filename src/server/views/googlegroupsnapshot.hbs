@@ -1,0 +1,19 @@
+<form action="/googlegroupsnapshot/snapshot", method="post", enctype="multipart/form-data">
+    {{!-- let files = JSON.parse(req.body.files) // list of files with new ids
+   fileId: req.body.fileid,
+    permissionId: req.body.permid,
+    data: data, --}}
+  Representing post call to backend
+  <br><br>
+  Insert name, email address of Google Group, along with timestamp, and finally an HTML file from saving that Group's Members page
+  <br><br>Group Name<br>
+  <input type="text" id="groupname" name="groupname">
+  <br><br>Group Address<br>
+  <input type="text" id="groupaddress" name="groupaddress">
+  <br><br>Timestamp<br>
+  <input type="datetime-local" id="timestamp" name="timestamp">
+  <br><br>Group Member Page HTML<br>
+  <input type="file" id="memberpagehtml" name="memberpagehtml" accept="text/html">
+  <br><br>Submit<br>
+  <input type="submit" value="Submit">
+</form>

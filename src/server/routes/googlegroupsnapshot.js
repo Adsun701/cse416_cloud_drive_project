@@ -1,9 +1,13 @@
 // const { authenticate } = require('@google-cloud/local-auth');
 const express = require('express');
 
+const fs = require('fs');
 const router = express.Router();
+const multer  = require('multer');
 const { google } = require('googleapis');
 const GroupSnapshot = require('../model/group-snapshot-model');
+const { waitForDebugger } = require('inspector');
+const upload = multer({ dest: '../../public/data/uploads/' });
 
 // custom middleware to check auth state
 // eslint-disable-next-line consistent-return
@@ -14,44 +18,30 @@ function isAuthenticated(req, res, next) {
   next();
 }
 
-router.get(
+router.post(
   '/snapshot',
+  upload.single('memberpagehtml'),
   isAuthenticated, // check if user is authenticated
   async (req, res, next) => {
-    try {
-      const snapshotMap = new Map();
-      const drive = google.drive({ version: 'v3' });
-      drive.files.list({
-        access_token: req.session.googleToken,
-        fields: 'files(id, name, permissions)',
-      // eslint-disable-next-line consistent-return
-      }, (err, response) => {
-        if (err) {
-          // console.error('The API returned an error.');
-          throw err;
-        }
-        const { files } = response.data;
-        if (files.length === 0) {
-          // console.log('No files found.');
-          return null;
-        }
-        // console.log('Files Found! File length: ' + files.length);
-        for (let i = 0; i < files.length; i += 1) {
-          const permissionAddresses = [];
-          for (let j = 0; files[i].permissions != null && j < files[i].permissions.length; j += 1) {
-            if (files[i].permissions[j].type === 'group') {
-              permissionAddresses.push(files[i].permissions[j].emailAddress);
-            }
-          }
-          snapshotMap.set(files[i].id, permissionAddresses);
-        }
-      });
-      const groupSnapshot = new GroupSnapshot({ groupMembers: snapshotMap });
-      groupSnapshot.save();
-    } catch (error) {
-      next(error);
+    const groupname = req.body.groupname;
+    const groupaddress = req.body.groupaddress;
+    const timestamp = req.body.timestamp;
+    let memberarray = new Array();
+    let start = 0;
+    const profileprefix = "Profile image for ";
+    const prefixlength = profileprefix.length;
+    let user = "";
+    
+    var data = fs.readFileSync(req.file.path).toString('utf-8');
+    while (data.indexOf(profileprefix, start) > -1) {
+      start = data.indexOf(profileprefix, start) + prefixlength;
+      user = data.substring(start, data.indexOf('\"', start));
+      memberarray.push(user);
     }
-  },
+    
+    const groupSnapshot = new GroupSnapshot({ groupName: groupname, groupAddress: groupaddress, groupMembers: memberarray, timestamp: timestamp });
+    groupSnapshot.save();
+  }
 );
 
 module.exports = router;

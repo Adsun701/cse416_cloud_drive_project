@@ -4,7 +4,9 @@ const { Schema } = mongoose;
 
 const GroupSnapshotSchema = new Schema(
   {
-    groupMembers: { type: Map, of: [String] },
+    groupName: String,
+    groupAddress: String,
+    groupMembers: [String],
   },
   { timestamps: true },
 );
