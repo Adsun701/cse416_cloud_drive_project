@@ -1,54 +1,69 @@
 import React from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Dropdown from 'react-bootstrap/Dropdown';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../app.css';
+import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from 'react-google-login';
+import { gapi } from 'gapi-script';
+import { MicrosoftLogin } from "react-microsoft-login";
 
 export default function LoginPage() {
-  const handleGoogle = () => {
-    window.open("http://localhost:8080/google/auth", "_blank");
+  gapi.load("client:auth2", () => {
+    gapi.client.init({
+      clientId:
+        process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive',
+    });
+  });
+  
+  const navigate = useNavigate();
+  const handleFail = (err) => {
+    console.log('failed login', err);
   };
-
-  const handleMicrosoft = () => {
-    window.open("http://localhost:8080/", "_blank");
+  const handleGoogle = (res) => {
+    console.log("GOOGLE");
+    console.log(res);
+    navigate('search');
+  };
+  const handleMicrosoft = (err, data) => {
+    console.log("MICROSOFT");
+    console.log(data);
+    navigate('search');
   };
 
   return (
     <Container fluid>
-      <Row className="d-flex justify-content-md-center align-items-center vh-100">
-        <h1 style={{ fontWeight: 'lighter' }}>Cloud Drive Manager</h1>
-        <Container style={{ width: '100%' }}>
-          <Button
-            className="me-5"
-            size="lg"
-            style={{
-              width: '40%', background: 'white', color: 'black', borderColor: '#CFCFCF'
-            }}
-            onClick={handleGoogle}
-          >
-            Sign in with Google
-          </Button>
-          <Button
-            size="lg"
-            style={{
-              width: '40%', background: 'white', color: 'black', borderColor: '#CFCFCF'
-            }}
-            onClick={handleMicrosoft}
-          >
-            Sign in with Microsoft
-          </Button>
-        </Container>
-        <Dropdown>
-          <Dropdown.Toggle style={{ background: 'white', borderColor: 'white', color: 'black' }}>
-            Choose other supported Drives
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item style={{ textAlign: 'center' }}>Other Drive</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-      </Row>
-    </Container>
+    <Row className="d-flex justify-content-md-center align-items-center vh-100">
+      <h1 style={{ fontWeight: 'lighter' }}>Cloud Drive Manager</h1>
+        <Col>
+        <GoogleLogin 
+            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+            buttonText="Log in with Google"
+            onSuccess={handleGoogle}
+            onFailure={handleFail}
+            cookiePolicy={'single_host_origin'}
+        />
+        </Col>
+        <Col>
+        <MicrosoftLogin 
+            clientId={process.env.REACT_APP_MS_CLIENT_ID}
+            redirectUri={process.env.REACT_APP_MS_REDIRECT_URI} 
+            graphScopes={['User.Read', 'Files.Read', 'Files.ReadWrite.All', 'Sites.ReadWrite.All']}
+            authCallback={handleMicrosoft} />
+        </Col>
+      <Dropdown>
+        <Dropdown.Toggle style={{ background: 'white', borderColor: 'white', color: 'black' }}>
+          Choose other supported Drives
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          <Dropdown.Item style={{ textAlign: 'center' }}>Other Drive</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+    </Row>
+  </Container>
   );
 }
