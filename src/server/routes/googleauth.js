@@ -140,6 +140,40 @@ async function getAllFiles(token) {
   return files;
 }
 
+async function getFiles(searchQuery, token) {
+  if (searchQuery == null || searchQuery.query == null) return [];
+  const drive = google.drive({ version: 'v3' });
+  const files = [];
+  let nextPage = null;
+  const result = await drive.files.list({
+    q: `name contains '${searchQuery.query}'`,
+    access_token: token,
+  });
+  nextPage = result.data.nextPageToken;
+  // console.log(nextPage);
+  let f = result.data.files;
+  f.forEach((element) => {
+    files.push(element);
+  });
+  // files.push(result.data.files);
+  while (nextPage) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await drive.files.list({
+      q: searchQuery.query,
+      access_token: token,
+      pageToken: nextPage,
+    });
+    // console.log(nextPage);
+    nextPage = res.data.nextPageToken;
+    f = res.data.files;
+    f.forEach((element) => {
+      files.push(element);
+    });
+    // files.push(result.data.files);
+  }
+  return files;
+}
+
 router.get('/auth', async (req, res) => {
   const url = getConnectionUrl();
   res.redirect(url);
@@ -296,6 +330,10 @@ router.get('/search', async (req, res) => {
 });
 
 router.post('/searchquery', async (req, res, next) => {
+  if (!req.session.googleToken) {
+    return res.send('nope');
+  }
+
   try {
     const user = await getUserDetails(Oauth2Client);
     const { email } = user.data;
@@ -308,7 +346,8 @@ router.post('/searchquery', async (req, res, next) => {
     searchQuery.save().then(() => {});
     User.update({ email }, { $push: { recentQueries: searchQuery } })
       .then(() => {});
-    res.send(searchQuery);
+      const result = await getFiles(searchQuery, req.session.googleToken);
+    res.send(result);
   } catch (error) {
     next(error);
   }
