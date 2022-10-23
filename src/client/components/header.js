@@ -18,7 +18,7 @@ export default function Header() {
               <Navbar.Text>A</Navbar.Text>
             </Dropdown.Toggle>
             <Dropdown.Menu className="dropdown-menu-end">
-              <Dropdown.Item style={{ textAlign: 'center' }} href="#/logout">Logout</Dropdown.Item>
+              <Dropdown.Item style={{ textAlign: 'center' }} href="/">Logout</Dropdown.Item>
             </Dropdown.Menu>
           </Dropdown>
         </Nav.Item>
