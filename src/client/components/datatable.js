@@ -11,7 +11,16 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
 
 export default function DataTable() {
+  function callAPI() {
+    // TODO: try to pass googleToken into this to actually receive data
+    fetch("http://localhost:8080/google/last15modifiedfiles" + new URLSearchParams({
+    }))
+      .then(res => res.text())
+      .then(text => console.log(text));
+  };
+
   let data = [];
+  callAPI();
   for (let i = 0; i < 15; i++) {
     data.push(
       <tr>

@@ -140,6 +140,21 @@ async function getAllFiles(token) {
   return files;
 }
 
+async function getLast15ModifiedFiles(token) {
+  const drive = google.drive({ version: 'v3' });
+  const files = [];
+  const result = await drive.files.list({
+    orderBy: 'modifiedTime',
+    pageSize: 15,
+    access_token: token,
+  });
+  let f = result.data.files;
+  f.forEach((element) => {
+    files.push(element);
+  });
+  return files;
+}
+
 async function getFiles(searchQuery, token) {
   if (searchQuery == null || searchQuery.query == null) return [];
   const drive = google.drive({ version: 'v3' });
@@ -356,6 +371,15 @@ router.post('/searchquery', async (req, res, next) => {
 router.get('/allfiles', async (req, res) => {
   if (req.session.googleToken) {
     const result = await getAllFiles(req.session.googleToken);
+    res.send(result);
+  } else {
+    res.send('nope');
+  }
+});
+
+router.get('/last15modifiedfiles', async (req, res) => {
+  if (req.session.googleToken) {
+    const result = await getLast15ModifiedFiles(req.session.googleToken);
     res.send(result);
   } else {
     res.send('nope');
