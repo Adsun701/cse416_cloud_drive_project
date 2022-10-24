@@ -1,4 +1,6 @@
 import React from 'react';
+import { useState, useContext } from "react";
+import { Context } from "../Context";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -13,6 +15,9 @@ import { MicrosoftLogin } from "react-microsoft-login";
 import axios from "axios";
 
 export default function LoginPage() {
+
+  const [context, setContext] = useContext(Context);
+
   gapi.load("client:auth2", () => {
     gapi.client.init({
       clientId:
@@ -41,15 +46,16 @@ export default function LoginPage() {
       email: res.profileObj.email
     }).then((response) => {
       // set a state here to change the page upon load
-
+      setContext(["google", ""]);
     });
     navigate('search');
   };
 
-  const handleMicrosoft = async (err, data) => {
+  const handleMicrosoft = async (err, data, msal) => {
     console.log("MICROSOFT");
     console.log(data.accessToken);
-    
+    setContext(["microsoft", msal]);
+
     client.post('/auth', {
       clouddrive: "microsoft",
       accessToken: data.accessToken,
@@ -79,6 +85,8 @@ export default function LoginPage() {
         <MicrosoftLogin 
             clientId={process.env.REACT_APP_MS_CLIENT_ID}
             redirectUri={process.env.REACT_APP_MS_REDIRECT_URI} 
+            postLogoutRedirectUri={process.env.REACT_APP_POST_LOGOUT_REDIRECT_URI}
+            withUserData={true}
             graphScopes={['User.Read', 'Files.Read', 'Files.ReadWrite.All', 'Sites.ReadWrite.All']}
             authCallback={handleMicrosoft} />
         </Col>
