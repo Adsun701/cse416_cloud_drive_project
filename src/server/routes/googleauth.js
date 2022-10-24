@@ -140,6 +140,27 @@ async function getAllFiles(token) {
   return files;
 }
 
+function sortQuery(query) {
+  words = query.replace(/ +(?= )/g,'').split(' ');
+  words.sort(function(a, b) {
+    if (a.includes(":") && !b.includes(":")) return 1;
+    else if (!a.includes(":") && b.includes(":")) return -1;
+    else return 0;
+  })
+  s = ""
+  i = 0
+  while (i < words.length && !words[i].includes(":")) {
+    if (i > 0) s = s + " ";
+    s = s + words[i].trim();
+    i++;
+  }
+  operators = []
+  for (j = i; j < words.length; j++) {
+    operators.push(words[j]);
+  }
+  return [s, operators];
+}
+
 async function getLast15ModifiedFiles(token) {
   const drive = google.drive({ version: 'v3' });
   const files = [];
@@ -157,11 +178,17 @@ async function getLast15ModifiedFiles(token) {
 
 async function getFiles(searchQuery, token) {
   if (searchQuery == null || searchQuery.query == null) return [];
+
+  /* extract default string and operators from query */
+  queryArray = sortQuery(searchQuery.query);
+  searchString = queryArray[0]; // string
+  operators = queryArray[1]; // array of strings containing "operation:value"
+
   const drive = google.drive({ version: 'v3' });
   const files = [];
   let nextPage = null;
   const result = await drive.files.list({
-    q: `name contains '${searchQuery.query}'`,
+    q: `name contains '${searchString}'`,
     access_token: token,
   });
   nextPage = result.data.nextPageToken;
@@ -174,7 +201,7 @@ async function getFiles(searchQuery, token) {
   while (nextPage) {
     // eslint-disable-next-line no-await-in-loop
     const res = await drive.files.list({
-      q: searchQuery.query,
+      q: `name contains '${searchString}'`,
       access_token: token,
       pageToken: nextPage,
     });
