@@ -78,6 +78,7 @@ export default function LoginPage() {
             buttonText="Log in with Google"
             onSuccess={handleGoogle}
             onFailure={handleFail}
+            isSignedIn={true}
             cookiePolicy={'single_host_origin'}
         />
         </Col>

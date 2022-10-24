@@ -1,6 +1,8 @@
 import React from 'react';
 import { useState, useContext } from "react";
 import { Context } from "../Context";
+import { GoogleLogout } from 'react-google-login';
+import { useNavigate } from 'react-router-dom';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Dropdown from 'react-bootstrap/Dropdown';
@@ -9,10 +11,12 @@ import '../app.css';
 
 export default function Header() {
   const [context, setContext] = useContext(Context);
+  const navigate = useNavigate();
 
   let handleLogout = () => {
     if (context[0] === "google") {
-
+      console.log("WE SIGNED OUT OF GOOGLE SUCCESSFULLY");
+      navigate('/');
     } else if (context[0] === "microsoft") {
       context[1].logout();
     } else {
@@ -32,8 +36,13 @@ export default function Header() {
               <Navbar.Text>A</Navbar.Text>
             </Dropdown.Toggle>
             <Dropdown.Menu className="dropdown-menu-end">
-              {context[0] === "microsoft" ? 
-              (<Dropdown.Item style={{ textAlign: 'center' }} onClick={handleLogout}>Microsoft Logout</Dropdown.Item>)
+              {context[0] === "google" ? 
+              <GoogleLogout
+              clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
+              buttonText="Logout"
+              onLogoutSuccess={handleLogout}
+              >
+            </GoogleLogout>
               :
               (<Dropdown.Item style={{ textAlign: 'center' }} onClick={handleLogout}>Logout</Dropdown.Item>)
               }              
