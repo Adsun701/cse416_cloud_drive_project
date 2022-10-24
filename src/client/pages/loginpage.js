@@ -31,7 +31,7 @@ export default function LoginPage() {
     console.log('failed login', err);
   };
 
-  const handleGoogle = (res) => {
+  const handleGoogle = async (res) => {
     console.log("GOOGLE");
     console.log(res);
     client.post('/auth', {
@@ -46,9 +46,19 @@ export default function LoginPage() {
     navigate('search');
   };
 
-  const handleMicrosoft = (err, data) => {
+  const handleMicrosoft = async (err, data) => {
     console.log("MICROSOFT");
-    console.log(data);
+    console.log(data.accessToken);
+    
+    client.post('/auth', {
+      clouddrive: "microsoft",
+      accessToken: data.accessToken,
+      name: data.account.name,
+      email: data.mail
+    }).then((response) => {
+      // set a state here to change the page upon load
+
+    });
     navigate('search');
   };
 
