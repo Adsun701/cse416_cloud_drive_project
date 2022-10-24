@@ -35,7 +35,7 @@ export default function Header() {
             <Dropdown.Toggle id="header-dropdown" className="rounded-circle" style={{ background: 'white', borderColor: '#CFCFCF' }}>
               <Navbar.Text>A</Navbar.Text>
             </Dropdown.Toggle>
-            <Dropdown.Menu className="dropdown-menu-end">
+            <Dropdown.Menu className="dropdown-menu-end" style={{ textAlign: "center" }} >
               {context[0] === "google" ? 
               <GoogleLogout
               clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
