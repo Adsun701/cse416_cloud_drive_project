@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from 'react-google-login';
 import { gapi } from 'gapi-script';
 import { MicrosoftLogin } from "react-microsoft-login";
+import axios from "axios";
 
 export default function LoginPage() {
   gapi.load("client:auth2", () => {
@@ -21,14 +22,30 @@ export default function LoginPage() {
   });
   
   const navigate = useNavigate();
+
+  const client = axios.create({
+    baseURL: "http://localhost:8080"
+  });
+
   const handleFail = (err) => {
     console.log('failed login', err);
   };
+
   const handleGoogle = (res) => {
     console.log("GOOGLE");
     console.log(res);
+    client.post('/auth', {
+      clouddrive: "google",
+      accessToken: res.accessToken,
+      name: res.profileObj.name,
+      email: res.profileObj.email
+    }).then((response) => {
+      // set a state here to change the page upon load
+
+    });
     navigate('search');
   };
+
   const handleMicrosoft = (err, data) => {
     console.log("MICROSOFT");
     console.log(data);

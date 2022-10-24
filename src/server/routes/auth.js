@@ -1,170 +1,148 @@
 const express = require('express');
-const msal = require('@azure/msal-node');
+const { google } = require('googleapis');
 
-const {
-  msalConfig,
-  REDIRECT_URI,
-  POST_LOGOUT_REDIRECT_URI,
-} = require('../authConfig');
+const User = require('../model/user-model');
+const File = require('../model/file-model');
+const Permission = require('../model/permission-model');
+const AccessPolicy = require('../model/access-policy-model');
+const SearchQuery = require('../model/search-query-model');
 
 const router = express.Router();
-const msalInstance = new msal.ConfidentialClientApplication(msalConfig);
-const cryptoProvider = new msal.CryptoProvider();
 
-/**
- * Prepares the auth code request parameters and initiates the first leg of auth code flow
- * @param req: Express request object
- * @param res: Express response object
- * @param next: Express next function
- * @param authCodeUrlRequestParams: parameters for requesting an auth code url
- * @param authCodeRequestParams: parameters for requesting tokens using auth code
- */
-async function redirectToAuthCodeUrl(req, res, next, authCodeUrlReqParams, authCodeRequestParams) {
-  // Generate PKCE Codes before starting the authorization flow
-  const { verifier, challenge } = await cryptoProvider.generatePkceCodes();
-
-  // Set generated PKCE codes and method as session vars
-  req.session.pkceCodes = {
-    challengeMethod: 'S256',
-    verifier,
-    challenge,
-  };
-
-  /**
-     * By manipulating the request objects below before each request, we can obtain
-     * auth artifacts with desired claims. For more information, visit:
-     * https://azuread.github.io/microsoft-authentication-library-for-js/ref/modules/_azure_msal_node.html#authorizationurlrequest
-     * https://azuread.github.io/microsoft-authentication-library-for-js/ref/modules/_azure_msal_node.html#authorizationcoderequest
-     * */
-
-  req.session.authCodeUrlRequest = {
-    redirectUri: REDIRECT_URI,
-    responseMode: 'form_post', // recommended for confidential clients
-    codeChallenge: req.session.pkceCodes.challenge,
-    codeChallengeMethod: req.session.pkceCodes.challengeMethod,
-    ...authCodeUrlReqParams,
-  };
-
-  req.session.authCodeRequest = {
-    redirectUri: REDIRECT_URI,
-    code: '',
-    ...authCodeRequestParams,
-  };
-
-  // Get url to sign user in and consent to scopes needed for application
-  try {
-    const authCodeUrlResponse = await msalInstance.getAuthCodeUrl(req.session.authCodeUrlRequest);
-    res.redirect(authCodeUrlResponse);
-  } catch (error) {
-    next(error);
+async function getFilesAndPerms(token) {
+    const drive = google.drive({ version: 'v3' });
+    const files = {};
+    let nextPage = null;
+    const result = await drive.files.list({
+      access_token: token,
+      fields: 'files(id, name, permissions), nextPageToken',
+    });
+    nextPage = result.data.nextPageToken;
+    // console.log(nextPage);
+    let f = result.data.files;
+    f.forEach((element) => {
+      const newPermsList = [];
+      if (element.permissions) {
+        for (let i = 0; i < element.permissions.length; i += 1) {
+          const newPermission = new Permission({
+            id: element.permissions[i].id,
+            email: element.permissions[i].emailAddress,
+            displayName: element.permissions[i].displayName,
+            roles: [element.permissions[i].role],
+            inheritedFrom: null,
+          });
+          newPermission.save();
+          newPermsList.push(newPermission);
+        }
+      }
+      files[element.id] = newPermsList;
+    });
+    while (nextPage) {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await drive.files.list({
+        access_token: token,
+        pageToken: nextPage,
+        fields: 'files(id, name, permissions), nextPageToken',
+      });
+      // console.log(nextPage);
+      nextPage = res.data.nextPageToken;
+      f = res.data.files;
+      f.forEach((element) => {
+        const newPermsList = [];
+        if (element.permissions) {
+          for (let i = 0; i < element.permissions.length; i += 1) {
+            const newPermission = new Permission({
+              id: element.permissions[i].id,
+              email: element.permissions[i].emailAddress,
+              displayName: element.permissions[i].displayName,
+              roles: [element.permissions[i].role],
+              inheritedFrom: null,
+            });
+            newPermission.save();
+            newPermsList.push(newPermission);
+          }
+        }
+        files[element.id] = newPermsList;
+      });
+    }
+    return files;
   }
+  
+  async function getFileData(token, fileid) {
+    const drive = google.drive({ version: 'v3' });
+    const fileData = await drive.files.get({
+      access_token: token,
+      fileId: fileid,
+      fields: '*',
+    });
+    return fileData;
+  }
+
+let getGoogleFiles = async (token, email) => {
+    const filesMap = await getFilesAndPerms(token);
+    const listFiles = [];
+    for (const [key, value] of Object.entries(filesMap)) {
+      let fileData = await getFileData(token, key);
+      fileData = fileData.data;
+      const file = new File({
+        id: fileData.id,
+        name: fileData.name,
+        createdTime: fileData.createdTime,
+        modifiedTime: fileData.modifiedTime,
+        permissions: value,
+      });
+      file.save();
+      listFiles.push(file);
+    }
+    User.update({ email: email }, { $set: { files: listFiles } }).then(() => {});
+    return true
 }
 
-router.get('/signin', async (req, res, next) => {
-  // create a GUID for crsf
-  req.session.csrfToken = cryptoProvider.createNewGuid();
-
-  /**
-     * The MSAL Node library allows you to pass your custom state as state parameter in the
-     * Request object. The state parameter can also be used to encode information of the app's
-     * state before redirect. You can pass the user's state in the app, such as the page or
-     * view they were on, as input to this parameter.
-     */
-  const state = cryptoProvider.base64Encode(
-    JSON.stringify({
-      csrfToken: req.session.csrfToken,
-      redirectTo: '/',
-    }),
-  );
-
-  const authCodeUrlRequestParams = {
-    state,
-
-    /**
-         * By default, MSAL Node will add OIDC scopes to the auth code url request.
-         * For more information, visit: https://docs.microsoft.com/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
-         */
-    scopes: [],
-  };
-
-  const authCodeRequestParams = {
-
-    /**
-         * By default, MSAL Node will add OIDC scopes to the auth code request.
-         * For more information, visit: https://docs.microsoft.com/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
-         */
-    scopes: [],
-  };
-
-  // trigger the first leg of auth code flow
-  return redirectToAuthCodeUrl(req, res, next, authCodeUrlRequestParams, authCodeRequestParams);
-});
-
-router.get('/acquireToken', async (req, res, next) => {
-  // create a GUID for csrf
-  req.session.csrfToken = cryptoProvider.createNewGuid();
-
-  // encode the state param
-  const state = cryptoProvider.base64Encode(
-    JSON.stringify({
-      csrfToken: req.session.csrfToken,
-      redirectTo: '/users/profile',
-    }),
-  );
-
-  const authCodeUrlRequestParams = {
-    state,
-    scopes: ['User.Read', 'Files.Read', 'Files.ReadWrite.All', 'Sites.ReadWrite.All'],
-  };
-
-  const authCodeRequestParams = {
-    scopes: ['User.Read', 'Files.Read', 'Files.ReadWrite.All', 'Sites.ReadWrite.All'],
-  };
-
-  // trigger the first leg of auth code flow
-  return redirectToAuthCodeUrl(req, res, next, authCodeUrlRequestParams, authCodeRequestParams);
-});
-
-router.post('/redirect', async (req, res, next) => {
-  if (req.body.state) {
-    const state = JSON.parse(cryptoProvider.base64Decode(req.body.state));
-
-    // check if csrfToken matches
-    if (state.csrfToken === req.session.csrfToken) {
-      req.session.authCodeRequest.code = req.body.code; // authZ code
-      req.session.authCodeRequest.codeVerifier = req.session.pkceCodes.verifier;
-      // PKCE Code Verifier
-
-      try {
-        const tokenResponse = await msalInstance.acquireTokenByCode(req.session.authCodeRequest);
-        req.session.accessToken = tokenResponse.accessToken;
-        req.session.idToken = tokenResponse.idToken;
-        req.session.account = tokenResponse.account;
-        req.session.isAuthenticated = true;
-
-        res.redirect(state.redirectTo);
-      } catch (error) {
-        next(error);
-      }
-    } else {
-      next(new Error('csrf token does not match'));
-    }
-  } else {
-    next(new Error('state is missing'));
-  }
-});
-
-router.get('/signout', (req, res) => {
-  /**
-     * Construct a logout URI and redirect the user to end the
-     * session with Azure AD. For more information, visit:
-     * https://docs.microsoft.com/azure/active-directory/develop/v2-protocols-oidc#send-a-sign-out-request
-     */
-  const logoutUri = `${msalConfig.auth.authority}/oauth2/v2.0/logout?post_logout_redirect_uri=${POST_LOGOUT_REDIRECT_URI}`;
-
-  req.session.destroy(() => {
-    res.redirect(logoutUri);
+let googleAuth = async (accessToken, email) => {
+  const newUser = new User({
+    email,
+    files: [],
+    accessPolicies: [],
+    fileSnapshots: [],
+    groupSnapshots: [],
+    recentQueries: [],
   });
+  User.exists({ email }).then((exists) => {
+    if (exists) {
+      User.update({ email }, { $set: { files: [] } }).then(() => {});
+    } else {
+      newUser.save().then(() => {});
+    }
+  });
+  getGoogleFiles(accessToken, email);
+} 
+
+/*
+{'clouddrive': "", accessToken, name, email}
+
+  // accessToken, account.name, mail(email) (microsoft)
+
+// accessToken, profileObj.name, profileObj.email (google)
+  
+*/
+router.post('/', async (req, res) => {
+    if (req.session.isAuthenticated) {
+        res.send("Already Authenticated");
+        return;
+    } else {
+        let clouddrive = req.body.clouddrive;
+        let accessToken = req.body.accessToken;
+        let name = req.body.name;
+        let email = req.body.email;
+        req.session.clouddrive = clouddrive;
+        req.session.accessToken = accessToken;
+        req.session.name = name;
+        req.session.email = email;
+        req.session.isAuthenticated = true;
+        googleAuth(req.session.accessToken, req.session.email);
+        res.send({"status": "Success"})
+        return;
+    } 
 });
 
 module.exports = router;
