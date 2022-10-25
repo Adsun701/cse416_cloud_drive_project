@@ -4,11 +4,12 @@ import Header from "../components/header";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import SideBar from "../components/sidebar";
 import DataTable from "../components/datatable";
+import EditPermission from "../components/editpermission";
 import { useStore } from "../store";
-import { gapi } from 'gapi-script';
+import { gapi } from "gapi-script";
 import axios from "axios";
 
 export default function SearchPage() {
@@ -94,38 +95,51 @@ export default function SearchPage() {
     },
   ];
 
-
   gapi.load("client:auth2", () => {
     gapi.client.init({
-      clientId:
-        process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive',
+      clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      scope: "https://www.googleapis.com/auth/drive",
     });
   });
 
   const navigate = useNavigate();
 
   const client = axios.create({
-    baseURL: "http://localhost:8080"
+    baseURL: "http://localhost:8080",
   });
 
   const handleFail = (err) => {
-    console.log('failed operation: ', err);
+    console.log("failed operation: ", err);
   };
 
   return (
     <div>
       <Header />
       <Container fluid className={"no-gutters mx-0 px-0"}>
-        <div class="row no-gutters">
-          <Row noGutters={true}>
-            <Col sm={2}>
-              <SideBar />
-            </Col>
-            <Col sm={10}>
-              <DataTable fileData={fileData} navigate={navigate} client={client} handleFail={handleFail}/>
-            </Col>
-            {editPermission && <div>EDIT PERMISSION HERE</div>}
+        <div className="row no-gutters">
+          <Row className="no-gutters">
+            {editPermission ? (
+              <>
+                <Col sm={1} className="px-0">
+                  <SideBar />
+                </Col>
+                <Col sm={7} className="px-0">
+                  <DataTable fileData={fileData} />
+                </Col>
+                <Col sm={4} className="px-0">
+                  <EditPermission />
+                </Col>
+              </>
+            ) : (
+              <>
+                <Col sm={2} className="px-0">
+                  <SideBar />
+                </Col>
+                <Col sm={10} className="px-0">
+                  <DataTable fileData={fileData} />
+                </Col>
+              </>
+            )}
           </Row>
         </div>
       </Container>
