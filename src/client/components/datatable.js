@@ -9,8 +9,9 @@ import Table from "react-bootstrap/Table";
 import { MdSearch, MdArrowRight, MdArrowDropDown } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
+import { useStore } from "../store";
 
-export default function DataTable() {
+export default function DataTable(props) {
   // function callAPI() {
   //   // TODO: try to pass googleToken into this to actually receive data
   //   fetch("http://localhost:8080/google/last15modifiedfiles" + new URLSearchParams({
@@ -20,71 +21,12 @@ export default function DataTable() {
   // };
 
   // callAPI();
-  const fileData = [
-    {
-      id: 1,
-      selected: false,
-      expanded: false,
-      name: "Folder 1",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
-    },
-    {
-      id: 2,
-      selected: false,
-      expanded: false,
-      name: "Folder 2",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
-    },
-    {
-      id: 3,
-      selected: false,
-      expanded: false,
-      name: "Folder 3",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
-    },
-    {
-      id: 4,
-      selected: false,
-      expanded: false,
-      name: "Folder 4",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)"
-      ],
-    }
-  ];
 
-  const [files, setFiles] = useState(fileData);
+  const [files, setFiles] = useState(props.fileData);
   const [selectAll, setSelectAll] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const setEditPermission = useStore((state) => state.setEditPermission);
 
   // select all files
   let onSelectAll = (e) => {
@@ -160,6 +102,7 @@ export default function DataTable() {
                 borderRadius: "30px",
                 color: "white",
               }}
+              onClick={setEditPermission}
             >
               Edit Permission
             </Button>
