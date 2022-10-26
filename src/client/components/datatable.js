@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
+import ListGroup from "react-bootstrap/ListGroup";
 import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -27,6 +28,10 @@ export default function DataTable(props) {
   const [selectAll, setSelectAll] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
+
+  const recentQueries = [
+    "Recent search query", "Recent search query", "Recent search query", "Recent search query"
+  ]
 
   // select all files
   let onSelectAll = (e) => {
@@ -75,8 +80,8 @@ export default function DataTable(props) {
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
-          <Col style={{ textAlign: "left" }}>
-            <InputGroup className="mb-3">
+          <Col className="mb-3" style={{ textAlign: "left", width: "30em" }}>
+            <InputGroup id="search-file">
               <Form.Control
                 placeholder="Search files"
                 aria-label="Search files"
@@ -86,6 +91,12 @@ export default function DataTable(props) {
                 <MdSearch />
               </InputGroup.Text>
             </InputGroup>
+            <ListGroup id="recent-query">
+              {recentQueries.length > 0 && recentQueries.map((query) => (
+                <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}>{query}</ListGroup.Item>
+              ))}
+              <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}}>Query Builder</ListGroup.Item>
+            </ListGroup>
           </Col>
           <Col style={{ textAlign: "right" }}>
             {files.filter((e) => e.selected).length > 0 && (
