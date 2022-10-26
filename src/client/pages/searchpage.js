@@ -19,6 +19,7 @@ export default function SearchPage() {
   console.log("CONTEXT FIN");
 
   const editPermission = useStore((state) => state.editPermission);
+  const selectedFiles = useStore((state) => state.selectedFiles);
 
   const fileData = [
     {

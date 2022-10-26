@@ -10,3 +10,25 @@ body {
 .dropdown-toggle::after {
   display: none;
 }
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+  border-bottom: 2px solid #3484FD;
+  color: #3484FD;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link {
+  color: gray;
+  border: 1px solid #CFCFCF;
+  background-color: #E9ECEF;
+}
+
+.nav-tabs .nav-link:hover{
+  color: #CFCFCF;
+}
+
+.dropdown-role {
+  background: white; 
+  border-color: #CFCFCF;
+  border-radius: 30px;
+  color: gray;
+}
