@@ -15,8 +15,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
 import { useStore } from "../store";
 
-export default function EditPermission() {
+export default function EditPermission(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
+  const selectedFiles = props.files.filter((e) => e.selected);
 
   return (
     <div style={{ height: "100vh", borderLeft: "1px solid #CFCFCF" }}>
@@ -30,7 +31,7 @@ export default function EditPermission() {
                 onClick={setEditPermission}
               />
             </Container>
-            <FilePermission />
+            <FilePermission selectedFiles={selectedFiles} />
           </Stack>
           <AddPermission />
           <RemovePermission />
@@ -40,87 +41,14 @@ export default function EditPermission() {
   );
 }
 
-function FilePermission() {
-  const permissionData = [
-    {
-      id: 1,
-      name: "Person 1",
-      permission: "Owner",
-      access: "Direct",
-    },
-    {
-      id: 2,
-      name: "Person 2",
-      permission: "Editor",
-      access: "Direct",
-    },
-    {
-      id: 3,
-      name: "Person 3",
-      permission: "Reader",
-      access: "Direct",
-    },
-    {
-      id: 4,
-      name: "Person 4",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-    {
-      id: 5,
-      name: "Person 5",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-    {
-      id: 6,
-      name: "Person 6",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-  ];
-
-  const selectedFilesData = [
-    {
-      id: 1,
-      selected: false,
-      expanded: false,
-      name: "Folder 1",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData,
-    },
-    {
-      id: 2,
-      selected: false,
-      expanded: false,
-      name: "Folder 2",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData,
-    },
-    {
-      id: 3,
-      selected: false,
-      expanded: false,
-      name: "Folder 3",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData,
-    },
-  ];
+function FilePermission(props) {
+  const selectedFiles = props.selectedFiles;
 
   return (
     <Container>
       <Tabs defaultActiveKey="0" className="mb-0" fill>
-        {selectedFilesData.map((file, index) => (
-          <Tab eventKey={index} title={file.name}>
+        {selectedFiles.map((file, index) => (
+          <Tab eventKey={index} title={file.name} key={index}>
             <div
               style={{
                 border: "1px solid #CFCFCF",
@@ -136,8 +64,8 @@ function FilePermission() {
                       Access
                     </td>
                   </tr>
-                  {file.permissions.map((permission) => (
-                    <tr>
+                  {file.permissions.map((permission, index) => (
+                    <tr key={index}>
                       <td>{permission.name}</td>
                       <td>
                         <Dropdown>
@@ -200,7 +128,7 @@ function AddPermission() {
           </Button>
         </Stack>
         <Stack direction="horizontal" gap={2} className="pt-2 pb-2">
-          <text>Permission Type:</text>
+          <>Permission Type:</>
           <Dropdown>
             <Dropdown.Toggle
               style={{

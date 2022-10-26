@@ -22,25 +22,24 @@ export default function DataTable(props) {
 
   // callAPI();
 
-  const [files, setFiles] = useState(props.fileData);
+  const files = props.files;
+  const setFiles = props.setFiles;
   const [selectAll, setSelectAll] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
   // select all files
   let onSelectAll = (e) => {
-    let tempFiles = files;
+    let tempFiles = [...files];
     tempFiles.map((file) => (file.selected = e.target.checked));
 
     setSelectAll(e.target.checked);
     setFiles(tempFiles);
-    setSelectedFiles(files.filter((e) => e.selected));
   };
 
   // update selected file
   let onSelectFile = (e, item) => {
-    let tempFiles = files;
+    let tempFiles = [...files];
     tempFiles.map((file) => {
       if (file.id === item.id) {
         file.selected = e.target.checked;
@@ -53,12 +52,11 @@ export default function DataTable(props) {
 
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
-    setSelectedFiles(files.filter((e) => e.selected));
   };
 
   // expand permissions
   let onExpand = (e, item) => {
-    let tempFiles = files;
+    let tempFiles = [...files];
     tempFiles.map((file) => {
       if (file.id === item.id) {
         file.expanded = !file.expanded;
@@ -71,11 +69,6 @@ export default function DataTable(props) {
 
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
-    setSelectedFiles(files.filter((e) => e.selected));
-  };
-
-  let getSelectedFiles = () => {
-    setSelectedFiles(files.filter((e) => e.selected));
   };
 
   return (
@@ -95,17 +88,19 @@ export default function DataTable(props) {
             </InputGroup>
           </Col>
           <Col style={{ textAlign: "right" }}>
-            <Button
-              style={{
-                background: "#3484FD",
-                borderColor: "#CFCFCF",
-                borderRadius: "30px",
-                color: "white",
-              }}
-              onClick={setEditPermission}
-            >
-              Edit Permission
-            </Button>
+            {files.filter((e) => e.selected).length > 0 && (
+              <Button
+                style={{
+                  background: "#3484FD",
+                  borderColor: "#CFCFCF",
+                  borderRadius: "30px",
+                  color: "white",
+                }}
+                onClick={setEditPermission}
+              >
+                Edit Permission
+              </Button>
+            )}
           </Col>
         </Row>
         <Row style={{ overflow: "auto" }}>
@@ -149,12 +144,20 @@ export default function DataTable(props) {
                   {file.expanded ? (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowDropDown onClick={(e) => onExpand(e, file)} />
+                        <MdArrowDropDown
+                          size={24}
+                          style={{ color: "#CFCFCF" }}
+                          onClick={(e) => onExpand(e, file)}
+                        />
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions.map((permission, index) => (
                           <React.Fragment key={index}>
-                            {permission}
+                            {permission.name +
+                              ", " +
+                              permission.permission +
+                              ", " +
+                              permission.access}
                             <br />
                           </React.Fragment>
                         ))}
@@ -163,14 +166,22 @@ export default function DataTable(props) {
                   ) : (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowRight onClick={(e) => onExpand(e, file)} />
+                        <MdArrowRight
+                          size={24}
+                          style={{ color: "#CFCFCF" }}
+                          onClick={(e) => onExpand(e, file)}
+                        />
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions
                           .slice(0, 2)
                           .map((permission, index) => (
                             <React.Fragment key={index}>
-                              {permission}
+                              {permission.name +
+                                ", " +
+                                permission.permission +
+                                ", " +
+                                permission.access}
                               <br />
                             </React.Fragment>
                           ))}

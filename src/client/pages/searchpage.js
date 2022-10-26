@@ -19,7 +19,45 @@ export default function SearchPage() {
   console.log("CONTEXT FIN");
 
   const editPermission = useStore((state) => state.editPermission);
-  const selectedFiles = useStore((state) => state.selectedFiles);
+
+  const permissionData = [
+    {
+      id: 1,
+      name: "Person 1",
+      permission: "Owner",
+      access: "Direct",
+    },
+    {
+      id: 2,
+      name: "Person 2",
+      permission: "Editor",
+      access: "Direct",
+    },
+    {
+      id: 3,
+      name: "Person 3",
+      permission: "Reader",
+      access: "Direct",
+    },
+    {
+      id: 4,
+      name: "Person 4",
+      permission: "Viewer",
+      access: "Inherited",
+    },
+    {
+      id: 5,
+      name: "Person 5",
+      permission: "Viewer",
+      access: "Inherited",
+    },
+    {
+      id: 6,
+      name: "Person 6",
+      permission: "Viewer",
+      access: "Inherited",
+    },
+  ];
 
   const fileData = [
     {
@@ -31,11 +69,7 @@ export default function SearchPage() {
       type: "Type",
       lastModified: "Last modified",
       created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
+      permissions: permissionData
     },
     {
       id: 2,
@@ -46,11 +80,7 @@ export default function SearchPage() {
       type: "Type",
       lastModified: "Last modified",
       created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
+      permissions: permissionData
     },
     {
       id: 3,
@@ -61,11 +91,7 @@ export default function SearchPage() {
       type: "Type",
       lastModified: "Last modified",
       created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-        "(name_of_person, edit, assigned)",
-      ],
+      permissions: permissionData
     },
     {
       id: 4,
@@ -76,10 +102,7 @@ export default function SearchPage() {
       type: "Type",
       lastModified: "Last modified",
       created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-        "(name_of_person, edit, assigned)",
-      ],
+      permissions: permissionData
     },
     {
       id: 5,
@@ -90,9 +113,7 @@ export default function SearchPage() {
       type: "Type",
       lastModified: "Last modified",
       created: "Created",
-      permissions: [
-        "(name of person/group, current permission, inherited/direct)",
-      ],
+      permissions: permissionData
     },
   ];
 
@@ -113,22 +134,24 @@ export default function SearchPage() {
     console.log("failed operation: ", err);
   };
 
+  const [files, setFiles] = useState(fileData);
+
   return (
     <div>
       <Header />
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <div className="row no-gutters">
           <Row className="no-gutters">
-            {editPermission ? (
+            {editPermission && (files.filter((e) => e.selected).length > 0) ? (
               <>
                 <Col sm={1} className="px-0">
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable fileData={fileData} />
+                  <DataTable files={files} setFiles={setFiles} />
                 </Col>
                 <Col sm={4} className="px-0">
-                  <EditPermission />
+                  <EditPermission files={files} />
                 </Col>
               </>
             ) : (
@@ -137,7 +160,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable fileData={fileData} />
+                  <DataTable files={files} setFiles={setFiles} />
                 </Col>
               </>
             )}

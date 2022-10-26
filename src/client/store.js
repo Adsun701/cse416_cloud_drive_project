@@ -4,5 +4,5 @@ export const useStore = create((set) => ({
   editPermission: false,
   selectedFiles: [],
   setEditPermission: () => set((state) => ({ editPermission: !state.editPermission })),
-  setSelectedFiles: () => set((state) => ({ selectedFiles: state.selectedFiles }))
+  setSelectedFiles: (files) => set((state) => ({ selectedFiles: files }))
 }));
