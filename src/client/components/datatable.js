@@ -28,6 +28,7 @@ export default function DataTable(props) {
   const [selectAll, setSelectAll] = useState(false);
   const [cursorOverSearchButton, setCursorOverSearchButton] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [recentQueriesVisible, setRecentQueriesVisible] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -102,7 +103,8 @@ export default function DataTable(props) {
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
-          <Col className="mb-3" style={{ textAlign: "left", width: "30em" }}>
+          <Col className="mb-3" style={{ textAlign: "left", width: "30em" }}
+            onMouseLeave={() => setRecentQueriesVisible(false)}>
             <InputGroup id="search-file">
               <Form.Control
                 placeholder="Search files"
@@ -111,6 +113,7 @@ export default function DataTable(props) {
                 value={searchText}
                 onChange={handleTextChange}
                 onKeyDown={handleKeyDown}
+                onClick={() => setRecentQueriesVisible(true)}
                 type="text"
               />
               <InputGroup.Text id="basic-addon2"
@@ -122,7 +125,7 @@ export default function DataTable(props) {
                 <MdSearch/>
               </InputGroup.Text>
             </InputGroup>
-            <ListGroup id="recent-query">
+            <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
               {recentQueries.length > 0 && recentQueries.map((query) => (
                 <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}>{query}</ListGroup.Item>
               ))}
