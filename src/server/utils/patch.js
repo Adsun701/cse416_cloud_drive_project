@@ -6,9 +6,6 @@ async function fetchpatch(endpoint, accessToken, body) {
       Authorization: `Bearer ${accessToken}`,
     },
   };
-
-  console.log(`request made to ${endpoint} at: ${new Date().toString()}`);
-
   try {
     const response = await axios.patch(endpoint, body, options);
     return await response.data;

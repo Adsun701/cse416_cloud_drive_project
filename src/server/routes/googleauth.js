@@ -503,7 +503,7 @@ router.post('/updateaccesspolicy/:requirement/ar', (req, res) => {
   const newar = req.body.ar;
   AccessPolicy.update({ requirement }, { $push: { ar: newar } })
     .then(() => {
-      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      const redirecturl = `/google/viewaccesspolicy?requirement=${requirement}`;
       res.redirect(redirecturl);
     });
 });
@@ -513,7 +513,7 @@ router.post('/updateaccesspolicy/:requirement/dr', (req, res) => {
   const newdr = req.body.dr;
   AccessPolicy.update({ requirement }, { $push: { dr: newdr } })
     .then(() => {
-      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      const redirecturl = `/google/viewaccesspolicy?requirement=${requirement}`;
       res.redirect(redirecturl);
     });
 });
@@ -523,7 +523,7 @@ router.post('/updateaccesspolicy/:requirement/aw', (req, res) => {
   const newaw = req.body.aw;
   AccessPolicy.update({ requirement }, { $push: { aw: newaw } })
     .then(() => {
-      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      const redirecturl = `/google/viewaccesspolicy?requirement=${requirement}`;
       res.redirect(redirecturl);
     });
 });
@@ -533,7 +533,7 @@ router.post('/updateaccesspolicy/:requirement/dw', (req, res) => {
   const newdw = req.body.dw;
   AccessPolicy.update({ requirement }, { $push: { dw: newdw } })
     .then(() => {
-      const redirecturl = `/users/microsoft/viewaccesspolicy?requirement=${requirement}`;
+      const redirecturl = `/google/viewaccesspolicy?requirement=${requirement}`;
       res.redirect(redirecturl);
     });
 });

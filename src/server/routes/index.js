@@ -1,18 +1,18 @@
 const express = require('express');
-// const { route } = require('./users');
+const cloudDriveAPI = require('../services/api');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.render('index', {
-    title: 'Cloud Drive Manager',
-    isAuthenticated: req.session.isAuthenticated,
-    username: req.session.account?.username,
-  });
-});
+function isAuthenticated(req, res, next) {
+  if (!req.session.isAuthenticated) {
+    res.send({"error": "Not Authenticated"});
+  }
+  next();
+}
 
-router.get('/goog', (req, res) => {
-  res.render('google');
-});
+router.get('/filesnapshot', isAuthenticated, async (req, res) => {
+  let snapshot = cloudDriveAPI.fileSnapshot(req.session.clouddrive, req.session.accessToken, req.session.email);
+  res.send(snapshot);
+}); 
 
 module.exports = router;
