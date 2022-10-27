@@ -48,7 +48,11 @@ export default function LoginPage() {
       // set a state here to change the page upon load
       setContext(["google", ""]);
     });
-    navigate('search');
+    navigate('search',
+      {state: { accessToken: res.accessToken,
+                name: res.profileObj.name,
+                email: res.profileObj.email } }
+    );
   };
 
   const handleMicrosoft = async (err, data, msal) => {
@@ -65,7 +69,10 @@ export default function LoginPage() {
       // set a state here to change the page upon load
 
     });
-    navigate('search');
+    navigate('search',
+      {state: { accessToken: data.accessToken,
+                name: data.account.name,
+                email: data.mail } });
   };
 
   return (

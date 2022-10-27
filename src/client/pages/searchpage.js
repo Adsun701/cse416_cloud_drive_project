@@ -4,7 +4,7 @@ import Header from "../components/header";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SideBar from "../components/sidebar";
 import DataTable from "../components/datatable";
 import EditPermission from "../components/editpermission";
@@ -13,10 +13,28 @@ import { gapi } from "gapi-script";
 import axios from "axios";
 
 export default function SearchPage() {
+  gapi.load("client:auth2", () => {
+    gapi.client.init({
+      clientId:
+        process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive',
+    });
+  });
+  
+  const navigate = useNavigate();
+
+  const client = axios.create({
+    baseURL: "http://localhost:8080"
+  });
+
+
   const [context, setContext] = useContext(Context);
   console.log("CONTEXT");
   console.log(context);
   console.log("CONTEXT FIN");
+
+  const { state } = useLocation();
+  const { accessToken, name, email } = state;
 
   const editPermission = useStore((state) => state.editPermission);
 
@@ -117,19 +135,6 @@ export default function SearchPage() {
     },
   ];
 
-  gapi.load("client:auth2", () => {
-    gapi.client.init({
-      clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      scope: "https://www.googleapis.com/auth/drive",
-    });
-  });
-
-  const navigate = useNavigate();
-
-  const client = axios.create({
-    baseURL: "http://localhost:8080",
-  });
-
   const handleFail = (err) => {
     console.log("failed operation: ", err);
   };
@@ -148,7 +153,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} />
+                  <DataTable files={files} setFiles={setFiles} state={state}/>
                 </Col>
                 <Col sm={4} className="px-0">
                   <EditPermission files={files} />
@@ -160,7 +165,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} />
+                  <DataTable files={files} setFiles={setFiles} state={state}/>
                 </Col>
               </>
             )}

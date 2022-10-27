@@ -8,20 +8,30 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
 import { MdSearch, MdArrowRight, MdArrowDropDown } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
 import { useStore } from "../store";
+import { gapi } from "gapi-script";
+import axios from "axios";
 
 export default function DataTable(props) {
-  // function callAPI() {
-  //   // TODO: try to pass googleToken into this to actually receive data
-  //   fetch("http://localhost:8080/google/last15modifiedfiles" + new URLSearchParams({
-  //   }))
-  //     .then(res => res.text())
-  //     .then(text => console.log(text));
-  // };
+  gapi.load("client:auth2", () => {
+    gapi.client.init({
+      clientId:
+        process.env.REACT_APP_GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive',
+    });
+  });
+  
+  const navigate = useNavigate();
 
-  // callAPI();
+  const client = axios.create({
+    baseURL: "http://localhost:8080"
+  });
+
+  const state = props.state;
+  const { accessToken, name, email } = state;
 
   const files = props.files;
   const setFiles = props.setFiles;
@@ -89,6 +99,13 @@ export default function DataTable(props) {
 
   let handleSearch = (s) => {
     console.log("Search clicked! Search string is " + s);
+    console.log(accessToken);
+    client.post('/google/searchquery', {
+      query: s,
+      googleToken: accessToken,
+    }).then((res) => {
+      console.log(res);
+    });
   }
 
   let handleCursorOverSearchButton = () => {
