@@ -27,6 +27,7 @@ export default function DataTable(props) {
   const setFiles = props.setFiles;
   const [selectAll, setSelectAll] = useState(false);
   const [cursorOverSearchButton, setCursorOverSearchButton] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -77,8 +78,16 @@ export default function DataTable(props) {
     setFiles(tempFiles);
   };
 
-  let handleSearch = () => {
-    console.log("Search clicked!");
+  let handleTextChange = () => {
+    if (event && event.target && event.target.value != null) setSearchText(event.target.value);
+  }
+
+  let handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSearch(searchText);
+  }
+
+  let handleSearch = (s) => {
+    console.log("Search clicked! Search string is " + s);
   }
 
   let handleCursorOverSearchButton = () => {
@@ -99,13 +108,17 @@ export default function DataTable(props) {
                 placeholder="Search files"
                 aria-label="Search files"
                 aria-describedby="basic-addon2"
+                value={searchText}
+                onChange={handleTextChange}
+                onKeyDown={handleKeyDown}
+                type="text"
               />
               <InputGroup.Text id="basic-addon2"
                 style={{
                   backgroundColor: cursorOverSearchButton ? 'salmon' : '',
                   color: cursorOverSearchButton ? 'white' : '',
                 }}
-                onClick={handleSearch} onMouseOver={handleCursorOverSearchButton} onMouseLeave={handleCursorLeaveSearchButton}>
+                onClick={() => handleSearch(searchText)} onMouseOver={handleCursorOverSearchButton} onMouseLeave={handleCursorLeaveSearchButton}>
                 <MdSearch/>
               </InputGroup.Text>
             </InputGroup>
