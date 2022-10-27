@@ -26,6 +26,7 @@ export default function DataTable(props) {
   const files = props.files;
   const setFiles = props.setFiles;
   const [selectAll, setSelectAll] = useState(false);
+  const [cursorOverSearchButton, setCursorOverSearchButton] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -76,6 +77,18 @@ export default function DataTable(props) {
     setFiles(tempFiles);
   };
 
+  let handleSearch = () => {
+    console.log("Search clicked!");
+  }
+
+  let handleCursorOverSearchButton = () => {
+    setCursorOverSearchButton(true);
+  }
+
+  let handleCursorLeaveSearchButton = () => {
+    setCursorOverSearchButton(false);
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -87,8 +100,13 @@ export default function DataTable(props) {
                 aria-label="Search files"
                 aria-describedby="basic-addon2"
               />
-              <InputGroup.Text id="basic-addon2">
-                <MdSearch />
+              <InputGroup.Text id="basic-addon2"
+                style={{
+                  backgroundColor: cursorOverSearchButton ? 'salmon' : '',
+                  color: cursorOverSearchButton ? 'white' : '',
+                }}
+                onClick={handleSearch} onMouseOver={handleCursorOverSearchButton} onMouseLeave={handleCursorLeaveSearchButton}>
+                <MdSearch/>
               </InputGroup.Text>
             </InputGroup>
             <ListGroup id="recent-query">
