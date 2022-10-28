@@ -11,8 +11,9 @@ function isAuthenticated(req, res, next) {
 }
 
 router.get('/filesnapshot', isAuthenticated, async (req, res) => {
-  let snapshot = cloudDriveAPI.fileSnapshot(req.session.clouddrive, req.session.accessToken, req.session.email);
+  const snapshot = await cloudDriveAPI
+    .fileSnapshot(req.session.clouddrive, req.session.accessToken, req.session.email);
   res.send(snapshot);
-}); 
+});
 
 module.exports = router;

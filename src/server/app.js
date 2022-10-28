@@ -35,7 +35,10 @@ app.use(session({
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000'],
+  credentials: true,
+}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(cookieParser());

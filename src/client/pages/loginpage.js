@@ -29,7 +29,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const client = axios.create({
-    baseURL: "http://localhost:8080"
+    baseURL: "http://localhost:8080",
+    withCredentials: true,
+    credentials: 'include',
   });
 
   const handleFail = (err) => {
@@ -39,6 +41,7 @@ export default function LoginPage() {
   const handleGoogle = async (res) => {
     console.log("GOOGLE");
     console.log(res);
+    setContext(["google", ""]);
     client.post('/auth', {
       clouddrive: "google",
       accessToken: res.accessToken,
@@ -46,7 +49,6 @@ export default function LoginPage() {
       email: res.profileObj.email
     }).then((response) => {
       // set a state here to change the page upon load
-      setContext(["google", ""]);
     });
     navigate('search');
   };
@@ -63,7 +65,6 @@ export default function LoginPage() {
       email: data.mail
     }).then((response) => {
       // set a state here to change the page upon load
-
     });
     navigate('search');
   };

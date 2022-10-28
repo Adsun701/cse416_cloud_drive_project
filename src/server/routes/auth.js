@@ -16,7 +16,9 @@ router.post('/', async (req, res) => {
     req.session.name = name;
     req.session.email = email;
     req.session.isAuthenticated = true;
+    req.session.save();
     cloudDriveAPI.auth(clouddrive, accessToken, email);
+    res.status(200).send();
   }
 });
 
