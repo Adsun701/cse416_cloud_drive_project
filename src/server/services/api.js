@@ -122,6 +122,9 @@ async function getRecentQueries(email) {
   return recentQueries;
 }
 
+// getAllFiles ()
+// return a list of all files (with their metadata from db)
+
 module.exports = {
   auth,
   fileSnapshot,

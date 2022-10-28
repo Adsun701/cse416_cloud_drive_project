@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from 'react-google-login';
 import { gapi } from 'gapi-script';
 import { MicrosoftLogin } from "react-microsoft-login";
-import axios from "axios";
+import AxiosClient from "../AxiosClient";
 
 export default function LoginPage() {
 
@@ -28,12 +28,6 @@ export default function LoginPage() {
   
   const navigate = useNavigate();
 
-  const client = axios.create({
-    baseURL: "http://localhost:8080",
-    withCredentials: true,
-    credentials: 'include',
-  });
-
   const handleFail = (err) => {
     console.log('failed login', err);
   };
@@ -42,7 +36,7 @@ export default function LoginPage() {
     console.log("GOOGLE");
     console.log(res);
     setContext(["google", ""]);
-    client.post('/auth', {
+    AxiosClient.post('/auth', {
       clouddrive: "google",
       accessToken: res.accessToken,
       name: res.profileObj.name,
@@ -62,7 +56,7 @@ export default function LoginPage() {
     console.log(data.accessToken);
     setContext(["microsoft", msal]);
 
-    client.post('/auth', {
+    AxiosClient.post('/auth', {
       clouddrive: "microsoft",
       accessToken: data.accessToken,
       name: data.account.name,

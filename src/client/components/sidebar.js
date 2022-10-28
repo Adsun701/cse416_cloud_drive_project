@@ -5,9 +5,14 @@ import Dropdown from "react-bootstrap/Dropdown";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
+import AxiosClient from "../AxiosClient";
 
 export default function SideBar() {
   const navigate = useNavigate();
+
+  let handleFileSnapshot = () => {
+    AxiosClient.get("/filesnapshot");
+  };
 
   const handleSearch = () => {
     navigate("/search");
@@ -37,7 +42,7 @@ export default function SideBar() {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item>File Snapshot</Dropdown.Item>
+            <Dropdown.Item onClick={handleFileSnapshot}>File Snapshot</Dropdown.Item>
             <Dropdown.Item>Group Snapshot</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>

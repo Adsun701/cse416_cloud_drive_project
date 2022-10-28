@@ -283,8 +283,9 @@ router.get('/file/:id', async (req, res) => {
   const fileid = req.params.id;
   const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.list({
-    access_token: req.session.googleToken,
+    access_token: req.session.accessToken,
     fileId: fileid,
+    fields: '*',
   });
   res.send(result.data);
 });
@@ -308,7 +309,7 @@ router.post('/addfilepermission', async (req, res) => {
   for (let i = 0; i < files.length; i += 1) {
     // eslint-disable-next-line no-await-in-loop
     const result = await drive.permissions.create({
-      access_token: req.session.googleToken,
+      access_token: req.session.accessToken,
       fileId: files[i],
       resource: body,
       emailMessage: 'Hello!',
