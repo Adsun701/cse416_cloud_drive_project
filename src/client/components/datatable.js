@@ -16,22 +16,19 @@ import { gapi } from "gapi-script";
 import axios from "axios";
 
 export default function DataTable(props) {
-  gapi.load("client:auth2", () => {
+  /*gapi.load("client:auth2", () => {
     gapi.client.init({
       clientId:
         process.env.REACT_APP_GOOGLE_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/drive',
     });
-  });
+  });*/
   
   const navigate = useNavigate();
 
   const client = axios.create({
     baseURL: "http://localhost:8080"
   });
-
-  const state = props.state;
-  const { accessToken, name, email } = state;
 
   const files = props.files;
   const setFiles = props.setFiles;
@@ -98,11 +95,8 @@ export default function DataTable(props) {
   }
 
   let handleSearch = (s) => {
-    console.log("Search clicked! Search string is " + s);
-    console.log(accessToken);
     client.post('/google/searchquery', {
-      query: s,
-      googleToken: accessToken,
+      query: s
     }).then((res) => {
       console.log(res);
     });

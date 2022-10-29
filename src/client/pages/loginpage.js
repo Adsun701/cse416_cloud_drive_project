@@ -44,11 +44,7 @@ export default function LoginPage() {
     }).then((response) => {
       // set a state here to change the page upon load
     });
-    navigate('search',
-      {state: { accessToken: res.accessToken,
-                name: res.profileObj.name,
-                email: res.profileObj.email } }
-    );
+    navigate('search');
   };
 
   const handleMicrosoft = async (err, data, msal) => {
@@ -64,10 +60,7 @@ export default function LoginPage() {
     }).then((response) => {
       // set a state here to change the page upon load
     });
-    navigate('search',
-      {state: { accessToken: data.accessToken,
-                name: data.account.name,
-                email: data.mail } });
+    navigate('search');
   };
 
   return (

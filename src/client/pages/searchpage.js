@@ -13,13 +13,14 @@ import { gapi } from "gapi-script";
 import axios from "axios";
 
 export default function SearchPage() {
+  /*
   gapi.load("client:auth2", () => {
     gapi.client.init({
       clientId:
         process.env.REACT_APP_GOOGLE_CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/drive',
     });
-  });
+  });*/
   
   const navigate = useNavigate();
 
@@ -32,9 +33,6 @@ export default function SearchPage() {
   console.log("CONTEXT");
   console.log(context);
   console.log("CONTEXT FIN");
-
-  const { state } = useLocation();
-  const { accessToken, name, email } = state;
 
   const editPermission = useStore((state) => state.editPermission);
 
@@ -153,7 +151,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} state={state}/>
+                  <DataTable files={files} setFiles={setFiles}/>
                 </Col>
                 <Col sm={4} className="px-0">
                   <EditPermission files={files} />
@@ -165,7 +163,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} state={state}/>
+                  <DataTable files={files} setFiles={setFiles}/>
                 </Col>
               </>
             )}

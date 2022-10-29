@@ -373,7 +373,8 @@ router.get('/search', async (req, res) => {
 });
 
 router.post('/searchquery', async (req, res, next) => {
-  if (!req.body.googleToken) {
+  console.log(req);
+  if (!req.session.accessToken) {
     return res.send('nope');
   }
 
@@ -381,7 +382,7 @@ router.post('/searchquery', async (req, res, next) => {
     const user = await getUserDetails(Oauth2Client);
     const { email } = user.data;
 
-    const { query, googleToken } = req.body;
+    const { query } = req.body;
 
     const searchQuery = new SearchQuery({
       query,
@@ -389,7 +390,7 @@ router.post('/searchquery', async (req, res, next) => {
     searchQuery.save().then(() => {});
     User.update({ email }, { $push: { recentQueries: searchQuery } })
       .then(() => {});
-      const result = await getFiles(searchQuery, googleToken);
+      const result = await getFiles(searchQuery, req.session.accessToken);
     res.send(result);
   } catch (error) {
     next(error);
