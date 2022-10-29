@@ -184,12 +184,37 @@ async function getFiles(searchQuery, token) {
   searchString = queryArray[0]; // string
   operators = queryArray[1]; // array of strings containing "operation:value"
 
+  let fullString = `name contains '${searchString}'`;
+
+  let owners = [];
+  let ownerString = "";
+
+  // iterate through operators
+  for (let i = 0; i < operators.length; i++) {
+    let opPair = operators[i];
+    let op = opPair.substring(0, opPair.indexOf(":"))
+    let val = opPair.substring(opPair.indexOf(":") + 1);
+
+    // case: op is equal to 'creator' or 'owner'
+    if (op == 'creator' || op == 'owner') {
+      if (val.length > 0) owners.push(val);
+    }
+  }
+  
+  // check if any owners or creators were specified
+  for (let i = 0; i < owners.length; i++) {
+    ownerString = ownerString + `'${owners[i]}' in owners`;
+    if (i < owners.length - 1) ownerString = ownerString + " and ";
+  }
+
+  if (ownerString.length > 0) fullString = fullString + " and " + ownerString;
+
   const drive = google.drive({ version: 'v3' });
   const files = [];
   let nextPage = null;
   const result = await drive.files.list({
     fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
-    q: `name contains '${searchString}'`,
+    q: fullString,
     access_token: token,
   });
   nextPage = result.data.nextPageToken;
@@ -203,7 +228,7 @@ async function getFiles(searchQuery, token) {
     // eslint-disable-next-line no-await-in-loop
     const res = await drive.files.list({
       fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
-      q: `name contains '${searchString}'`,
+      q: fullString,
       access_token: token,
       pageToken: nextPage,
     });

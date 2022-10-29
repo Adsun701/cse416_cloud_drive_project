@@ -113,8 +113,10 @@ export default function DataTable(props) {
 
         // get owner names
         let ownerDisplayNames = [];
-        for (let j = 0; j < object.owners.length; j++) {
-          ownerDisplayNames.push(object.owners[j].displayName);
+        if (object.owners) {
+          for (let j = 0; j < object.owners.length; j++) {
+            ownerDisplayNames.push(object.owners[j].displayName);
+          }
         }
 
         // get permission data
