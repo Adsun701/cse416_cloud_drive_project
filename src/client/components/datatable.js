@@ -26,9 +26,7 @@ export default function DataTable(props) {
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
-  const recentQueries = [
-    "Recent search query", "Recent search query", "Recent search query", "Recent search query"
-  ]
+  const [recentQueries, setRecentQueries] = useState([]);
 
   // select all files
   let onSelectAll = (e) => {
@@ -82,10 +80,74 @@ export default function DataTable(props) {
   }
 
   let handleSearch = (s) => {
+    // update recentQueries
+    let newRecentQueries = [];
+    newRecentQueries.push(s);
+    for (let i = 0; i < recentQueries.length; i++) {
+      newRecentQueries.push(recentQueries[i]);
+    }
+    setRecentQueries(newRecentQueries);
+
+    // post to route
     AxiosClient.post('/google/searchquery', {
       query: s
     }).then((res) => {
-      console.log(res);
+      // get data
+      let data = res.data;
+
+      // if data is null or data length is 0 simply set files to empty list
+      if (data == null || data.length == 0) {
+        setFiles([]);
+        return;
+      }
+
+      // initialize variables
+      let newFiles = [];
+      let file = null;
+      let object = null;
+
+      // iterate through each file to add to list
+      for (let i = 0; i < data.length; i++) {
+        object = data[i];
+        let permissionsArray = [];
+
+        // get owner names
+        let ownerDisplayNames = [];
+        for (let j = 0; j < object.owners.length; j++) {
+          ownerDisplayNames.push(object.owners[j].displayName);
+        }
+
+        // get permission data
+        if (object.permissions) {
+          for (let j = 0; j < object.permissions.length; j++) {
+            let entry = {
+              id: j + 1,
+              name: object.permissions[j].displayName,
+              permission: object.permissions[j].role,
+              access: object.permissions[j].type
+            };
+            permissionsArray.push(entry);
+            j++;
+          }
+        }
+
+        // initialize and push file to array.
+        file = {
+          id: i + 1,
+          selected: false,
+          expanded: false,
+          name: object.name,
+          owner: ownerDisplayNames.join(",\n"),
+          type: object.mimeType,
+          lastModified: (new Date(object.modifiedTime)).toLocaleString(),
+          created: (new Date(object.createdTime)).toLocaleString(),
+          permissions: permissionsArray
+        };
+        newFiles.push(file);
+      }
+
+      // set new files.
+      setFiles(newFiles);
     });
   }
 

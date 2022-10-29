@@ -188,6 +188,7 @@ async function getFiles(searchQuery, token) {
   const files = [];
   let nextPage = null;
   const result = await drive.files.list({
+    fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
     q: `name contains '${searchString}'`,
     access_token: token,
   });
@@ -201,6 +202,7 @@ async function getFiles(searchQuery, token) {
   while (nextPage) {
     // eslint-disable-next-line no-await-in-loop
     const res = await drive.files.list({
+      fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
       q: `name contains '${searchString}'`,
       access_token: token,
       pageToken: nextPage,
