@@ -114,6 +114,7 @@ async function getAllFiles(token) {
   const files = [];
   let nextPage = null;
   const result = await drive.files.list({
+    fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
     access_token: token,
   });
   nextPage = result.data.nextPageToken;
@@ -126,6 +127,7 @@ async function getAllFiles(token) {
   while (nextPage) {
     // eslint-disable-next-line no-await-in-loop
     const res = await drive.files.list({
+      fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
       access_token: token,
       pageToken: nextPage,
     });
@@ -138,6 +140,41 @@ async function getAllFiles(token) {
     // files.push(result.data.files);
   }
   return files;
+}
+
+async function getDriveID(driveName, token) {
+  const drive = google.drive({ version: 'v3' });
+  const drives = [];
+  let nextPage = null;
+  const result = await drive.drives.list({
+    q: `name = '${driveName}'`,
+    access_token: token,
+  });
+  nextPage = result.data.nextPageToken;
+  // console.log(nextPage);
+  let f = result.data.drives;
+  f.forEach((element) => {
+    drives.push(element);
+  });
+  // files.push(result.data.files);
+  while (nextPage) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await drive.drives.list({
+      q: `name = '${driveName}'`,
+      access_token: token,
+    });
+    // console.log(nextPage);
+    nextPage = res.data.nextPageToken;
+    f = res.data.drives;
+    f.forEach((element) => {
+      drives.push(element);
+    });
+    // files.push(result.data.files);
+  }
+  for (let i = 0; i < drives.length; i++) {
+    if (driveName == drives[i].name) return drives[i].id;
+  }
+  return "";
 }
 
 function sortQuery(query) {
@@ -195,11 +232,20 @@ async function getFiles(searchQuery, token) {
   let writers = [];
   let writerString = "";
 
+  let drives = [];
+  let driveID = "";
+  let searchInSharedDrive = false;
+
   // iterate through operators
   for (let i = 0; i < operators.length; i++) {
     let opPair = operators[i];
     let op = opPair.substring(0, opPair.indexOf(":"))
     let val = opPair.substring(opPair.indexOf(":") + 1);
+
+    // case: op is equal to 'drive'
+    if (op == 'drive') {
+      if (val.length > 0) drives.push(val);
+    }
 
     // case: op is equal to 'creator' or 'owner'
     if (op == 'creator' || op == 'owner') {
@@ -214,6 +260,15 @@ async function getFiles(searchQuery, token) {
     // case: op is equal to 'writer'
     if (op == 'writer') {
       if (val.length > 0) writers.push(val);
+    }
+  }
+
+  // check if any drives were specified
+  if (drives.length > 0) {
+    if (drives[0] != "MyDrive") {
+      searchInSharedDrive = true;
+      driveID = await getDriveID(drives[0], token);
+      if (driveID == "") return [];
     }
   }
   
@@ -243,16 +298,24 @@ async function getFiles(searchQuery, token) {
     else writerString = writerString + ")";
   }
   if (writerString.length > 0) fullString = fullString + " and " + writerString;
+
   console.log(fullString);
 
   const drive = google.drive({ version: 'v3' });
   const files = [];
   let nextPage = null;
-  const result = await drive.files.list({
-    fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
-    q: fullString,
-    access_token: token,
-  });
+  const result = await drive.files.list((searchInSharedDrive ?
+    {
+      driveId: driveID,
+      fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
+      q: fullString,
+      access_token: token,
+    } :
+    {
+      fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
+      q: fullString,
+      access_token: token,
+    }));
   nextPage = result.data.nextPageToken;
   // console.log(nextPage);
   let f = result.data.files;
@@ -262,12 +325,19 @@ async function getFiles(searchQuery, token) {
   // files.push(result.data.files);
   while (nextPage) {
     // eslint-disable-next-line no-await-in-loop
-    const res = await drive.files.list({
-      fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
-      q: fullString,
-      access_token: token,
-      pageToken: nextPage,
-    });
+    if (searchInSharedDrive) {}
+    const res = await drive.files.list((searchInSharedDrive ?
+      {
+        driveId: driveID,
+        fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
+        q: fullString,
+        access_token: token,
+      } :
+      {
+        fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
+        q: fullString,
+        access_token: token,
+      }));
     // console.log(nextPage);
     nextPage = res.data.nextPageToken;
     f = res.data.files;
