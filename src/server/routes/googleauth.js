@@ -189,6 +189,12 @@ async function getFiles(searchQuery, token) {
   let owners = [];
   let ownerString = "";
 
+  let readers = [];
+  let readerString = "";
+
+  let writers = [];
+  let writerString = "";
+
   // iterate through operators
   for (let i = 0; i < operators.length; i++) {
     let opPair = operators[i];
@@ -199,15 +205,45 @@ async function getFiles(searchQuery, token) {
     if (op == 'creator' || op == 'owner') {
       if (val.length > 0) owners.push(val);
     }
+
+    // case: op is equal to 'reader'
+    if (op == 'reader') {
+      if (val.length > 0) readers.push(val);
+    }
+
+    // case: op is equal to 'writer'
+    if (op == 'writer') {
+      if (val.length > 0) writers.push(val);
+    }
   }
   
   // check if any owners or creators were specified
   for (let i = 0; i < owners.length; i++) {
+    if (i == 0) ownerString = ownerString + "(";
     ownerString = ownerString + `'${owners[i]}' in owners`;
-    if (i < owners.length - 1) ownerString = ownerString + " and ";
+    if (i < owners.length - 1) ownerString = ownerString + " or ";
+    else ownerString = ownerString + ")";
   }
-
   if (ownerString.length > 0) fullString = fullString + " and " + ownerString;
+
+  // check if any readers were specified
+  for (let i = 0; i < readers.length; i++) {
+    if (i == 0) readerString = readerString + "(";
+    readerString = readerString + `'${readers[i]}' in readers`;
+    if (i < readers.length - 1) readerString = readerString + " or ";
+    else readerString = readerString + ")";
+  }
+  if (readerString.length > 0) fullString = fullString + " and " + readerString;
+  
+  // check if any writers were specified
+  for (let i = 0; i < writers.length; i++) {
+    if (i == 0) writerString = writerString + "(";
+    writerString = writerString + `'${writers[i]}' in writers`;
+    if (i < writers.length - 1) writerString = writerString + " or ";
+    else writerString = writerString + ")";
+  }
+  if (writerString.length > 0) fullString = fullString + " and " + writerString;
+  console.log(fullString);
 
   const drive = google.drive({ version: 'v3' });
   const files = [];
