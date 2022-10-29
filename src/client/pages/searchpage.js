@@ -9,25 +9,9 @@ import SideBar from "../components/sidebar";
 import DataTable from "../components/datatable";
 import EditPermission from "../components/editpermission";
 import { useStore } from "../store";
-import { gapi } from "gapi-script";
-import axios from "axios";
 
 export default function SearchPage() {
-  /*
-  gapi.load("client:auth2", () => {
-    gapi.client.init({
-      clientId:
-        process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive',
-    });
-  });*/
-  
   const navigate = useNavigate();
-
-  const client = axios.create({
-    baseURL: "http://localhost:8080"
-  });
-
 
   const [context, setContext] = useContext(Context);
   console.log("CONTEXT");

@@ -373,7 +373,6 @@ router.get('/search', async (req, res) => {
 });
 
 router.post('/searchquery', async (req, res, next) => {
-  console.log(req);
   if (!req.session.accessToken) {
     return res.send('nope');
   }
