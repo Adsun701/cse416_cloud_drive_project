@@ -80,11 +80,12 @@ export default function DataTable(props) {
   }
 
   let handleSearch = (s) => {
+    s = s?.trim();
     // update recentQueries
     let newRecentQueries = [];
     newRecentQueries.push(s);
     for (let i = 0; i < recentQueries.length; i++) {
-      newRecentQueries.push(recentQueries[i]);
+      if (recentQueries[i] != s) newRecentQueries.push(recentQueries[i]);
     }
     setRecentQueries(newRecentQueries);
 
@@ -161,6 +162,10 @@ export default function DataTable(props) {
     setCursorOverSearchButton(false);
   }
 
+  let handleClickQuery = (query) => {
+    handleSearch(query);
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -189,7 +194,8 @@ export default function DataTable(props) {
             </InputGroup>
             <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
               {recentQueries.length > 0 && recentQueries.map((query) => (
-                <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}>{query}</ListGroup.Item>
+                <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}
+                onClick={() => handleClickQuery(query)}>{query}</ListGroup.Item>
               ))}
               <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}}>Query Builder</ListGroup.Item>
             </ListGroup>
