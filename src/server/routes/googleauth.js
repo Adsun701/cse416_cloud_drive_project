@@ -378,8 +378,7 @@ router.post('/searchquery', async (req, res, next) => {
   }
 
   try {
-    const user = await getUserDetails(Oauth2Client);
-    const { email } = user.data;
+    const email = req.session.email;
 
     const { query } = req.body;
 
