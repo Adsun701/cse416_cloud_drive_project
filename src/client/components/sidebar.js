@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useContext } from "react";
+import { Context } from "../Context";
 import Nav from "react-bootstrap/Nav";
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
 import AxiosClient from "../AxiosClient";
 
 export default function SideBar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [context, setContext] = useContext(Context);
 
   let handleFileSnapshot = () => {
     AxiosClient.get("/filesnapshot");
@@ -49,13 +52,13 @@ export default function SideBar() {
 
           <Dropdown.Menu>
             <Dropdown.Item onClick={handleFileSnapshot}>File Snapshot</Dropdown.Item>
-            <Dropdown.Item onClick={handleGroupSnapshot}>Group Snapshot</Dropdown.Item>
+            <Dropdown.Item hidden={context[0] === "google" ? false : true} onClick={handleGroupSnapshot}>Group Snapshot</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
-        <Nav.Link onClick={handleSearch} style={{ color: "#3A3A3A" }}>
+        <Nav.Link hidden={location.pathname === "/search" ? true : false} onClick={handleSearch} style={{ color: "#3A3A3A" }}>
           Search
         </Nav.Link>
-        <Nav.Link onClick={handleSnapshot} style={{ color: "#3A3A3A" }}>
+        <Nav.Link hidden={location.pathname === "/snapshot" ? true : false} onClick={handleSnapshot} style={{ color: "#3A3A3A" }}>
           Snapshot
         </Nav.Link>
       </Nav>
