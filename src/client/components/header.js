@@ -8,6 +8,7 @@ import Navbar from 'react-bootstrap/Navbar';
 import Dropdown from 'react-bootstrap/Dropdown';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../app.css';
+import AxiosClient from "../AxiosClient";
 
 export default function Header() {
   const [context, setContext] = useContext(Context);
@@ -15,9 +16,10 @@ export default function Header() {
 
   let handleLogout = () => {
     if (context[0] === "google") {
-      console.log("WE SIGNED OUT OF GOOGLE SUCCESSFULLY");
+      AxiosClient.post('/logout');
       navigate('/');
     } else if (context[0] === "microsoft") {
+      AxiosClient.post('/logout');
       context[1].logout();
     } else {
 

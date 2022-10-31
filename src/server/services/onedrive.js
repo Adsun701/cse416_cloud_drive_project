@@ -1,6 +1,7 @@
 const fetch = require('../utils/fetch');
 const fetchpost = require('../utils/post');
 const fetchpatch = require('../utils/patch');
+const fetchdelete = require('../utils/delete');
 const { GRAPH_API_ENDPOINT, GRAPH_ME_ENDPOINT } = require('../authConfig');
 
 const User = require('../model/user-model');
@@ -178,6 +179,14 @@ async function updatePermission(accessToken, role, fileid, permid) {
 }
 
 /*
+Delete the specified file's permissions
+*/
+async function removePermission(accessToken, fileid, permid) {
+  const update = await fetchdelete(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
+  return update;
+}
+
+/*
 Adding new permissions for a single file or multiple files
 @files = list of files with new ids
 @value = email address for new permission
@@ -202,9 +211,12 @@ async function addPermissions(accessToken, files, value, role) {
   return ans;
 }
 
+
+
 module.exports = {
   microsoftAuth,
   saveSnapshot,
   updatePermission,
   addPermissions,
+  removePermission,
 };

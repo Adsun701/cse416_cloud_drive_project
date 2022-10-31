@@ -198,9 +198,23 @@ async function updatePermission(accessToken, fileid, permid, data) {
   return result;
 }
 
+/*
+Delete a permission for a google file 
+*/
+async function removePermission(accessToken, fileid, permid) {
+  const drive = google.drive({ version: 'v3'});
+  const result = await drive.permissions.delete({
+    accessToken: accessToken,
+    fileId: fileid,
+    permissionId: permid
+  });
+  return result;
+}
+
 module.exports = {
   googleAuth,
   saveSnapshot,
   addPermissions,
   updatePermission,
+  removePermission,
 };

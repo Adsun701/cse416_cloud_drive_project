@@ -49,6 +49,17 @@ async function addPermissions(clouddrive, token, files, value, role, type = '') 
 }
 
 /*
+Delete permissions for a file using file id and permission id
+*/
+async function deletePermission(clouddrive, token, fileid, permid) {
+  if (clouddrive === 'google') {
+    googledrive.removePermission(token, fileid, permid);
+  } else if (clouddrive === 'microsoft') {
+    onedrive.removePermission(token, fileid, permid);
+  }
+}
+
+/*
 Updating access policy in the DB
 (requirement is the search query associated with the access policy)
 */
@@ -149,5 +160,6 @@ module.exports = {
   addNewAccessPolicy,
   addQuery,
   getRecentQueries,
-  getAllFiles
+  getAllFiles,
+  deletePermission
 };
