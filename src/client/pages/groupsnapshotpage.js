@@ -34,7 +34,7 @@ export default function GroupSnapshotPage() {
         AxiosClient.post('/googlegroupsnapshot/snapshot', formData)
           .then((res) => {
             console.log("success");
-          })
+          });
     }
 
   return (

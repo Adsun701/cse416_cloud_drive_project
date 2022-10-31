@@ -7,6 +7,7 @@ import LoginPage from './pages/loginpage';
 import SearchPage from './pages/searchpage';
 import SnapshotPage from './pages/snapshotpage';
 import GroupSnapshotPage from './pages/groupsnapshotpage';
+import AccessControlPage from './pages/AccessControlPage.js';
 
 const App = () => {
   const [context, setContext] = useState([]);
@@ -18,6 +19,7 @@ const App = () => {
       <Route exact path="/search/" element={<SearchPage />} />
       <Route exact path="/snapshot/" element={<SnapshotPage />} />
       <Route exact path="/group/" element={<GroupSnapshotPage />} />
+      <Route exact path="/accesscontrol/" element={<AccessControlPage />} />
     </Routes>
   </div>
   </Context.Provider>

@@ -31,6 +31,10 @@ export default function SideBar() {
     navigate("/snapshot");
   };
 
+  let handleAccessControl = () => {
+    navigate("/accesscontrol");
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <Nav
@@ -60,6 +64,9 @@ export default function SideBar() {
         </Nav.Link>
         <Nav.Link hidden={location.pathname === "/snapshot" ? true : false} onClick={handleSnapshot} style={{ color: "#3A3A3A" }}>
           Snapshot
+        </Nav.Link>
+        <Nav.Link hidden={location.pathname === "/accesscontrol" ? true : false} onClick={handleAccessControl} style={{ color: "#3A3A3A" }}>
+          Access Control Policies
         </Nav.Link>
       </Nav>
     </div>
