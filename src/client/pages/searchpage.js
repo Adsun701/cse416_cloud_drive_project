@@ -30,6 +30,7 @@ export default function SearchPage() {
   if (location.state) {
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
+      if (file == null) continue;
 
       let permissionsArray = [];
       if (file.permissions) {
@@ -37,7 +38,7 @@ export default function SearchPage() {
           let entry = {
             id: j + 1,
             name: file.permissions[j].displayName,
-            permission: file.permissions[j].roles[0],
+            permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
             access:
               file.permissions[j].inheritedFrom == null
                 ? "Direct"

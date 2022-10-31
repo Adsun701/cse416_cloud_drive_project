@@ -19,7 +19,7 @@ export default function SideBar() {
   };
 
   const handleSearch = () => {
-    AxiosClient.get("/allFiles").then((res) => {
+    AxiosClient.get("/google/last15modifiedfiles").then((res) => {
       navigate("/search", { state: { files: res.data }} );
     });
   };

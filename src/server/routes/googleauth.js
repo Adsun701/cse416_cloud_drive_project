@@ -204,7 +204,8 @@ async function getLast15ModifiedFiles(token) {
   const drive = google.drive({ version: "v3" });
   const files = [];
   const result = await drive.files.list({
-    orderBy: "modifiedTime",
+    fields: `files(id,name,owners,mimeType,createdTime,modifiedTime,permissions)`,
+    orderBy: "modifiedTime desc",
     pageSize: 15,
     access_token: token,
   });
@@ -212,6 +213,7 @@ async function getLast15ModifiedFiles(token) {
   f.forEach((element) => {
     files.push(element);
   });
+
   return files;
 }
 

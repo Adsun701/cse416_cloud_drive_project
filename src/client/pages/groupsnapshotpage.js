@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import Header from '../components/header';
+import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import SideBar from "../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import AxiosClient from "../AxiosClient";
 
@@ -36,30 +40,42 @@ export default function GroupSnapshotPage() {
   return (
     <div>
       <Header />
-      Snapshot Page
-      <form method="post" encType="multipart/form-data" onSubmit={handleSubmit} >
-      <label>
-        Group Name:
-        <input type="text" name="groupname" onChange={handleName} />
-      </label>
-      <br />
-      <label>
-        Group Address:
-        <input type="text" name="groupaddress" onChange={handleAddress} />
-      </label>
-      <br />
-      <label>
-       Timestamp:
-       <input type="datetime-local" name="timestamp" onChange={handleTimestamp} />
-      </label>
-      <br />
-      <label>
-        Html File:
-        <input type="file" name="memberpagehtml" accept="text/html" onChange={handleFile} />
-      </label>
-      <br />
-      <button type="button" onClick={handleSubmit}>Submit</button>
-      </form>
+      <Container fluid className={"no-gutters mx-0 px-0"}>Snapshot Page
+        <div className="row no-gutters">
+          <Row className="no-gutters">
+            <>
+              <Col sm={2} className="px-0">
+                <SideBar />
+              </Col>
+              <Col sm={10} className="px-0">
+                <form method="post" encType="multipart/form-data" onSubmit={handleSubmit} >
+                <label>
+                  Group Name:
+                  <input type="text" name="groupname" onChange={handleName} />
+                </label>
+                <br />
+                <label>
+                  Group Address:
+                  <input type="text" name="groupaddress" onChange={handleAddress} />
+                </label>
+                <br />
+                <label>
+                Timestamp:
+                <input type="datetime-local" name="timestamp" onChange={handleTimestamp} />
+                </label>
+                <br />
+                <label>
+                  Html File:
+                  <input type="file" name="memberpagehtml" accept="text/html" onChange={handleFile} />
+                </label>
+                <br />
+                <button type="button" onClick={handleSubmit}>Submit</button>
+                </form>
+              </Col>
+            </>
+          </Row>
+        </div>
+      </Container>
     </div>
   );
 }
