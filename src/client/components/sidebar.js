@@ -14,6 +14,10 @@ export default function SideBar() {
     AxiosClient.get("/filesnapshot");
   };
 
+  const handleGroupSnapshot = () => {
+    navigate('/group');
+  };
+
   const handleSearch = () => {
     navigate("/search");
   };
@@ -43,7 +47,7 @@ export default function SideBar() {
 
           <Dropdown.Menu>
             <Dropdown.Item onClick={handleFileSnapshot}>File Snapshot</Dropdown.Item>
-            <Dropdown.Item>Group Snapshot</Dropdown.Item>
+            <Dropdown.Item onClick={handleGroupSnapshot}>Group Snapshot</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
         <Nav.Link onClick={handleSearch} style={{ color: "#3A3A3A" }}>

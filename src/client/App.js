@@ -6,6 +6,7 @@ import { Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/loginpage';
 import SearchPage from './pages/searchpage';
 import SnapshotPage from './pages/snapshotpage';
+import GroupSnapshotPage from './pages/groupsnapshotpage';
 
 const App = () => {
   const [context, setContext] = useState([]);
@@ -16,6 +17,7 @@ const App = () => {
       <Route exact path="/" element={<LoginPage />} />
       <Route exact path="/search/" element={<SearchPage />} />
       <Route exact path="/snapshot/" element={<SnapshotPage />} />
+      <Route exact path="/group/" element={<GroupSnapshotPage />} />
     </Routes>
   </div>
   </Context.Provider>

@@ -6,80 +6,6 @@ const Permission = require('../model/permission-model');
 const FileSnapshot = require('../model/file-snapshot-model');
 
 /*
-Helper function for saving a file snapshot to the user database
-*/
-async function getSnapshot(token) {
-  const drive = google.drive({ version: 'v3' });
-  const files = {};
-  let nextPage = null;
-  const result = await drive.files.list({
-    access_token: token,
-    fields: 'files(id, name, permissions), nextPageToken',
-  });
-  nextPage = result.data.nextPageToken;
-  let f = result.data.files;
-  f.forEach((element) => {
-    const newPermsList = [];
-    if (element.permissions) {
-      for (let i = 0; i < element.permissions.length; i += 1) {
-        const newPermission = new Permission({
-          id: element.permissions[i].id,
-          email: element.permissions[i].emailAddress,
-          displayName: element.permissions[i].displayName,
-          roles: [element.permissions[i].role],
-          inheritedFrom: null,
-        });
-        newPermission.save();
-        newPermsList.push(newPermission);
-      }
-    }
-    files[element.id] = newPermsList;
-  });
-  while (nextPage) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await drive.files.list({
-      access_token: token,
-      pageToken: nextPage,
-      fields: 'files(id, name, permissions), nextPageToken',
-    });
-    nextPage = res.data.nextPageToken;
-    f = res.data.files;
-    f.forEach((element) => {
-      const newPermsList = [];
-      if (element.permissions) {
-        for (let i = 0; i < element.permissions.length; i += 1) {
-          const newPermission = new Permission({
-            id: element.permissions[i].id,
-            email: element.permissions[i].emailAddress,
-            displayName: element.permissions[i].displayName,
-            roles: [element.permissions[i].role],
-            inheritedFrom: null,
-          });
-          newPermission.save();
-          newPermsList.push(newPermission);
-        }
-      }
-      files[element.id] = newPermsList;
-    });
-  }
-  return files;
-}
-
-/*
-Save a File Snapshot to the User DB (profile)
-*/
-async function saveSnapshot(token, email) {
-  const result = await getSnapshot(token);
-  const fileSnapshot = new FileSnapshot({
-    files: result,
-  });
-  fileSnapshot.save();
-  User.updateOne({ email }, { $push: { fileSnapshots: fileSnapshot } })
-    .then(() => {});
-  return result;
-}
-
-/*
 Build and return a map of files with their list of permissions
 */
 async function getFilesAndPerms(token) {
@@ -200,6 +126,20 @@ async function googleAuth(accessToken, email) {
     }
   });
   getGoogleFiles(accessToken, email);
+}
+
+/*
+Save a File Snapshot to the User DB (profile)
+*/
+async function saveSnapshot(token, email) {
+  const result = await getFilesAndPerms(token);
+  const fileSnapshot = new FileSnapshot({
+    files: result,
+  });
+  fileSnapshot.save();
+  User.updateOne({ email }, { $push: { fileSnapshots: fileSnapshot } })
+    .then(() => {});
+  return result;
 }
 
 /*
