@@ -349,7 +349,7 @@ async function getFiles(searchQuery, token) {
   return files;
 }
 
-router.get('/auth', async (req, res) => {
+router.post('/auth', async (req, res) => {
   const url = getConnectionUrl();
   res.redirect(url);
 });

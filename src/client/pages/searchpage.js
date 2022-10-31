@@ -20,108 +20,46 @@ export default function SearchPage() {
 
   const editPermission = useStore((state) => state.editPermission);
 
-  const permissionData = [
-    {
-      id: 1,
-      name: "Person 1",
-      permission: "Owner",
-      access: "Direct",
-    },
-    {
-      id: 2,
-      name: "Person 2",
-      permission: "Editor",
-      access: "Direct",
-    },
-    {
-      id: 3,
-      name: "Person 3",
-      permission: "Reader",
-      access: "Direct",
-    },
-    {
-      id: 4,
-      name: "Person 4",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-    {
-      id: 5,
-      name: "Person 5",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-    {
-      id: 6,
-      name: "Person 6",
-      permission: "Viewer",
-      access: "Inherited",
-    },
-  ];
-
-  const fileData = [
-    {
-      id: 1,
-      selected: false,
-      expanded: false,
-      name: "Folder 1",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData
-    },
-    {
-      id: 2,
-      selected: false,
-      expanded: false,
-      name: "Folder 2",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData
-    },
-    {
-      id: 3,
-      selected: false,
-      expanded: false,
-      name: "Folder 3",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData
-    },
-    {
-      id: 4,
-      selected: false,
-      expanded: false,
-      name: "Folder 4",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData
-    },
-    {
-      id: 5,
-      selected: false,
-      expanded: false,
-      name: "Folder 5",
-      owner: "Owner",
-      type: "Type",
-      lastModified: "Last modified",
-      created: "Created",
-      permissions: permissionData
-    },
-  ];
-
   const handleFail = (err) => {
     console.log("failed operation: ", err);
   };
 
-  const [files, setFiles] = useState(fileData);
+  const location = useLocation();
+  let allFiles = [];
+  for (let i = 0; i < location.state.files.length; i++) {
+    let file = location.state.files[i];
+
+    let permissionsArray = [];
+    if (file.permissions) {
+      for (let j = 0; j < file.permissions.length; j++) {
+        let entry = {
+          id: j + 1,
+          name: file.permissions[j].displayName,
+          permission: file.permissions[j].roles[0],
+          access:
+            file.permissions[j].inheritedFrom == null
+              ? "Direct"
+              : "Inherited",
+        };
+        permissionsArray.push(entry);
+      }
+    }
+
+    let newFile = {
+      id: i + 1,
+      selected: false,
+      expanded: false,
+      name: file.name,
+      owner: "",
+      type: "",
+      lastModified: new Date(file.modifiedTime).toLocaleString(),
+      created: new Date(file.createdTime).toLocaleString(),
+      permissions: permissionsArray,
+    };
+    allFiles.push(newFile);
+  }
+
+  const [files, setFiles] = useState(allFiles);
 
   return (
     <div>
@@ -129,13 +67,13 @@ export default function SearchPage() {
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <div className="row no-gutters">
           <Row className="no-gutters">
-            {editPermission && (files.filter((e) => e.selected).length > 0) ? (
+            {editPermission && files.filter((e) => e.selected).length > 0 ? (
               <>
                 <Col sm={1} className="px-0">
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable files={files} setFiles={setFiles}/>
+                  <DataTable files={files} setFiles={setFiles} />
                 </Col>
                 <Col sm={4} className="px-0">
                   <EditPermission files={files} />
@@ -147,7 +85,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable files={files} setFiles={setFiles}/>
+                  <DataTable files={files} setFiles={setFiles} />
                 </Col>
               </>
             )}

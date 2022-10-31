@@ -4,6 +4,7 @@ Main interface to act as cloud drive adapter and to perform database operations
 const googledrive = require('./googledrive');
 const onedrive = require('./onedrive');
 const User = require('../model/user-model');
+const File = require('../model/file-model');
 const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 
@@ -124,6 +125,19 @@ async function getRecentQueries(email) {
 
 // getAllFiles ()
 // return a list of all files (with their metadata from db)
+async function getAllFiles(email) {
+  const user = await User.find({ email: email });
+  const files = user[0].files;
+  const ids = [];
+  files.forEach((element) => {
+    // eslint-disable-next-line no-underscore-dangle
+    ids.push(element._id);
+  });
+  const allFiles = await File.find({ _id: { $in: ids } });
+  console.log("ALL FILES");
+  console.log(allFiles);
+  return allFiles;
+}
 
 module.exports = {
   auth,
@@ -134,4 +148,5 @@ module.exports = {
   addNewAccessPolicy,
   addQuery,
   getRecentQueries,
+  getAllFiles
 };
