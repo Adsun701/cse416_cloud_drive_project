@@ -355,12 +355,12 @@ router.post('/auth', async (req, res) => {
 });
 
 router.get('/adduserfiles', async (req, res) => {
-  const filesMap = await getFilesAndPerms(req.session.googleToken);
+  const filesMap = await getFilesAndPerms(req.session.accessToken);
   const listFiles = [];
   // eslint-disable-next-line no-restricted-syntax
   for (const [key, value] of Object.entries(filesMap)) {
     // eslint-disable-next-line no-await-in-loop
-    let fileData = await getFileData(req.session.googleToken, key);
+    let fileData = await getFileData(req.session.accessToken, key);
     fileData = fileData.data;
     const file = new File({
       id: fileData.id,
@@ -382,7 +382,7 @@ router.get('/authorize', async (req, res) => {
   const { tokens } = await Oauth2Client.getToken(code);
   Oauth2Client.setCredentials(tokens);
   google.options({ auth: Oauth2Client });
-  req.session.googleToken = tokens.access_token;
+  req.session.accessToken = tokens.access_token;
   const user = await getUserDetails(Oauth2Client);
   const { email } = user.data;
   req.session.googleEmail = email;
@@ -407,7 +407,7 @@ router.get('/authorize', async (req, res) => {
 router.get('/file', async (req, res) => {
   const drive = google.drive({ version: 'v3' });
   const result = await drive.files.list({
-    access_token: req.session.googleToken,
+    access_token: req.session.accessToken,
   });
   res.render('google', { files: result.data.files });
 });
@@ -529,8 +529,8 @@ router.post('/searchquery', async (req, res, next) => {
 });
 
 router.get('/allfiles', async (req, res) => {
-  if (req.session.googleToken) {
-    const result = await getAllFiles(req.session.googleToken);
+  if (req.session.accessToken) {
+    const result = await getAllFiles(req.session.accessToken);
     res.send(result);
   } else {
     res.send('nope');
@@ -538,8 +538,8 @@ router.get('/allfiles', async (req, res) => {
 });
 
 router.get('/last15modifiedfiles', async (req, res) => {
-  if (req.session.googleToken) {
-    const result = await getLast15ModifiedFiles(req.session.googleToken);
+  if (req.session.accessToken) {
+    const result = await getLast15ModifiedFiles(req.session.accessToken);
     res.send(result);
   } else {
     res.send('nope');
@@ -554,7 +554,7 @@ router.post('/f/updatepermission', async (req, res) => {
   const drive = google.drive({ version: 'v3' });
   const data = JSON.parse(req.body.data);
   const result = await drive.permissions.update({
-    access_token: req.session.googleToken,
+    access_token: req.session.accessToken,
     fileId: req.body.fileid,
     permissionId: req.body.permid,
     requestBody: data,
@@ -565,7 +565,7 @@ router.post('/f/updatepermission', async (req, res) => {
 router.get('/file/:fileid/permission/:permid', async (req, res) => {
   const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.get({
-    access_token: req.session.googleToken,
+    access_token: req.session.accessToken,
     fileId: req.params.fileid,
     permissionId: req.params.permid,
     fields: '*',
@@ -576,7 +576,7 @@ router.get('/file/:fileid/permission/:permid', async (req, res) => {
 router.post('/file', async (req, res) => {
   const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.update({
-    access_token: req.session.googleToken,
+    access_token: req.session.accessToken,
 
   });
   res.send(result.data);
@@ -593,7 +593,7 @@ router.post('/file', async (req, res) => {
 
 router.get('/filedata/:id', async (req, res) => {
   const fileid = req.params.id;
-  const result = await getFileData(req.session.googleToken, fileid);
+  const result = await getFileData(req.session.accessToken, fileid);
   res.send(result.data);
 });
 

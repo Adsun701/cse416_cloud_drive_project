@@ -12,7 +12,7 @@ const upload = multer({ dest: '../../public/data/uploads/' });
 // custom middleware to check auth state
 // eslint-disable-next-line consistent-return
 function isAuthenticated(req, res, next) {
-  if (!req.session.googleToken) {
+  if (!req.session.accessToken) {
     return res.redirect('/google/auth'); // redirect to sign-in route
   }
   next();
