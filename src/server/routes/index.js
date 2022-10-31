@@ -19,8 +19,8 @@ router.get('/filesnapshot', isAuthenticated, async (req, res) => {
 router.get('/allfiles', isAuthenticated, async (req, res) => {
   console.log(req.session);
   const files = await cloudDriveAPI
-  .getAllFiles(req.session.email); // where is the email from?
-  res.send(JSON.stringify(files)); // header error
+  .getAllFiles(req.session.email);
+  res.send(JSON.stringify(files));
 })
 
 module.exports = router;

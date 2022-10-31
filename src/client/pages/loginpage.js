@@ -49,7 +49,7 @@ export default function LoginPage() {
 
   const handleMicrosoft = async (err, data, msal) => {
     console.log("MICROSOFT");
-    console.log(data.accessToken);
+    console.log(data);
     setContext(["microsoft", msal]);
 
     AxiosClient.post("/auth", {

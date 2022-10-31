@@ -19,7 +19,9 @@ export default function SideBar() {
   };
 
   const handleSearch = () => {
-    navigate("/search");
+    AxiosClient.get("/allFiles").then((res) => {
+      navigate("/search", { state: { files: res.data }} );
+    });
   };
 
   const handleSnapshot = () => {

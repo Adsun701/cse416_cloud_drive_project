@@ -127,6 +127,7 @@ async function getRecentQueries(email) {
 // return a list of all files (with their metadata from db)
 async function getAllFiles(email) {
   const user = await User.find({ email: email });
+  console.log(user);
   const files = user[0].files;
   const ids = [];
   files.forEach((element) => {

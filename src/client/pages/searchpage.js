@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../Context";
 import Header from "../components/header";
 import Container from "react-bootstrap/Container";
@@ -14,6 +14,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
 
   const [context, setContext] = useContext(Context);
+  const [files, setFiles] = useState([]);
   console.log("CONTEXT");
   console.log(context);
   console.log("CONTEXT FIN");
@@ -26,40 +27,44 @@ export default function SearchPage() {
 
   const location = useLocation();
   let allFiles = [];
-  for (let i = 0; i < location.state.files.length; i++) {
-    let file = location.state.files[i];
+  if (location.state) {
+    for (let i = 0; i < location.state.files.length; i++) {
+      let file = location.state.files[i];
 
-    let permissionsArray = [];
-    if (file.permissions) {
-      for (let j = 0; j < file.permissions.length; j++) {
-        let entry = {
-          id: j + 1,
-          name: file.permissions[j].displayName,
-          permission: file.permissions[j].roles[0],
-          access:
-            file.permissions[j].inheritedFrom == null
-              ? "Direct"
-              : "Inherited",
-        };
-        permissionsArray.push(entry);
+      let permissionsArray = [];
+      if (file.permissions) {
+        for (let j = 0; j < file.permissions.length; j++) {
+          let entry = {
+            id: j + 1,
+            name: file.permissions[j].displayName,
+            permission: file.permissions[j].roles[0],
+            access:
+              file.permissions[j].inheritedFrom == null
+                ? "Direct"
+                : "Inherited",
+          };
+          permissionsArray.push(entry);
+        }
       }
-    }
 
-    let newFile = {
-      id: i + 1,
-      selected: false,
-      expanded: false,
-      name: file.name,
-      owner: "",
-      type: "",
-      lastModified: new Date(file.modifiedTime).toLocaleString(),
-      created: new Date(file.createdTime).toLocaleString(),
-      permissions: permissionsArray,
-    };
-    allFiles.push(newFile);
+      let newFile = {
+        id: i + 1,
+        selected: false,
+        expanded: false,
+        name: file.name,
+        owner: "",
+        type: "",
+        lastModified: new Date(file.modifiedTime).toLocaleString(),
+        created: new Date(file.createdTime).toLocaleString(),
+        permissions: permissionsArray,
+      };
+      allFiles.push(newFile);
+    }
   }
 
-  const [files, setFiles] = useState(allFiles);
+  useEffect(() => {
+    setFiles(allFiles);
+  }, []);
 
   return (
     <div>
