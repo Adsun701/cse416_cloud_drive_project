@@ -58,7 +58,7 @@ export default function GroupSnapshotPage() {
         <input type="file" name="memberpagehtml" accept="text/html" onChange={handleFile} />
       </label>
       <br />
-      <input type="submit" value="Submit" onClick={handleSubmit} />
+      <button type="button" onClick={handleSubmit}>Submit</button>
       </form>
     </div>
   );
