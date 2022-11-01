@@ -146,7 +146,6 @@ Retrieve all of the user's files
 */
 async function getAllFiles(email) {
   const user = await User.find({ email: email });
-  console.log(user);
   const files = user[0].files;
   const ids = [];
   files.forEach((element) => {
@@ -154,7 +153,6 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
-  console.log("ALL FILES");
   console.log(allFiles);
   return allFiles;
 }
@@ -222,6 +220,34 @@ async function searchFilter(op, value, snapshotFiles) {
       }
       break;
     case "name":
+      break;
+    case "sharing":
+      if (value == "none") {
+        snapshotFiles.forEach((val, fileId) => {
+          let perms = val;
+          if (perms.length == 1 && perms[0].roles[0] == "owner") {
+            ids.push(fileId);
+          }
+        });
+        for (let i = 0; i < ids.length; i++) {
+          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      }
+      else if (value == "anyone") {
+        snapshotFiles.forEach((val, fileId) => {
+          let perms = val;
+          for(let i = 0; i < perms.length; i++) {
+            if(perms[i].id == "anyoneWithLink") {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i++) {
+          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      }
       break;
   }
   return files;
