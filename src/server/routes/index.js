@@ -23,7 +23,7 @@ router.get('/filesnapshot', isAuthenticated, async (req, res) => {
 
 router.get('/allfilesnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
-  const { fileSnapshots } = user[0];
+  const { fileSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
   fileSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
@@ -36,7 +36,7 @@ router.get('/allfilesnapshots', async (req, res) => {
 
 router.get('/allgroupsnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
-  const { groupSnapshots } = user[0];
+  const { groupSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
   groupSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
