@@ -225,6 +225,9 @@ async function getFiles(searchQuery, token) {
   searchString = queryArray[0]; // string
   operators = queryArray[1]; // array of strings containing "operation:value"
 
+  let fromUsers = [];
+  let fromUsersString = "";
+
   let owners = [];
   let ownerString = "";
 
@@ -259,6 +262,11 @@ async function getFiles(searchQuery, token) {
       if (val.length > 0) owners.push(val);
     }
 
+    // case: op is equal to 'from'
+    if (op == "from") {
+      if (val.length > 0) fromUsers.push(val);
+    }
+
     // case: op is equal to 'reader'
     if (op == "reader") {
       if (val.length > 0) readers.push(val);
@@ -288,6 +296,15 @@ async function getFiles(searchQuery, token) {
       if (driveID == "") return [];
     }
   }
+
+  // check if any fromUsers were specified
+  for (let i = 0; i < fromUsers.length; i++) {
+    if (i == 0) fromUsersString = fromUsersString + "(";
+    fromUsersString = fromUsersString + `('${fromUsers[i]}' in owners or '${fromUsers[i]}' in writers) and sharedWithMe = true`;
+    if (i < fromUsers.length - 1) fromUsersString = fromUsersString + " or ";
+    else fromUsersString = fromUsersString + ")";
+  }
+  if (fromUsersString.length > 0) fullString = fullString + " and " + fromUsersString;
 
   // check if any owners or creators were specified
   for (let i = 0; i < owners.length; i++) {
