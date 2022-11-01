@@ -90,6 +90,17 @@ export default function SnapshotPage() {
     setGroupSnapshots(temp);
   };
 
+  let onExpand = (e, item) => {
+    let temp = [...groupSnapshots];
+    temp.map((snapshot) => {
+      if (snapshot.id === item.id) {
+        snapshot.expanded = !snapshot.expanded;
+      }
+      return snapshot;
+    });
+    setGroupSnapshots(temp);
+  };
+
   return (
     <div>
       <Header />

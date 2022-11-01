@@ -16,6 +16,7 @@ export default function SearchPage() {
   const [context, setContext] = useContext(Context);
   const [files, setFiles] = useState([]);
   const [fileSnapshots, setFileSnapshots] = useState([]);
+  const [groupSnapshots, setGroupSnapshots] = useState([]);
   console.log("CONTEXT");
   console.log(context);
   console.log("CONTEXT FIN");
@@ -28,7 +29,8 @@ export default function SearchPage() {
 
   const location = useLocation();
   let allFiles = [];
-  let allSnapshots = [];
+  let allFileSnapshots = [];
+  let allGroupSnapshots = [];
   if (location.state) {
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
@@ -45,6 +47,7 @@ export default function SearchPage() {
               file.permissions[j].inheritedFrom == null
                 ? "Direct"
                 : "Inherited",
+            expanded: false,
           };
           permissionsArray.push(entry);
         }
@@ -71,13 +74,17 @@ export default function SearchPage() {
         timestamp: new Date(location.state.fileSnapshots[i].createdAt),
         selected: false,
       };
-      allSnapshots.push(snapshot);
+      allFileSnapshots.push(snapshot);
+    }
+    for (let i = 0; i < location.state.groupSnapshots.length; i++) {
+      allGroupSnapshots[location.state.groupSnapshots[i].groupName] = location.state.groupSnapshots[i].groupMembers;
     }
   }
 
   useEffect(() => {
     setFiles(allFiles);
-    setFileSnapshots(allSnapshots);
+    setFileSnapshots(allFileSnapshots);
+    setGroupSnapshots(allGroupSnapshots);
   }, []);
 
   return (
@@ -92,7 +99,13 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} fileSnapshots={fileSnapshots} setFileSnapshots={setFileSnapshots}/>
+                  <DataTable 
+                    files={files} 
+                    setFiles={setFiles} 
+                    fileSnapshots={fileSnapshots} 
+                    setFileSnapshots={setFileSnapshots}
+                    groupSnapshots={groupSnapshots} 
+                    setGroupSnapshots={setGroupSnapshots}/>
                 </Col>
                 <Col sm={4} className="px-0">
                   <EditPermission files={files} />
@@ -104,7 +117,13 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} fileSnapshots={fileSnapshots} setFileSnapshots={setFileSnapshots}/>
+                  <DataTable
+                    files={files} 
+                    setFiles={setFiles} 
+                    fileSnapshots={fileSnapshots} 
+                    setFileSnapshots={setFileSnapshots}
+                    groupSnapshots={groupSnapshots} 
+                    setGroupSnapshots={setGroupSnapshots}/>
                 </Col>
               </>
             )}
