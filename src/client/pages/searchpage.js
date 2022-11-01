@@ -63,6 +63,7 @@ export default function SearchPage() {
       };
       allFiles.push(newFile);
     }
+    allFiles.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
     for (let i = 0; i < location.state.fileSnapshots.length; i++) {
       let snapshot = {
         id: i + 1,

@@ -8,7 +8,7 @@ import CloseButton from 'react-bootstrap/CloseButton';
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
-import { MdSearch, MdArrowRight, MdArrowDropDown } from "react-icons/md";
+import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -28,6 +28,11 @@ export default function DataTable(props) {
   const [cursorOverSearchButton, setCursorOverSearchButton] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [recentQueriesVisible, setRecentQueriesVisible] = useState(false);
+
+  const [sortNameButton, setSortNameButton] = useState(false);
+  const [sortOwnerButton, setSortOwnerButton] = useState(false);
+  const [sortModifiedButton, setSortModifiedButton] = useState(false);
+  const [sortCreatedButton, setSortCreatedButton] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -253,6 +258,50 @@ export default function DataTable(props) {
     handleResetBuilder();
   }
 
+  let sortName = (event) => {
+    let temp = files;
+    if (!sortNameButton) {
+      temp.sort((a,b) => (a.name < b.name) ? 1 : ((b.name < a.name) ? -1 : 0));
+    } else {
+      temp.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+    }
+    setSortNameButton(!sortNameButton);
+    setFiles(temp);
+  }
+
+  let sortOwner= (event) => {
+    let temp = files;
+    if (!sortOwnerButton) {
+      temp.sort((a,b) => (a.owner < b.owner) ? 1 : ((b.owner < a.owner) ? -1 : 0));
+    } else {
+      temp.sort((a,b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0));
+    }
+    setSortOwnerButton(!sortOwnerButton);
+    setFiles(temp);
+  }
+
+  let sortModified= (event) => {
+    let temp = files;
+    if (!sortModifiedButton) {
+      temp.sort((a,b) => (a.lastModified < b.lastModified) ? 1 : ((b.lastModified < a.lastModified) ? -1 : 0));
+    } else {
+      temp.sort((a,b) => (a.lastModified > b.lastModified) ? 1 : ((b.lastModified > a.lastModified) ? -1 : 0));
+    }
+    setSortModifiedButton(!sortModifiedButton);
+    setFiles(temp);
+  }
+
+  let sortCreated= (event) => {
+    let temp = files;
+    if (!sortCreatedButton) {
+      temp.sort((a,b) => (a.created < b.created) ? 1 : ((b.created < a.created) ? -1 : 0));
+    } else {
+      temp.sort((a,b) => (a.created > b.created) ? 1 : ((b.created > a.created) ? -1 : 0));
+    }
+    setSortCreatedButton(!sortCreatedButton);
+    setFiles(temp);
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -418,11 +467,11 @@ export default function DataTable(props) {
                     onChange={(e) => onSelectAll(e)}
                   />
                 </th>
-                <th>Name</th>
-                <th>Owner</th>
+                <><th>Name {sortNameButton ? <MdArrowDropUp onClick={sortName}/> : <MdArrowDropDown onClick={sortName}/>}</th></>
+                <><th>Owner {sortOwnerButton ? <MdArrowDropUp onClick={sortOwner}/> : <MdArrowDropDown onClick={sortOwner}/>}</th></>
                 <th>Type</th>
-                <th>Last modified</th>
-                <th>Created</th>
+                <><th>Last Modified {sortModifiedButton ? <MdArrowDropUp onClick={sortModified}/> : <MdArrowDropDown onClick={sortModified}/>}</th></>
+                <><th>Created {sortCreatedButton ? <MdArrowDropUp onClick={sortCreated}/> : <MdArrowDropDown onClick={sortCreated}/>}</th></>
                 <th colSpan={2}>Permissions</th>
               </tr>
             </thead>
