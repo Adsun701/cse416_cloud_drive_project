@@ -115,7 +115,7 @@ router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
 });
 
 router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) => {
-  await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.str);
+  await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.prevControl);
   res.status(200).send();
 })
 

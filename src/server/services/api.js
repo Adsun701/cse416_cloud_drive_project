@@ -84,7 +84,7 @@ async function updateAccessPolicy(type, requirement, newValue) {
 }
 
 async function deletingAccessPolicyRequirement(email, requirement) {
-  const removedAccessPolicy = await AccessPolicy.find({ requirement });
+  const removedAccessPolicy = await AccessPolicy.findById({ requirement });
   await AccessPolicy.remove({ requirement });
   const user = await User.find({ email });
   const accessControls = user[0].accessPolicies;
@@ -98,9 +98,12 @@ async function deletingAccessPolicyRequirement(email, requirement) {
 
 async function editAccessControl(requirement, type, prevControl, newControl) {
   const accessPolicy = await AccessPolicy.findOne({ requirement });
-  console.log("edit access controls");
-  console.log(accessPolicy);
-  let newControls = accessPolicy.filter((policy) => policy !== prevControl);
+  // console.log("edit access controls");
+  // console.log(accessPolicy);
+  // console.log(accessPolicy["ar"]);
+  // console.log(type);
+  // console.log(accessPolicy[type]);
+  let newControls = accessPolicy[type].filter((old) => old !== prevControl);
   newControls.push(newControl);
   switch (type) {
     case 'ar':
@@ -121,9 +124,9 @@ async function editAccessControl(requirement, type, prevControl, newControl) {
   return newControls;
 }
 
-async function deletingAccessControlsInRequirement(requirement, type, str) {
-  const accessPolicy = await AccessPolicy.find({ requirement });
-  const newControls = accessPolicy.filter((policy) => policy !== str);
+async function deletingAccessControlsInRequirement(requirement, type, prevControl) {
+  const accessPolicy = await AccessPolicy.findOne({ requirement });
+  let newControls = accessPolicy[type].filter((old) => old !== prevControl);
   switch (type) {
     case 'ar':
       await AccessPolicy.updateOne({ requirement }, { ar: newControls });
