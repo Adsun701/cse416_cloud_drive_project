@@ -45,4 +45,9 @@ router.post('/logout', isAuthenticated, async (req, res) => {
   res.status(200).send();
 });
 
+router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
+  const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
+  res.send(response);
+});
+
 module.exports = router;

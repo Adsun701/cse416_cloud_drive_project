@@ -99,9 +99,15 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
     dw,
   });
   accessPolicy.save().then(() => {});
-  User.update({ email }, { $push: { accessPolicies: accessPolicy } })
+  User.updateOne({ email }, { $push: { accessPolicies: accessPolicy } })
     .then(() => {});
   return accessPolicy;
+}
+
+async function getAccessControlPolicies(email) {
+  const user = await User.find({ email: email });
+  const accessControls = user[0].accessPolicies;
+  return accessControls;
 }
 
 /*
@@ -113,7 +119,7 @@ async function addQuery(email, query) {
     query,
   });
   searchQuery.save().then(() => {});
-  User.update({ email }, { $push: { recentQueries: searchQuery } })
+  User.updateOne({ email }, { $push: { recentQueries: searchQuery } })
     .then(() => {});
   return searchQuery;
 }
@@ -161,5 +167,6 @@ module.exports = {
   addQuery,
   getRecentQueries,
   getAllFiles,
-  deletePermission
+  deletePermission,
+  getAccessControlPolicies,
 };
