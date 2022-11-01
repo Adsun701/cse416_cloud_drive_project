@@ -132,8 +132,16 @@ router.post('/searchquery', async (req, res, next) => {
   try {
     const { email } = req.session;
 
-    const { query } = req.body;
+    let fileSnapshot = null;
+    if (req.body.snapshot != "") {
+      const timestamp = new Date(req.body.snapshot);
+  
+      fileSnapshot = await FileSnapshot.find({ createdAt: timestamp })
+      .sort({ createdAt: -1 })
+      .limit(1);
+    }
 
+    let query = req.body.query;
     const searchQuery = new SearchQuery({
       query,
     });
@@ -144,7 +152,7 @@ router.post('/searchquery', async (req, res, next) => {
     ).then(() => {});
     const result = await cloudDriveAPI.getSearchResults(
       searchQuery,
-      req.session.accessToken,
+      fileSnapshot,
       req.session.email,
     );
     res.send(result);
