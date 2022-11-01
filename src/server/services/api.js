@@ -187,6 +187,7 @@ async function getSearchResults(searchQuery, token, email) {
   operators = queryArray[1]; // array of strings containing "operation:value"
 
   const files = [];
+  // get the most recent file snapshot from the user
   const user = await User.find({ email });
   const { fileSnapshots } = user[0];
   const ids = [];
@@ -198,17 +199,43 @@ async function getSearchResults(searchQuery, token, email) {
     .sort({ createdAt: -1 })
     .limit(1);
 
+  // get all files from snapshot
   const snapshotFiles = recentFileSnapshot[0].files;
 
   // iterate through operators
-  for (let i = 0; i < operators.length; i++) {
-    const opPair = operators[i];
-    const op = opPair.substring(0, opPair.indexOf(':'));
-    const val = opPair.substring(opPair.indexOf(':') + 1);
+  if (operators.length > 0) {
+    for (let i = 0; i < operators.length; i++) {
+      const opPair = operators[i];
+      const op = opPair.substring(0, opPair.indexOf(':'));
+      const val = opPair.substring(opPair.indexOf(':') + 1);
 
-    const searchFiles = await searchFilter(op, val, snapshotFiles);
-    for (let j = 0; j < searchFiles.length; j++) {
-      files.push(searchFiles[j]);
+      if (val == "me") {
+        val = email;
+      }
+  
+      // get search results for the operator
+      const searchFiles = await searchFilter(op, val, snapshotFiles);
+      for (let j = 0; j < searchFiles.length; j++) {
+        files.push(searchFiles[j]);
+      }
+    }
+  } else {
+    // default file name search if no operators
+    let fileList = [];
+    let ids = []
+    snapshotFiles.forEach((val, fileId) => {
+      ids.push(fileId);
+    });
+    for (let i = 0; i < ids.length; i++) {
+      let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+      fileList.push(file);
+    }
+    for (let i = 0; i < fileList.length; i++) {
+      let name = fileList[i].name;
+      const reg = new RegExp(searchString, "gi");
+      if (name.match(reg)) {
+        files.push(fileList[i])
+      }
     }
   }
   return files;
@@ -224,22 +251,65 @@ async function searchFilter(op, value, snapshotFiles) {
     case 'creator':
       op = 'owner';
     case 'owner':
-    case 'reader':
-    case 'writer':
       snapshotFiles.forEach((val, fileId) => {
-        const perms = val;
-        for (let i = 0; i < perms.length; i++) {
-          if (perms[i].roles[0] == op && perms[i].email == value) {
+        let perms = val;
+        for(let i = 0; i < perms.length; i++) {
+          if(perms[i].roles[0] == op && perms[i].email == value) {
             ids.push(fileId);
           }
         }
       });
       for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         files.push(file);
       }
       break;
+    case 'readable':
+      snapshotFiles.forEach((val, fileId) => {
+        let perms = val;
+        for(let i = 0; i < perms.length; i++) {
+          if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case 'writable':
+      snapshotFiles.forEach((val, fileId) => {
+        let perms = val;
+        for(let i = 0; i < perms.length; i++) {
+          if(perms[i].roles[0] == 'writer' && perms[i].email == value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case "to":
+      break;
     case 'name':
+      let fileList = [];
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i++) {
+        let name = fileList[i].name;
+        const reg = new RegExp(value, "gi");
+        if (name.match(reg)) {
+          files.push(fileList[i])
+        }
+      }
       break;
     case "sharing":
       if (value == "none") {
