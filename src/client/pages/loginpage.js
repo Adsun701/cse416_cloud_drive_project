@@ -41,7 +41,7 @@ export default function LoginPage() {
       email: res.profileObj.email,
     }).then((response) => {
       // set a state here to change the page upon load
-      AxiosClient.get("/google/last15modifiedfiles").then((res) => {
+      AxiosClient.get("/allFiles").then((res) => {
         navigate("search", { state: { files: res.data }} );
       });
     });
@@ -59,7 +59,7 @@ export default function LoginPage() {
       email: data.mail,
     }).then((response) => {
       // set a state here to change the page upon load
-      AxiosClient.get("/last15modifiedfiles").then((res) => {
+      AxiosClient.get("/allFiles").then((res) => {
         navigate("search", { state: { files: res.data }} );
       });
     });
