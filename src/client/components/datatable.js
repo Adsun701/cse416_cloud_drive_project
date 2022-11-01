@@ -146,7 +146,6 @@ export default function DataTable(props) {
               access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
             };
             permissionsArray.push(entry);
-            j++;
           }
         }
 
