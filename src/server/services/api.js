@@ -241,7 +241,7 @@ async function getSearchResults(searchQuery, token, email) {
     .limit(1);
 
   // get all files from snapshot
-  const snapshotFiles = recentFileSnapshot[0].files;
+  const snapshotFiles = (recentFileSnapshot && recentFileSnapshot.length > 0 && recentFileSnapshot[0]) ? recentFileSnapshot[0]?.files : [];
 
   // iterate through operators
   if (operators.length > 0) {
