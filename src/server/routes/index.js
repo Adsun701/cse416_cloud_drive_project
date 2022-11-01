@@ -119,7 +119,7 @@ router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) =
   res.status(200).send();
 })
 
-router.post('/editaccesscontrl', isAuthenticated, async (req, res) => {
+router.post('/editaccesscontrol', isAuthenticated, async (req, res) => {
   await cloudDriveAPI.editAccessControl(req.body.requirement, req.body.type, req.body.prevControl, req.body.newControl);
   res.status(200).send();
 });
