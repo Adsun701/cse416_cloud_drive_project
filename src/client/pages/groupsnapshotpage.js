@@ -8,34 +8,35 @@ import { useNavigate } from "react-router-dom";
 import AxiosClient from "../AxiosClient";
 
 export default function GroupSnapshotPage() {
-    const [name, setName] = useState()
-    const [address, setAddress] = useState()
-    const [timestamp, setTimestamp] = useState()
-    const [file, setFile] = useState()
+  const navigate = useNavigate();
+  const [name, setName] = useState()
+  const [address, setAddress] = useState()
+  const [timestamp, setTimestamp] = useState()
+  const [file, setFile] = useState()
 
-    function handleName(event) {
-        setName(event.target.value)
-    }
-    function handleAddress(event) {
-        setAddress(event.target.value)
-    }
-    function handleTimestamp(event) {
-        setTimestamp(event.target.value)
-    }
-    function handleFile(event) {
-      setFile(event.target.files[0])
-    }
-    function handleSubmit(event) {
-        let formData = new FormData();
-        formData.append("groupname", name);
-        formData.append("groupaddress", address);
-        formData.append("timestamp", timestamp);
-        formData.append('memberpagehtml', file);
-        AxiosClient.post('/googlegroupsnapshot/snapshot', formData)
-          .then((res) => {
-            console.log("success");
-          });
-    }
+  function handleName(event) {
+    setName(event.target.value)
+  }
+  function handleAddress(event) {
+    setAddress(event.target.value)
+  }
+  function handleTimestamp(event) {
+    setTimestamp(event.target.value)
+  }
+  function handleFile(event) {
+    setFile(event.target.files[0])
+  }
+  function handleSubmit(event) {
+      let formData = new FormData();
+      formData.append("groupname", name);
+      formData.append("groupaddress", address);
+      formData.append("timestamp", timestamp);
+      formData.append('memberpagehtml', file);
+      AxiosClient.post('/googlegroupsnapshot/snapshot', formData).then((res) => {
+        console.log("success");
+        navigate('/snapshot');
+      });
+  }
 
   return (
     <div>
