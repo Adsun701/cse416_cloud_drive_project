@@ -5,6 +5,7 @@ const fs = require('fs');
 const router = express.Router();
 const multer  = require('multer');
 const { google } = require('googleapis');
+const User = require('../model/user-model');
 const GroupSnapshot = require('../model/group-snapshot-model');
 const { waitForDebugger } = require('inspector');
 const upload = multer({ dest: '../../public/data/uploads/' });
@@ -23,6 +24,7 @@ router.post(
   upload.single('memberpagehtml'),
   isAuthenticated, // check if user is authenticated
   async (req, res, next) => {
+    let email = req.session.email;
     const groupname = req.body.groupname;
     const groupaddress = req.body.groupaddress;
     const timestamp = req.body.timestamp;
@@ -41,6 +43,8 @@ router.post(
     
     const groupSnapshot = new GroupSnapshot({ groupName: groupname, groupAddress: groupaddress, groupMembers: memberarray, timestamp: timestamp });
     groupSnapshot.save();
+    User.updateOne({ email }, { $push: { groupSnapshots: groupSnapshot } })
+    .then(() => {});
   }
 );
 
