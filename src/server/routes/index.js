@@ -94,7 +94,34 @@ router.post('/logout', isAuthenticated, async (req, res) => {
 
 router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
+  // console.log(response);
   res.send(response);
+});
+
+router.post('/addnewaccesscontrolpolicies', isAuthenticated, async (req, res) => {
+  const response = await cloudDriveAPI
+    .addNewAccessPolicy(req.session.email, req.body.requirement, req.body.ar, req.body.dr, req.body.aw, req.body.dw);
+  res.send(JSON.stringify(response));
+  });
+
+router.post('/updateaccesscontrolpolicy', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.updateAccessPolicy(req.body.type, req.body.requirement, req.body.newValue);
+  res.status(200).send();
+});
+
+router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.deletingAccessPolicyRequirement(req.session.email, req.body.requirement);
+  res.status(200).send();
+});
+
+router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.str);
+  res.status(200).send();
+})
+
+router.post('/editaccesscontrol', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.editAccessControl(req.body.requirement, req.body.type, req.body.prevControl, req.body.newControl);
+  res.status(200).send();
 });
 
 router.post('/searchquery', async (req, res, next) => {
