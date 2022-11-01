@@ -65,6 +65,11 @@ router.post('/updateaccesscontrolpolicy', isAuthenticated, async (req, res) => {
   res.status(200).send();
 });
 
+router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.deletingAccessPolicyRequirement(req.session.email, req.body.requirement);
+  res.status(200).send();
+});
+
 router.post("/searchquery", async (req, res, next) => {
   if (!req.session.accessToken) {
     return res.send("nope");

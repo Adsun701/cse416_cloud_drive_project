@@ -7,7 +7,7 @@ import AxiosClient from "../AxiosClient";
 export default function AccessControlPage() {
 
   let [accesscontrols, setAccessControls] = useState([]);
-  let [accessControlChanged, setAccessControlChanged] = useState(false);
+  let [accessControlChanged, setAccessControlChanged] = useState(0);
   const [requirementStr, setRequirementStr] = useState("");
   const [arStr, setarStr] = useState("");
   const [awStr, setawStr] = useState("");
@@ -30,13 +30,21 @@ export default function AccessControlPage() {
 
   let handleAddNewAccessControl = async (e) => {
     e.preventDefault();
-    await AxiosClient.post("/addnewaccesscontrolpolicies", {
+    AxiosClient.post("/addnewaccesscontrolpolicies", {
       requirement: requirementStr,
       ar: arStr,
       dr: drStr,
       aw: awStr,
       dw: dwStr
-    }).then(setAccessControlChanged(!accessControlChanged)).catch();
+    }).then(setAccessControlChanged(accessControlChanged+1)).catch();
+  }
+
+  let handleDeleteRequirement = async (requirement) => {
+    AxiosClient.post("/deleteaccesscontrolpolicy", {
+      requirement: requirement
+    }).then((res)=> {
+      setAccessControlChanged(accessControlChanged+1);
+    }).catch();
   }
 
   return (
@@ -44,7 +52,7 @@ export default function AccessControlPage() {
         <Header/>
         <SideBar/>
         <h2>Access Control Policies</h2>
-        {accesscontrols.length == 0 ? (
+        
           <div>
           <h3> Add new Access Control</h3>
         <form onSubmit={handleAddNewAccessControl}>
@@ -66,14 +74,14 @@ export default function AccessControlPage() {
           <input type="submit" value="Add"/>
         </form>
         </div>
-        ) : (
+       
           <div>
           <h3>Updating Access Controls</h3>
           <ol>
           {
            accesscontrols.map((policy) => (
            <div>
-            <li>Requirement: {policy.requirement}</li>
+            <li>Requirement: {policy.requirement} <p onClick={() => handleDeleteRequirement(policy.requirement)}>Delete</p></li>
             <ul>
               <li>Allowed Readers: {policy.ar.map(ar => <li>{ar}</li>)}</li>
             </ul>
@@ -90,7 +98,7 @@ export default function AccessControlPage() {
           ))} 
           </ol>
           </div>
-        )}
+       
     </div>
   );
 }
