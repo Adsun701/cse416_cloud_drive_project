@@ -84,18 +84,59 @@ async function updateAccessPolicy(type, requirement, newValue) {
 }
 
 async function deletingAccessPolicyRequirement(email, requirement) {
-  const removedAccessPolicy = await AccessPolicy.find({requirement: requirement})[0];
-  await AccessPolicy.remove({ requirement: requirement });
-  const user = await User.find({email: email});
-  let accessControls = user[0].accessPolicies;
-  let newControls = accessControls.filter((policy) => policy !== removedAccessPolicy);
-  await User.updateOne({ email: email }, { accessPolicy: newControls });
+  const removedAccessPolicy = await AccessPolicy.find({ requirement })[0];
+  await AccessPolicy.remove({ requirement });
+  const user = await User.find({ email });
+  const accessControls = user[0].accessPolicies;
+  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy);
+  console.log(newControls);
+  await User.updateOne({ email }, { accessPolicies: newControls });
+  return newControls;
+}
+
+async function editAccessControl(requirement, type, prevControl, newControl) {
+  const accessPolicy = await AccessPolicy.find({ requirement });
+  let newControls = accessPolicy.filter((policy) => policy !== prevControl);
+  newControls.push(newControl);
+  switch (type) {
+    case 'ar':
+      await AccessPolicy.updateOne({ requirement }, { ar: newControls });
+      break;
+    case 'aw':
+      await AccessPolicy.updateOne({ requirement }, { aw: newControls });
+      break;
+    case 'dw':
+      await AccessPolicy.updateOne({ requirement }, { dw: newControls });
+      break;
+    case 'dr':
+      await AccessPolicy.updateOne({ requirement }, { dr: newControls });
+      break;
+    default:
+      break;
+  }
   return newControls;
 }
 
 async function deletingAccessControlsInRequirement(requirement, type, str) {
-  const accessPolicy = await AccessPolicy.find({ requirement: requirement });
-
+  const accessPolicy = await AccessPolicy.find({ requirement });
+  const newControls = accessPolicy.filter((policy) => policy !== str);
+  switch (type) {
+    case 'ar':
+      await AccessPolicy.updateOne({ requirement }, { ar: newControls });
+      break;
+    case 'aw':
+      await AccessPolicy.updateOne({ requirement }, { aw: newControls });
+      break;
+    case 'dw':
+      await AccessPolicy.updateOne({ requirement }, { dw: newControls });
+      break;
+    case 'dr':
+      await AccessPolicy.updateOne({ requirement }, { dr: newControls });
+      break;
+    default:
+      break;
+  }
+  return newControls;
 }
 /*
 Add a new access policy with the default values
@@ -165,8 +206,8 @@ async function getRecentQueries(email) {
 Retrieve all of the user's files
 */
 async function getAllFiles(email) {
-  const user = await User.find({ email: email });
-  const files = user[0].files;
+  const user = await User.find({ email });
+  const { files } = user[0];
   const ids = [];
   files.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
@@ -241,30 +282,29 @@ async function searchFilter(op, value, snapshotFiles) {
       break;
     case 'name':
       break;
-    case "sharing":
-      if (value == "none") {
+    case 'sharing':
+      if (value == 'none') {
         snapshotFiles.forEach((val, fileId) => {
-          let perms = val;
-          if (perms.length == 1 && perms[0].roles[0] == "owner") {
+          const perms = val;
+          if (perms.length == 1 && perms[0].roles[0] == 'owner') {
             ids.push(fileId);
           }
         });
         for (let i = 0; i < ids.length; i++) {
-          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
           files.push(file);
         }
-      }
-      else if (value == "anyone") {
+      } else if (value == 'anyone') {
         snapshotFiles.forEach((val, fileId) => {
-          let perms = val;
-          for(let i = 0; i < perms.length; i++) {
-            if(perms[i].id == "anyoneWithLink") {
+          const perms = val;
+          for (let i = 0; i < perms.length; i++) {
+            if (perms[i].id == 'anyoneWithLink') {
               ids.push(fileId);
             }
           }
         });
         for (let i = 0; i < ids.length; i++) {
-          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
           files.push(file);
         }
       }
@@ -309,4 +349,5 @@ module.exports = {
   getAccessControlPolicies,
   deletingAccessPolicyRequirement,
   deletingAccessControlsInRequirement,
+  editAccessControl,
 };

@@ -98,7 +98,6 @@ router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   res.send(response);
 });
 
-<<<<<<< HEAD
 router.post('/addnewaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI
     .addNewAccessPolicy(req.session.email, req.body.requirement, req.body.ar, req.body.dr, req.body.aw, req.body.dw);
@@ -115,10 +114,17 @@ router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
   res.status(200).send();
 });
 
-router.post("/searchquery", async (req, res, next) => {
-=======
+router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.str);
+  res.status(200).send();
+})
+
+router.post('/editaccesscontrl', isAuthenticated, async (req, res) => {
+  await cloudDriveAPI.editAccessControl(req.body.requirement, req.body.type, req.body.prevControl, req.body.newControl);
+  res.status(200).send();
+});
+
 router.post('/searchquery', async (req, res, next) => {
->>>>>>> 02cbbf6f344f39008591dafe24c33e6c18773688
   if (!req.session.accessToken) {
     return res.send('nope');
   }
