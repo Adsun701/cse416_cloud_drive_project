@@ -23,7 +23,7 @@ router.get('/filesnapshot', isAuthenticated, async (req, res) => {
 
 router.get('/allfilesnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
-  const { fileSnapshots } = user[0];
+  const { fileSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
   fileSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
@@ -36,7 +36,7 @@ router.get('/allfilesnapshots', async (req, res) => {
 
 router.get('/allgroupsnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
-  const { groupSnapshots } = user[0];
+  const { groupSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
   groupSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
@@ -132,8 +132,16 @@ router.post('/searchquery', async (req, res, next) => {
   try {
     const { email } = req.session;
 
-    const { query } = req.body;
+    let fileSnapshot = null;
+    if (req.body.snapshot != "") {
+      const timestamp = new Date(req.body.snapshot);
+  
+      fileSnapshot = await FileSnapshot.find({ createdAt: timestamp })
+      .sort({ createdAt: -1 })
+      .limit(1);
+    }
 
+    let query = req.body.query;
     const searchQuery = new SearchQuery({
       query,
     });
@@ -144,7 +152,7 @@ router.post('/searchquery', async (req, res, next) => {
     ).then(() => {});
     const result = await cloudDriveAPI.getSearchResults(
       searchQuery,
-      req.session.accessToken,
+      fileSnapshot,
       req.session.email,
     );
     res.send(result);

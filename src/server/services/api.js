@@ -224,7 +224,7 @@ async function getAllFiles(email) {
 }
 
 // Get search results from file snapshots given search query
-async function getSearchResults(searchQuery, token, email) {
+async function getSearchResults(searchQuery, snapshot, email) {
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
@@ -233,20 +233,29 @@ async function getSearchResults(searchQuery, token, email) {
   operators = queryArray[1]; // array of strings containing "operation:value"
 
   const files = [];
-  // get the most recent file snapshot from the user
-  const user = await User.find({ email });
-  const { fileSnapshots } = user[0];
-  const ids = [];
-  fileSnapshots.forEach((element) => {
-    // eslint-disable-next-line no-underscore-dangle
-    ids.push(element._id);
-  });
-  const recentFileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
-    .sort({ createdAt: -1 })
-    .limit(1);
 
-  // get all files from snapshot
-  const snapshotFiles = recentFileSnapshot[0].files;
+  let fileSnapshot;
+  let snapshotFiles;
+
+  // get the most recent file snapshot from the user if snapshot not specified
+  if (!snapshot) {
+    const user = await User.find({ email });
+    const { fileSnapshots } = user[0];
+    const ids = [];
+    fileSnapshots.forEach((element) => {
+      // eslint-disable-next-line no-underscore-dangle
+      ids.push(element._id);
+    });
+    fileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
+      .sort({ createdAt: -1 })
+      .limit(1);
+  
+    // get all files from snapshot
+    snapshotFiles = fileSnapshot[0].files;
+  } else {
+    // use file snapshot selected by the user
+    snapshotFiles = snapshot[0].files;
+  }
 
   // iterate through operators
   if (operators.length > 0) {

@@ -8,6 +8,7 @@ import CloseButton from 'react-bootstrap/CloseButton';
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
+import Stack from "react-bootstrap/Stack";
 import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -101,10 +102,10 @@ export default function DataTable(props) {
   }
 
   let handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSearch(searchText);
+    if (e.key === 'Enter') handleSearch(searchText, snapshotCreatedAt);
   }
 
-  let handleSearch = (s) => {
+  let handleSearch = (s, snapshotCreated) => {
     s = s?.trim();
     // update recentQueries
     let newRecentQueries = [];
@@ -116,7 +117,8 @@ export default function DataTable(props) {
 
     // post to route
     AxiosClient.post('/searchquery', {
-      query: s
+      query: s,
+      snapshot: snapshotCreated
     }).then((res) => {
       // get data
       let data = res.data;
@@ -187,7 +189,7 @@ export default function DataTable(props) {
   }
 
   let handleClickQuery = (query) => {
-    handleSearch(query);
+    handleSearch(query, snapshotCreatedAt);
   }
 
   let handleSelectSnapshot = (event) => {
@@ -306,153 +308,155 @@ export default function DataTable(props) {
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
-          <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}
-            onMouseLeave={() => setRecentQueriesVisible(false)}>
-            <InputGroup id="search-file">
-              <Form.Control
-                placeholder="Search files"
-                aria-label="Search files"
-                aria-describedby="basic-addon2"
-                value={searchText}
-                onChange={handleTextChange}
-                onKeyDown={handleKeyDown}
-                onClick={() => setRecentQueriesVisible(true)}
-                type="text"
-              />
-              <InputGroup.Text id="basic-addon2"
-                style={{
-                  backgroundColor: cursorOverSearchButton ? 'salmon' : '',
-                  color: cursorOverSearchButton ? 'white' : '',
-                }}
-                onClick={builder ? handleBuilderSearch : () => handleSearch(searchText)} 
-                onMouseOver={handleCursorOverSearchButton} 
-                onMouseLeave={handleCursorLeaveSearchButton}>
-                <MdSearch/>
-              </InputGroup.Text>
-            </InputGroup>
-            { builder ?
-              <Container id="query-builder">
-                <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
-                  <Col style={{fontSize: '20px'}}>
-                    Query Builder
-                  </Col>
-                  <Col md="auto">
-                    <CloseButton onClick={handleCloseBuilder}/>
-                  </Col>
-                </Row>
-                <Form>
-                  <Row className="mb-3">
-                    <Form.Group as={Col} controlId="drive">
-                      <Form.Label>Drive</Form.Label>
-                      <Form.Control placeholder="Drive Name" value={drive} onChange={(event) => setDrive(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="owner">
-                      <Form.Label>Owner</Form.Label>
-                      <Form.Control placeholder="User" value={owner} onChange={(event) => setOwner(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="creator">
-                      <Form.Label>Creator</Form.Label>
-                      <Form.Control placeholder="User" value={creator} onChange={(event) => setCreator(event.target.value)}/>
-                    </Form.Group>
-                  </Row>
-                  <Row className="mb-3">
-                    <Form.Group as={Col} controlId="from">
-                      <Form.Label>From</Form.Label>
-                      <Form.Control placeholder="User" value={from} onChange={(event) => setFrom(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="to">
-                      <Form.Label>To</Form.Label>
-                      <Form.Control placeholder="User" value={to} onChange={(event) => setTo(event.target.value)}/>
-                    </Form.Group>
-                  </Row>
-                  <Row className="mb-3">
-                    <Form.Group as={Col} controlId="readable">
-                      <Form.Label>Readable</Form.Label>
-                      <Form.Control placeholder="User" value={readable} onChange={(event) => setReadable(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="writable">
-                      <Form.Label>Writable</Form.Label>
-                      <Form.Control placeholder="User" value={writable} onChange={(event) => setWritable(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="shareable">
-                      <Form.Label>Shareable</Form.Label>
-                      <Form.Control placeholder="User" value={shareable} onChange={(event) => setShareable(event.target.value)}/>
-                    </Form.Group>
-                  </Row>
-                  <Row className="mb-3">
-                    <Form.Group as={Col} controlId="name">
-                      <Form.Label>File Name</Form.Label>
-                      <Form.Control placeholder="Name" value={name} onChange={(event) => setName(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="inFolder">
-                      <Form.Label>In Folder</Form.Label>
-                      <Form.Control placeholder="Folder Name" value={inFolder} onChange={(event) => setInFolder(event.target.value)}/>
-                    </Form.Group>
-                    <Form.Group as={Col} controlId="folder">
-                      <Form.Label>Folder</Form.Label>
-                      <Form.Control placeholder="Folder Name" value={folder} onChange={(event) => setFolder(event.target.value)}/>
-                    </Form.Group>
-                  </Row>
-                  <Form.Group className="mb-3" controlId="path">
-                    <Form.Label>Path</Form.Label>
-                    <Form.Control placeholder="Path (separated by /)" value={path} onChange={(event) => setPath(event.target.value)}/>
-                  </Form.Group>
-                  <Form.Group className="mb-3"  controlId="sharing">
-                      <Form.Label>Sharing</Form.Label>
-                      <Form.Select value={sharing} onChange={handleSharingOption}>
-                        <option value="">Choose...</option>
-                        <option value="none">none</option>
-                        <option value="anyone">anyone</option>
-                        <option value="individual">individual</option>
-                        <option value="domain">domain</option>
-                      </Form.Select>
-                  </Form.Group>
+          <Stack direction="horizontal" gap={2}>
+            <Col className="mb-3" style={{ textAlign: "left", width: "100%" }}
+              onMouseLeave={() => setRecentQueriesVisible(false)}>
+              <InputGroup id="search-file">
+                <Form.Control
+                  placeholder="Search files"
+                  aria-label="Search files"
+                  aria-describedby="basic-addon2"
+                  value={searchText}
+                  onChange={handleTextChange}
+                  onKeyDown={handleKeyDown}
+                  onClick={() => setRecentQueriesVisible(true)}
+                  type="text"
+                />
+                <InputGroup.Text id="basic-addon2"
+                  style={{
+                    backgroundColor: cursorOverSearchButton ? 'salmon' : '',
+                    color: cursorOverSearchButton ? 'white' : '',
+                  }}
+                  onClick={builder ? handleBuilderSearch : () => handleSearch(searchText, snapshotCreatedAt)} 
+                  onMouseOver={handleCursorOverSearchButton} 
+                  onMouseLeave={handleCursorLeaveSearchButton}>
+                  <MdSearch/>
+                </InputGroup.Text>
+              </InputGroup>
+              { builder ?
+                <Container id="query-builder">
                   <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
-                    <Col md="auto">
-                      <button type="button" className="btn bg-transparent" onClick={handleResetBuilder}>Reset</button>
+                    <Col style={{fontSize: '20px'}}>
+                      Query Builder
                     </Col>
                     <Col md="auto">
-                      <Button variant="primary" onClick={handleBuilderSearch}>
-                        Search
-                      </Button>
+                      <CloseButton onClick={handleCloseBuilder}/>
                     </Col>
                   </Row>
-                </Form>
-              </Container>
-              :
-              <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
-                {recentQueries.length > 0 && recentQueries.map((query) => (
-                  <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}
-                  onClick={() => handleClickQuery(query)}>{query}</ListGroup.Item>
+                  <Form>
+                    <Row className="mb-3">
+                      <Form.Group as={Col} controlId="drive">
+                        <Form.Label>Drive</Form.Label>
+                        <Form.Control placeholder="Drive Name" value={drive} onChange={(event) => setDrive(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="owner">
+                        <Form.Label>Owner</Form.Label>
+                        <Form.Control placeholder="User" value={owner} onChange={(event) => setOwner(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="creator">
+                        <Form.Label>Creator</Form.Label>
+                        <Form.Control placeholder="User" value={creator} onChange={(event) => setCreator(event.target.value)}/>
+                      </Form.Group>
+                    </Row>
+                    <Row className="mb-3">
+                      <Form.Group as={Col} controlId="from">
+                        <Form.Label>From</Form.Label>
+                        <Form.Control placeholder="User" value={from} onChange={(event) => setFrom(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="to">
+                        <Form.Label>To</Form.Label>
+                        <Form.Control placeholder="User" value={to} onChange={(event) => setTo(event.target.value)}/>
+                      </Form.Group>
+                    </Row>
+                    <Row className="mb-3">
+                      <Form.Group as={Col} controlId="readable">
+                        <Form.Label>Readable</Form.Label>
+                        <Form.Control placeholder="User" value={readable} onChange={(event) => setReadable(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="writable">
+                        <Form.Label>Writable</Form.Label>
+                        <Form.Control placeholder="User" value={writable} onChange={(event) => setWritable(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="shareable">
+                        <Form.Label>Shareable</Form.Label>
+                        <Form.Control placeholder="User" value={shareable} onChange={(event) => setShareable(event.target.value)}/>
+                      </Form.Group>
+                    </Row>
+                    <Row className="mb-3">
+                      <Form.Group as={Col} controlId="name">
+                        <Form.Label>File Name</Form.Label>
+                        <Form.Control placeholder="Name" value={name} onChange={(event) => setName(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="inFolder">
+                        <Form.Label>In Folder</Form.Label>
+                        <Form.Control placeholder="Folder Name" value={inFolder} onChange={(event) => setInFolder(event.target.value)}/>
+                      </Form.Group>
+                      <Form.Group as={Col} controlId="folder">
+                        <Form.Label>Folder</Form.Label>
+                        <Form.Control placeholder="Folder Name" value={folder} onChange={(event) => setFolder(event.target.value)}/>
+                      </Form.Group>
+                    </Row>
+                    <Form.Group className="mb-3" controlId="path">
+                      <Form.Label>Path</Form.Label>
+                      <Form.Control placeholder="Path (separated by /)" value={path} onChange={(event) => setPath(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group className="mb-3"  controlId="sharing">
+                        <Form.Label>Sharing</Form.Label>
+                        <Form.Select value={sharing} onChange={handleSharingOption}>
+                          <option value="">Choose...</option>
+                          <option value="none">none</option>
+                          <option value="anyone">anyone</option>
+                          <option value="individual">individual</option>
+                          <option value="domain">domain</option>
+                        </Form.Select>
+                    </Form.Group>
+                    <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
+                      <Col md="auto">
+                        <button type="button" className="btn bg-transparent" onClick={handleResetBuilder}>Reset</button>
+                      </Col>
+                      <Col md="auto">
+                        <Button variant="primary" onClick={handleBuilderSearch}>
+                          Search
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Form>
+                </Container>
+                :
+                <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
+                  {recentQueries.length > 0 && recentQueries.map((query) => (
+                    <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}
+                    onClick={() => handleClickQuery(query)}>{query}</ListGroup.Item>
+                  ))}
+                  <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}} onClick={handleQueryBuilder}>Query Builder</ListGroup.Item>
+                </ListGroup>
+              }
+            </Col>
+            <Col className="mb-3">
+              <Form.Select style={{ width: "70%" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
+                {fileSnapshots.map((snapshot) => (
+                  <option key={snapshot.id} value={snapshot.id}>
+                    {snapshot.timestamp.toString()}
+                  </option>
                 ))}
-                <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}} onClick={handleQueryBuilder}>Query Builder</ListGroup.Item>
-              </ListGroup>
-            }
-          </Col>
-          <Col>
-            <Form.Select value={selectSnapshot} onChange={handleSelectSnapshot}>
-              {fileSnapshots.map((snapshot) => (
-                <option key={snapshot.id} value={snapshot.id}>
-                  {snapshot.timestamp.toString()}
-                </option>
-              ))}
-            </Form.Select>
-          </Col>
-          <Col style={{ textAlign: "right" }}>
-            {files.filter((e) => e.selected).length > 0 && (
-              <Button
-                style={{
-                  background: "#3484FD",
-                  borderColor: "#CFCFCF",
-                  borderRadius: "30px",
-                  color: "white",
-                }}
-                onClick={setEditPermission}
-              >
-                Edit Permission
-              </Button>
-            )}
-          </Col>
+              </Form.Select>
+            </Col>
+            <Col className="mb-3" style={{ textAlign: "right" }}>
+              {files.filter((e) => e.selected).length > 0 && (
+                <Button
+                  style={{
+                    background: "#3484FD",
+                    borderColor: "#CFCFCF",
+                    borderRadius: "30px",
+                    color: "white",
+                  }}
+                  onClick={setEditPermission}
+                >
+                  Edit Permission
+                </Button>
+              )}
+            </Col>
+          </Stack>
         </Row>
         <Row style={{ overflow: "auto" }}>
           <Table style={{ textAlign: "left" }}>
@@ -495,11 +499,13 @@ export default function DataTable(props) {
                   {file.expanded ? (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowDropDown
-                          size={24}
-                          style={{ color: "#CFCFCF" }}
-                          onClick={(e) => onExpand(e, file)}
-                        />
+                        {file.permissions.length > 2 && 
+                          <MdArrowDropDown
+                            size={24}
+                            style={{ color: "#CFCFCF" }}
+                            onClick={(e) => onExpand(e, file)}
+                          />
+                        }
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions.map((permission, index) => (
@@ -517,11 +523,13 @@ export default function DataTable(props) {
                   ) : (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowRight
-                          size={24}
-                          style={{ color: "#CFCFCF" }}
-                          onClick={(e) => onExpand(e, file)}
-                        />
+                        {file.permissions.length > 2 && 
+                          <MdArrowRight
+                            size={24}
+                            style={{ color: "#CFCFCF" }}
+                            onClick={(e) => onExpand(e, file)}
+                          />
+                        }
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions
