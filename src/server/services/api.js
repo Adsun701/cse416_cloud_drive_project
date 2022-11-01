@@ -108,7 +108,13 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
 async function getAccessControlPolicies(email) {
   const user = await User.find({ email: email });
   const accessControls = user[0].accessPolicies;
-  return accessControls;
+  const ids = [];
+  accessControls.forEach((element) => {
+    // eslint-disable-next-line no-underscore-dangle
+    ids.push(element._id);
+  });
+  const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
+  return allPolicies;
 }
 
 /*
