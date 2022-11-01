@@ -8,11 +8,14 @@ export default function AccessControlPage() {
 
   let [accesscontrols, setAccessControls] = useState([]);
   let [accessControlChanged, setAccessControlChanged] = useState(0);
+  let [change, setChange] = useState(0);
   const [requirementStr, setRequirementStr] = useState("");
   const [arStr, setarStr] = useState("");
   const [awStr, setawStr] = useState("");
   const [drStr, setdrStr] = useState("");
   const [dwStr, setdwStr] = useState("");
+  const [newEdit, setNewEditValue] = useState("");
+  const [newValue, setNewValue] = useState("");
 
   const navigate = useNavigate();
 
@@ -27,6 +30,14 @@ export default function AccessControlPage() {
     }
     fetchData();
   }, [accessControlChanged]);
+
+let fetchData = async() => {
+  AxiosClient.get("/getaccesscontrolpolicies").then((response) => {
+    console.log(response.data);
+    setAccessControls(response.data);
+    setChange(change+1);
+  }).catch();
+}
 
   let handleAddNewAccessControl = async (e) => {
     e.preventDefault();
@@ -44,6 +55,29 @@ export default function AccessControlPage() {
       requirement: requirement
     }).then((res)=> {
       setAccessControlChanged(accessControlChanged+1);
+    }).catch();
+  }
+
+  let handleAddUpdateAccessControl = async (requirement, type) => {
+    AxiosClient.post("/updateaccesscontrolpolicy", {
+      requirement: requirement,
+      type: type,
+      newValue: newValue
+    }).then((res)=> {
+      setAccessControlChanged(accessControlChanged+1);
+      fetchData();
+    }).catch();
+  }
+
+  let handleEditAccessControl = async(requirement, type, prevControl) => {
+    AxiosClient.post("/editaccesscontrol", {
+      requirement: requirement,
+      type: type, 
+      prevControl: prevControl,
+      newControl: newEdit
+    }).then((res) => {
+      setAccessControlChanged(accessControlChanged+1);
+      fetchData();
     }).catch();
   }
 
@@ -81,18 +115,28 @@ export default function AccessControlPage() {
           {
            accesscontrols.map((policy) => (
            <div>
-            <li>Requirement: {policy.requirement} <p onClick={() => handleDeleteRequirement(policy.requirement)}>Delete</p></li>
+            <li>Requirement: {policy.requirement} <button onClick={() => handleDeleteRequirement(policy.requirement)}>Delete</button></li>
             <ul>
-              <li>Allowed Readers: {policy.ar.map(ar => <li>{ar}</li>)}</li>
+              <li>Allowed Readers: {policy.ar.map(ar => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={ar}/>
+              <button onClick={() => handleEditAccessControl(policy.requirement, "ar", ar)}>Edit</button>
+              </li>)} <input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "ar")}>Add</button></li>
             </ul>
             <ul>
-              <li>Denied Readers: {policy.dr.map(dr => <li>{dr}</li>)}</li>
+              <li>Denied Readers: {policy.dr.map(dr => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={dr}/>
+              <button onClick={() => handleEditAccessControl(policy.requirement, "dr", dr)}>Edit</button>
+              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "dr")}>Add</button></li>
             </ul>
             <ul>
-              <li>Allowed Writers: {policy.aw.map(aw => <li>{aw}</li>)}</li>
+              <li>Allowed Writers: {policy.aw.map(aw => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={aw}/>
+              <button onClick={() => handleEditAccessControl(policy.requirement, "aw", aw)}>Edit</button>
+              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "aw")}>Add</button></li>
             </ul>
             <ul>
-              <li>Denied Writers: {policy.dw.map(dw => <li>{dw}</li>)}</li>
+              <li>Denied Writers: {policy.dw.map(
+                dw => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={dw}/>
+                <button onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</button>
+                </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input>
+                <button onClick={() => handleAddUpdateAccessControl(policy.requirement, "dw")}>Add</button></li>
             </ul>
             </div>
           ))} 

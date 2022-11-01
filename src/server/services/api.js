@@ -84,18 +84,22 @@ async function updateAccessPolicy(type, requirement, newValue) {
 }
 
 async function deletingAccessPolicyRequirement(email, requirement) {
-  const removedAccessPolicy = await AccessPolicy.find({ requirement })[0];
+  const removedAccessPolicy = await AccessPolicy.find({ requirement });
   await AccessPolicy.remove({ requirement });
   const user = await User.find({ email });
   const accessControls = user[0].accessPolicies;
-  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy);
+  console.log(removedAccessPolicy);
+  console.log(removedAccessPolicy[0]._id)
+  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy[0]._id);
   console.log(newControls);
   await User.updateOne({ email }, { accessPolicies: newControls });
   return newControls;
 }
 
 async function editAccessControl(requirement, type, prevControl, newControl) {
-  const accessPolicy = await AccessPolicy.find({ requirement });
+  const accessPolicy = await AccessPolicy.findOne({ requirement });
+  console.log("edit access controls");
+  console.log(accessPolicy);
   let newControls = accessPolicy.filter((policy) => policy !== prevControl);
   newControls.push(newControl);
   switch (type) {
@@ -169,6 +173,7 @@ async function getAccessControlPolicies(email) {
     ids.push(element._id);
   });
   const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
+  // console.log(allPolicies);
   return allPolicies;
 }
 

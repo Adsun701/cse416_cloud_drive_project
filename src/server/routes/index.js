@@ -94,7 +94,7 @@ router.post('/logout', isAuthenticated, async (req, res) => {
 
 router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
-  // console.log(response);
+  console.log(response);
   res.send(response);
 });
 
