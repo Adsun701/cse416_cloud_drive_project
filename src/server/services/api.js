@@ -5,6 +5,7 @@ const googledrive = require('./googledrive');
 const onedrive = require('./onedrive');
 const User = require('../model/user-model');
 const File = require('../model/file-model');
+const FileSnapshot = require("../model/file-snapshot-model");
 const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 
@@ -134,8 +135,9 @@ async function getRecentQueries(email) {
   return recentQueries;
 }
 
-// getAllFiles ()
-// return a list of all files (with their metadata from db)
+/*
+Retrieve all of the user's files
+*/
 async function getAllFiles(email) {
   const user = await User.find({ email: email });
   console.log(user);
@@ -151,6 +153,109 @@ async function getAllFiles(email) {
   return allFiles;
 }
 
+// Get search results from file snapshots given search query
+async function getSearchResults(searchQuery, token, email) {
+  if (searchQuery == null || searchQuery.query == null) return [];
+
+  /* extract default string and operators from query */
+  queryArray = sortQuery(searchQuery.query);
+  searchString = queryArray[0]; // string
+  operators = queryArray[1]; // array of strings containing "operation:value"
+
+  let files = [];
+  const user = await User.find({ email: email });
+  const fileSnapshots = user[0].fileSnapshots;
+  const ids = [];
+  fileSnapshots.forEach((element) => {
+    // eslint-disable-next-line no-underscore-dangle
+    ids.push(element._id);
+  });
+  const recentFileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
+    .sort({ createdAt: -1 })
+    .limit(1);
+
+  const snapshotFiles = recentFileSnapshot[0].files;
+
+  // iterate through operators
+  for (let i = 0; i < operators.length; i++) {
+    let opPair = operators[i];
+    let op = opPair.substring(0, opPair.indexOf(":"));
+    let val = opPair.substring(opPair.indexOf(":") + 1);
+
+    let searchFiles = await searchFilter(op, val, snapshotFiles);
+    for (let j = 0; j < searchFiles.length; j++) {
+      files.push(searchFiles[j]);
+    }
+  }
+  return files;
+}
+
+// Filter list of files based on given operator and value
+async function searchFilter(op, value, snapshotFiles) {
+  let files = [];
+  let ids = [];
+  switch(op) {
+    case "drive":
+      break;
+    case "creator":
+      break;
+    case "owner":
+      snapshotFiles.forEach((val, fileId) => {
+        let perms = val;
+        for(let i = 0; i < perms.length; i++) {
+          if(perms[i].roles[0] == 'owner' && perms[i].email == value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case "reader":
+      break;
+    case "writer":
+      snapshotFiles.forEach((val, fileId) => {
+        let perms = val;
+        for(let i = 0; i < perms.length; i++) {
+          if(perms[i].roles[0] == 'writer' && perms[i].email == value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case "name":
+      break;
+  }
+  return files;
+}
+
+function sortQuery(query) {
+  words = query.replace(/ +(?= )/g, "").split(" ");
+  words.sort(function (a, b) {
+    if (a.includes(":") && !b.includes(":")) return 1;
+    else if (!a.includes(":") && b.includes(":")) return -1;
+    else return 0;
+  });
+  s = "";
+  i = 0;
+  while (i < words.length && !words[i].includes(":")) {
+    if (i > 0) s = s + " ";
+    s = s + words[i].trim();
+    i++;
+  }
+  operators = [];
+  for (j = i; j < words.length; j++) {
+    operators.push(words[j]);
+  }
+  return [s, operators];
+}
+
 module.exports = {
   auth,
   fileSnapshot,
@@ -161,5 +266,6 @@ module.exports = {
   addQuery,
   getRecentQueries,
   getAllFiles,
-  deletePermission
+  deletePermission,
+  getSearchResults
 };
