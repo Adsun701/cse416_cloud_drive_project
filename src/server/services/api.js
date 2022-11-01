@@ -84,13 +84,12 @@ async function updateAccessPolicy(type, requirement, newValue) {
 }
 
 async function deletingAccessPolicyRequirement(email, requirement) {
-  const removedAccessPolicy = await AccessPolicy.findById({ requirement });
+  const removedAccessPolicy = await AccessPolicy.findOne({ requirement });
   await AccessPolicy.remove({ requirement });
   const user = await User.find({ email });
   const accessControls = user[0].accessPolicies;
   console.log(removedAccessPolicy);
-  console.log(removedAccessPolicy[0]._id)
-  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy[0]._id);
+  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy._id);
   console.log(newControls);
   await User.updateOne({ email }, { accessPolicies: newControls });
   return newControls;
@@ -145,6 +144,7 @@ async function deletingAccessControlsInRequirement(requirement, type, prevContro
   }
   return newControls;
 }
+
 /*
 Add a new access policy with the default values
 ar, dr, aw, and dw are strings with the values split by ', '

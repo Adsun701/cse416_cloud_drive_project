@@ -134,19 +134,22 @@ export default function AccessControlPage() {
               <li>Allowed Readers: {policy.ar.map(ar => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={ar}/>
               <button onClick={() => handleEditAccessControl(policy.requirement, "ar", ar)}>Edit</button>
               <button onClick={() => handleDeleteSingleAccessControl(policy.requirement, "ar", ar)}>Delete</button>
-              </li>)} <input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "ar")}>Add</button></li>
+              </li>)} <input type="text" onChange={(e) => setNewValue(e.target.value)}></input>
+              <button onClick={(e) => handleAddUpdateAccessControl(e, policy.requirement, "ar")}>Add</button></li>
             </ul>
             <ul>
               <li>Denied Readers: {policy.dr.map(dr => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={dr}/>
               <button onClick={() => handleEditAccessControl(policy.requirement, "dr", dr)}>Edit</button>
               <button onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dr", dr)}>Delete</button>
-              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "dr")}>Add</button></li>
+              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input>
+              <button onClick={(e) => handleAddUpdateAccessControl(e, policy.requirement, "dr")}>Add</button></li>
             </ul>
             <ul>
               <li>Allowed Writers: {policy.aw.map(aw => <li><input type="text" onChange={(e) => setNewEditValue(e.target.value)} defaultValue={aw}/>
               <button onClick={() => handleEditAccessControl(policy.requirement, "aw", aw)}>Edit</button>
               <button onClick={() => handleDeleteSingleAccessControl(policy.requirement, "aw", aw)}>Delete</button>
-              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input><button onClick={() => handleAddUpdateAccessControl(policy.requirement, "aw")}>Add</button></li>
+              </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input>
+              <button onClick={(e) => handleAddUpdateAccessControl(e, policy.requirement, "aw")}>Add</button></li>
             </ul>
             <ul>
               <li>Denied Writers: {policy.dw.map(
@@ -154,7 +157,7 @@ export default function AccessControlPage() {
                 <button onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</button>
                 <button onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dw", dw)}>Delete</button>
                 </li>)}<input type="text" onChange={(e) => setNewValue(e.target.value)}></input>
-                <button onClick={() => handleAddUpdateAccessControl(policy.requirement, "dw")}>Add</button></li>
+                <button onClick={(e) => handleAddUpdateAccessControl(e, policy.requirement, "dw")}>Add</button></li>
             </ul>
             </div>
           ))} 

@@ -19,6 +19,10 @@ export default function EditPermission(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
   const selectedFiles = props.files.filter((e) => e.selected);
 
+  console.log("edit permission page");
+  console.log(setEditPermission);
+  console.log(selectedFiles);
+
   return (
     <div style={{ height: "100vh", borderLeft: "1px solid #CFCFCF" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
