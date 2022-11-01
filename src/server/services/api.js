@@ -204,28 +204,14 @@ async function searchFilter(op, value, snapshotFiles) {
     case "drive":
       break;
     case "creator":
-      break;
+      op = 'owner';
     case "owner":
-      snapshotFiles.forEach((val, fileId) => {
-        let perms = val;
-        for(let i = 0; i < perms.length; i++) {
-          if(perms[i].roles[0] == 'owner' && perms[i].email == value) {
-            ids.push(fileId);
-          }
-        }
-      });
-      for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        files.push(file);
-      }
-      break;
     case "reader":
-      break;
     case "writer":
       snapshotFiles.forEach((val, fileId) => {
         let perms = val;
         for(let i = 0; i < perms.length; i++) {
-          if(perms[i].roles[0] == 'writer' && perms[i].email == value) {
+          if(perms[i].roles[0] == op && perms[i].email == value) {
             ids.push(fileId);
           }
         }
