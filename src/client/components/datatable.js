@@ -20,6 +20,10 @@ export default function DataTable(props) {
 
   const files = props.files;
   const setFiles = props.setFiles;
+  const fileSnapshots = props.fileSnapshots;
+  const setFileSnapshots = props.setFileSnapshots;
+  const [selectSnapshot, setSelectSnapshot] = useState("1");
+  const [snapshotCreatedAt, setSnapshotCreatedAt] = useState("");
   const [selectAll, setSelectAll] = useState(false);
   const [cursorOverSearchButton, setCursorOverSearchButton] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -181,6 +185,12 @@ export default function DataTable(props) {
     handleSearch(query);
   }
 
+  let handleSelectSnapshot = (event) => {
+    setSelectSnapshot(event.target.value);
+    let selected = fileSnapshots[event.target.value - 1];
+    setSnapshotCreatedAt(selected.createdAt);
+  }
+
   let handleQueryBuilder = (event) => {
     setBuilder(true);
   }
@@ -239,6 +249,7 @@ export default function DataTable(props) {
     query = query.replace(" ", " and ");
     setSearchText(query);
     setBuilder(false);
+    console.log(snapshotCreatedAt);
     handleResetBuilder();
   }
 
@@ -368,6 +379,15 @@ export default function DataTable(props) {
                 <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}} onClick={handleQueryBuilder}>Query Builder</ListGroup.Item>
               </ListGroup>
             }
+          </Col>
+          <Col>
+            <Form.Select value={selectSnapshot} onChange={handleSelectSnapshot}>
+              {fileSnapshots.map((snapshot) => (
+                <option key={snapshot.id} value={snapshot.id}>
+                  {snapshot.timestamp.toString()}
+                </option>
+              ))}
+            </Form.Select>
           </Col>
           <Col style={{ textAlign: "right" }}>
             {files.filter((e) => e.selected).length > 0 && (

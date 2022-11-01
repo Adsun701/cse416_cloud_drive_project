@@ -41,8 +41,11 @@ export default function LoginPage() {
       email: res.profileObj.email,
     }).then((response) => {
       // set a state here to change the page upon load
-      AxiosClient.get("/allFiles").then((res) => {
-        navigate("search", { state: { files: res.data }} );
+      AxiosClient.get("/allfilesnapshots").then((res) => {
+        let fileSnapshots = res.data;
+        AxiosClient.get("/allFiles").then((res) => {
+          navigate("search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+        });
       });
     });
   };
@@ -59,8 +62,11 @@ export default function LoginPage() {
       email: data.mail,
     }).then((response) => {
       // set a state here to change the page upon load
-      AxiosClient.get("/allFiles").then((res) => {
-        navigate("search", { state: { files: res.data }} );
+      AxiosClient.get("/allfilesnapshots").then((res) => {
+        let fileSnapshots = res.data;
+        AxiosClient.get("/allFiles").then((res) => {
+          navigate("search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+        });
       });
     });
     navigate("search");

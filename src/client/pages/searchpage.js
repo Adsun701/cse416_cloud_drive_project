@@ -15,6 +15,7 @@ export default function SearchPage() {
 
   const [context, setContext] = useContext(Context);
   const [files, setFiles] = useState([]);
+  const [fileSnapshots, setFileSnapshots] = useState([]);
   console.log("CONTEXT");
   console.log(context);
   console.log("CONTEXT FIN");
@@ -27,6 +28,7 @@ export default function SearchPage() {
 
   const location = useLocation();
   let allFiles = [];
+  let allSnapshots = [];
   if (location.state) {
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
@@ -61,10 +63,20 @@ export default function SearchPage() {
       };
       allFiles.push(newFile);
     }
+    for (let i = 0; i < location.state.fileSnapshots.length; i++) {
+      let snapshot = {
+        id: i + 1,
+        createdAt: location.state.fileSnapshots[i].createdAt,
+        timestamp: new Date(location.state.fileSnapshots[i].createdAt),
+        selected: false,
+      };
+      allSnapshots.push(snapshot);
+    }
   }
 
   useEffect(() => {
     setFiles(allFiles);
+    setFileSnapshots(allSnapshots);
   }, []);
 
   return (
@@ -79,7 +91,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={7} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} />
+                  <DataTable files={files} setFiles={setFiles} fileSnapshots={fileSnapshots} setFileSnapshots={setFileSnapshots}/>
                 </Col>
                 <Col sm={4} className="px-0">
                   <EditPermission files={files} />
@@ -91,7 +103,7 @@ export default function SearchPage() {
                   <SideBar />
                 </Col>
                 <Col sm={10} className="px-0">
-                  <DataTable files={files} setFiles={setFiles} />
+                  <DataTable files={files} setFiles={setFiles} fileSnapshots={fileSnapshots} setFileSnapshots={setFileSnapshots}/>
                 </Col>
               </>
             )}

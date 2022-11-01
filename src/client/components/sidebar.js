@@ -22,8 +22,11 @@ export default function SideBar() {
   };
 
   const handleSearch = () => {
-    AxiosClient.get("/google/last15modifiedfiles").then((res) => {
-      navigate("/search", { state: { files: res.data }} );
+    AxiosClient.get("/allfilesnapshots").then((res) => {
+      let fileSnapshots = res.data;
+      AxiosClient.get("/allFiles").then((res) => {
+        navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+      });
     });
   };
 
