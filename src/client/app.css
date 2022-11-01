@@ -38,6 +38,17 @@ body {
   width: inherit;
 }
 
+#query-builder {
+  position: absolute;
+  width: inherit;
+  background: white; 
+  border-color: #CFCFCF;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 5px;
+  color: gray;
+}
+
 #search-file {
   width: inherit;
 }

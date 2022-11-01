@@ -4,6 +4,7 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import ListGroup from "react-bootstrap/ListGroup";
 import Button from "react-bootstrap/Button";
+import CloseButton from 'react-bootstrap/CloseButton';
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
@@ -27,6 +28,21 @@ export default function DataTable(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
 
   const [recentQueries, setRecentQueries] = useState([]);
+
+  const [builder, setBuilder] = useState(false);
+  const [drive, setDrive] = useState("");
+  const [owner, setOwner] = useState("");
+  const [creator, setCreator] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [readable, setReadable] = useState("");
+  const [writable, setWritable] = useState("");
+  const [shareable, setShareable] = useState("");
+  const [name, setName] = useState("");
+  const [inFolder, setInFolder] = useState("");
+  const [folder, setFolder] = useState("");
+  const [path, setPath] = useState("");
+  const [sharing, setSharing] = useState("");
 
   // select all files
   let onSelectAll = (e) => {
@@ -90,7 +106,7 @@ export default function DataTable(props) {
     setRecentQueries(newRecentQueries);
 
     // post to route
-    AxiosClient.post('/google/searchquery', {
+    AxiosClient.post('/searchquery', {
       query: s
     }).then((res) => {
       // get data
@@ -126,8 +142,8 @@ export default function DataTable(props) {
             let entry = {
               id: j + 1,
               name: object.permissions[j].displayName,
-              permission: object.permissions[j].role,
-              access: object.permissions[j].type
+              permission: object.permissions[j].roles[0],
+              access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
             };
             permissionsArray.push(entry);
             j++;
@@ -166,11 +182,72 @@ export default function DataTable(props) {
     handleSearch(query);
   }
 
+  let handleQueryBuilder = (event) => {
+    setBuilder(true);
+  }
+
+  let handleCloseBuilder = (event) => {
+    setBuilder(false);
+  }
+
+  let handleResetBuilder = (event) => {
+    setDrive("");
+    setOwner("");
+    setCreator("");
+    setFrom("");
+    setTo("");
+    setReadable("");
+    setWritable("");
+    setShareable("");
+    setName("");
+    setInFolder("");
+    setFolder("");
+    setPath("");
+    setSharing("");
+  }
+
+  let handleSharingOption = (event) => {
+    setSharing(event.target.value);
+  }
+
+  let handleBuilderSearch = (event) => {
+    let query = "";
+    let drives = drive === "" ? [] : drive.split(',').map(e => e.trim());
+    let owners = owner === "" ? [] : owner.split(',').map(e => e.trim());
+    let creators = creator === "" ? [] : creator.split(',').map(e => e.trim());
+    let froms = from === "" ? [] : from.split(',').map(e => e.trim());
+    let tos = to === "" ? [] : to.split(',').map(e => e.trim());
+    let reads = readable === "" ? [] : readable.split(',').map(e => e.trim());
+    let writes = writable === "" ? [] : writable.split(',').map(e => e.trim());
+    let shares = shareable === "" ? [] : shareable.split(',').map(e => e.trim());
+    let names = name === "" ? [] : name.split(',').map(e => e.trim());
+    let inFolders = inFolder === "" ? [] : inFolder.split(',').map(e => e.trim());
+    let folders = folder === "" ? [] : folder.split(',').map(e => e.trim());
+    let paths = path === "" ? [] : path.split(',').map(e => e.trim());
+    drives.forEach(element => {query += "drive:"+element+" "});
+    owners.forEach(element => {query += "owner:"+element+" "});
+    creators.forEach(element => {query += "creator:"+element+" "});
+    froms.forEach(element => {query += "from:"+element +" "});
+    tos.forEach(element => {query += "to:"+element+" "});
+    reads.forEach(element => {query += "readable:"+element+" "});
+    writes.forEach(element => {query += "writable:"+element+" "});
+    shares.forEach(element => {query += "shareable:"+element+" "});
+    names.forEach(element => {query += "name:"+element+" "});
+    inFolders.forEach(element => {query += "inFolder:"+element+" "});
+    folders.forEach(element => {query += "folder:"+element+" "});
+    paths.forEach(element => {query += "path:"+element+" "});
+    query += "sharing:"+sharing;
+    query = query.replace(" ", " and ");
+    setSearchText(query);
+    setBuilder(false);
+    handleResetBuilder();
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
-          <Col className="mb-3" style={{ textAlign: "left", width: "30em" }}
+          <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}
             onMouseLeave={() => setRecentQueriesVisible(false)}>
             <InputGroup id="search-file">
               <Form.Control
@@ -188,17 +265,110 @@ export default function DataTable(props) {
                   backgroundColor: cursorOverSearchButton ? 'salmon' : '',
                   color: cursorOverSearchButton ? 'white' : '',
                 }}
-                onClick={() => handleSearch(searchText)} onMouseOver={handleCursorOverSearchButton} onMouseLeave={handleCursorLeaveSearchButton}>
+                onClick={builder ? handleBuilderSearch : () => handleSearch(searchText)} 
+                onMouseOver={handleCursorOverSearchButton} 
+                onMouseLeave={handleCursorLeaveSearchButton}>
                 <MdSearch/>
               </InputGroup.Text>
             </InputGroup>
-            <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
-              {recentQueries.length > 0 && recentQueries.map((query) => (
-                <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}
-                onClick={() => handleClickQuery(query)}>{query}</ListGroup.Item>
-              ))}
-              <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}}>Query Builder</ListGroup.Item>
-            </ListGroup>
+            { builder ?
+              <Container id="query-builder">
+                <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
+                  <Col style={{fontSize: '20px'}}>
+                    Query Builder
+                  </Col>
+                  <Col md="auto">
+                    <CloseButton onClick={handleCloseBuilder}/>
+                  </Col>
+                </Row>
+                <Form>
+                  <Row className="mb-3">
+                    <Form.Group as={Col} controlId="drive">
+                      <Form.Label>Drive</Form.Label>
+                      <Form.Control placeholder="Drive Name" value={drive} onChange={(event) => setDrive(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="owner">
+                      <Form.Label>Owner</Form.Label>
+                      <Form.Control placeholder="User" value={owner} onChange={(event) => setOwner(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="creator">
+                      <Form.Label>Creator</Form.Label>
+                      <Form.Control placeholder="User" value={creator} onChange={(event) => setCreator(event.target.value)}/>
+                    </Form.Group>
+                  </Row>
+                  <Row className="mb-3">
+                    <Form.Group as={Col} controlId="from">
+                      <Form.Label>From</Form.Label>
+                      <Form.Control placeholder="User" value={from} onChange={(event) => setFrom(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="to">
+                      <Form.Label>To</Form.Label>
+                      <Form.Control placeholder="User" value={to} onChange={(event) => setTo(event.target.value)}/>
+                    </Form.Group>
+                  </Row>
+                  <Row className="mb-3">
+                    <Form.Group as={Col} controlId="readable">
+                      <Form.Label>Readable</Form.Label>
+                      <Form.Control placeholder="User" value={readable} onChange={(event) => setReadable(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="writable">
+                      <Form.Label>Writable</Form.Label>
+                      <Form.Control placeholder="User" value={writable} onChange={(event) => setWritable(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="shareable">
+                      <Form.Label>Shareable</Form.Label>
+                      <Form.Control placeholder="User" value={shareable} onChange={(event) => setShareable(event.target.value)}/>
+                    </Form.Group>
+                  </Row>
+                  <Row className="mb-3">
+                    <Form.Group as={Col} controlId="name">
+                      <Form.Label>File Name</Form.Label>
+                      <Form.Control placeholder="Name" value={name} onChange={(event) => setName(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="inFolder">
+                      <Form.Label>In Folder</Form.Label>
+                      <Form.Control placeholder="Folder Name" value={inFolder} onChange={(event) => setInFolder(event.target.value)}/>
+                    </Form.Group>
+                    <Form.Group as={Col} controlId="folder">
+                      <Form.Label>Folder</Form.Label>
+                      <Form.Control placeholder="Folder Name" value={folder} onChange={(event) => setFolder(event.target.value)}/>
+                    </Form.Group>
+                  </Row>
+                  <Form.Group className="mb-3" controlId="path">
+                    <Form.Label>Path</Form.Label>
+                    <Form.Control placeholder="Path (separated by /)" value={path} onChange={(event) => setPath(event.target.value)}/>
+                  </Form.Group>
+                  <Form.Group className="mb-3"  controlId="sharing">
+                      <Form.Label>Sharing</Form.Label>
+                      <Form.Select value={sharing} onChange={handleSharingOption}>
+                        <option value="">Choose...</option>
+                        <option value="none">none</option>
+                        <option value="anyone">anyone</option>
+                        <option value="individual">individual</option>
+                        <option value="domain">domain</option>
+                      </Form.Select>
+                  </Form.Group>
+                  <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
+                    <Col md="auto">
+                      <button type="button" className="btn bg-transparent" onClick={handleResetBuilder}>Reset</button>
+                    </Col>
+                    <Col md="auto">
+                      <Button variant="primary" onClick={handleBuilderSearch}>
+                        Search
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              </Container>
+              :
+              <ListGroup id="recent-query" hidden={recentQueriesVisible ? false : true}>
+                {recentQueries.length > 0 && recentQueries.map((query) => (
+                  <ListGroup.Item as="button" style={{textAlign: "left", color: "gray"}}
+                  onClick={() => handleClickQuery(query)}>{query}</ListGroup.Item>
+                ))}
+                <ListGroup.Item as="button" style={{textAlign: "right", textDecoration: "underline"}} onClick={handleQueryBuilder}>Query Builder</ListGroup.Item>
+              </ListGroup>
+            }
           </Col>
           <Col style={{ textAlign: "right" }}>
             {files.filter((e) => e.selected).length > 0 && (

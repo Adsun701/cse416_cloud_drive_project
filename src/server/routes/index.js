@@ -3,6 +3,9 @@ const cloudDriveAPI = require('../services/api');
 
 const router = express.Router();
 
+const User = require("../model/user-model");
+const SearchQuery = require("../model/search-query-model");
+
 function isAuthenticated(req, res, next) {
   if (!req.session.isAuthenticated) {
     res.send({ error: 'Not Authenticated' });
@@ -48,6 +51,35 @@ router.post('/logout', isAuthenticated, async (req, res) => {
 router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
   res.send(response);
+});
+
+router.post("/searchquery", async (req, res, next) => {
+  if (!req.session.accessToken) {
+    return res.send("nope");
+  }
+
+  try {
+    const email = req.session.email;
+
+    const { query } = req.body;
+
+    const searchQuery = new SearchQuery({
+      query,
+    });
+    searchQuery.save().then(() => {});
+    User.updateOne(
+      { email },
+      { $push: { recentQueries: searchQuery } }
+    ).then(() => {});
+    const result = await cloudDriveAPI.getSearchResults(
+      searchQuery,
+      req.session.accessToken, 
+      req.session.email
+    );
+    res.send(result);
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;
