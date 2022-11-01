@@ -309,7 +309,7 @@ export default function DataTable(props) {
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
           <Stack direction="horizontal" gap={2}>
-            <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}
+            <Col className="mb-3" style={{ textAlign: "left", width: "100%" }}
               onMouseLeave={() => setRecentQueriesVisible(false)}>
               <InputGroup id="search-file">
                 <Form.Control
@@ -433,7 +433,7 @@ export default function DataTable(props) {
               }
             </Col>
             <Col className="mb-3">
-              <Form.Select style={{ width: "15em" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
+              <Form.Select style={{ width: "70%" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
                 {fileSnapshots.map((snapshot) => (
                   <option key={snapshot.id} value={snapshot.id}>
                     {snapshot.timestamp.toString()}
@@ -441,7 +441,7 @@ export default function DataTable(props) {
                 ))}
               </Form.Select>
             </Col>
-            <Col style={{ textAlign: "right" }}>
+            <Col className="mb-3" style={{ textAlign: "right" }}>
               {files.filter((e) => e.selected).length > 0 && (
                 <Button
                   style={{
@@ -499,11 +499,13 @@ export default function DataTable(props) {
                   {file.expanded ? (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowDropDown
-                          size={24}
-                          style={{ color: "#CFCFCF" }}
-                          onClick={(e) => onExpand(e, file)}
-                        />
+                        {file.permissions.length > 2 && 
+                          <MdArrowDropDown
+                            size={24}
+                            style={{ color: "#CFCFCF" }}
+                            onClick={(e) => onExpand(e, file)}
+                          />
+                        }
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions.map((permission, index) => (
@@ -521,11 +523,13 @@ export default function DataTable(props) {
                   ) : (
                     <>
                       <td style={{ paddingRight: "0px" }}>
-                        <MdArrowRight
-                          size={24}
-                          style={{ color: "#CFCFCF" }}
-                          onClick={(e) => onExpand(e, file)}
-                        />
+                        {file.permissions.length > 2 && 
+                          <MdArrowRight
+                            size={24}
+                            style={{ color: "#CFCFCF" }}
+                            onClick={(e) => onExpand(e, file)}
+                          />
+                        }
                       </td>
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions
