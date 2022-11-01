@@ -309,7 +309,7 @@ export default function DataTable(props) {
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <Row>
           <Stack direction="horizontal" gap={2}>
-            <Col className="mb-3" style={{ textAlign: "left", width: "100%" }}
+            <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}
               onMouseLeave={() => setRecentQueriesVisible(false)}>
               <InputGroup id="search-file">
                 <Form.Control
