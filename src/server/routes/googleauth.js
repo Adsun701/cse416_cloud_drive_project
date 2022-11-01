@@ -531,30 +531,30 @@ router.get("/search", async (req, res) => {
   });
 });
 
-router.post("/searchquery", async (req, res, next) => {
-  if (!req.session.accessToken) {
-    return res.send("nope");
-  }
+// router.post("/searchquery", async (req, res, next) => {
+//   if (!req.session.accessToken) {
+//     return res.send("nope");
+//   }
 
-  try {
-    const email = req.session.email;
+//   try {
+//     const email = req.session.email;
 
-    const { query } = req.body;
+//     const { query } = req.body;
 
-    const searchQuery = new SearchQuery({
-      query,
-    });
-    searchQuery.save().then(() => {});
-    User.update(
-      { email },
-      { $push: { recentQueries: searchQuery } }
-    ).then(() => {});
-    const result = await getFiles(searchQuery, req.session.accessToken);
-    res.send(result);
-  } catch (error) {
-    next(error);
-  }
-});
+//     const searchQuery = new SearchQuery({
+//       query,
+//     });
+//     searchQuery.save().then(() => {});
+//     User.update(
+//       { email },
+//       { $push: { recentQueries: searchQuery } }
+//     ).then(() => {});
+//     const result = await getFiles(searchQuery, req.session.accessToken);
+//     res.send(result);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 router.get('/allfiles', async (req, res) => {
   if (req.session.accessToken) {

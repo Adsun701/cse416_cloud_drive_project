@@ -90,7 +90,7 @@ export default function DataTable(props) {
     setRecentQueries(newRecentQueries);
 
     // post to route
-    AxiosClient.post('/google/searchquery', {
+    AxiosClient.post('/searchquery', {
       query: s
     }).then((res) => {
       // get data
@@ -126,8 +126,8 @@ export default function DataTable(props) {
             let entry = {
               id: j + 1,
               name: object.permissions[j].displayName,
-              permission: object.permissions[j].role,
-              access: object.permissions[j].type
+              permission: object.permissions[j].roles[0],
+              access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
             };
             permissionsArray.push(entry);
             j++;
