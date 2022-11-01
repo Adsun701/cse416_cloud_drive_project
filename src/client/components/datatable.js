@@ -23,6 +23,7 @@ export default function DataTable(props) {
   const setFiles = props.setFiles;
   const fileSnapshots = props.fileSnapshots;
   const setFileSnapshots = props.setFileSnapshots;
+  const groupSnapshots = props.groupSnapshots;
   const [selectSnapshot, setSelectSnapshot] = useState("1");
   const [snapshotCreatedAt, setSnapshotCreatedAt] = useState("");
   const [selectAll, setSelectAll] = useState(false);
@@ -34,6 +35,7 @@ export default function DataTable(props) {
   const [sortOwnerButton, setSortOwnerButton] = useState(false);
   const [sortModifiedButton, setSortModifiedButton] = useState(false);
   const [sortCreatedButton, setSortCreatedButton] = useState(false);
+  const [show, setShow] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -304,6 +306,10 @@ export default function DataTable(props) {
     setFiles(temp);
   }
 
+  let handleShow = () => {
+    setShow(!show);
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -471,11 +477,11 @@ export default function DataTable(props) {
                     onChange={(e) => onSelectAll(e)}
                   />
                 </th>
-                <><th>Name {sortNameButton ? <MdArrowDropUp onClick={sortName}/> : <MdArrowDropDown onClick={sortName}/>}</th></>
-                <><th>Owner {sortOwnerButton ? <MdArrowDropUp onClick={sortOwner}/> : <MdArrowDropDown onClick={sortOwner}/>}</th></>
+                <th>Name {sortNameButton ? <MdArrowDropUp onClick={sortName}/> : <MdArrowDropDown onClick={sortName}/>}</th>
+                <th>Owner {sortOwnerButton ? <MdArrowDropUp onClick={sortOwner}/> : <MdArrowDropDown onClick={sortOwner}/>}</th>
                 <th>Type</th>
-                <><th>Last Modified {sortModifiedButton ? <MdArrowDropUp onClick={sortModified}/> : <MdArrowDropDown onClick={sortModified}/>}</th></>
-                <><th>Created {sortCreatedButton ? <MdArrowDropUp onClick={sortCreated}/> : <MdArrowDropDown onClick={sortCreated}/>}</th></>
+                <th>Last Modified {sortModifiedButton ? <MdArrowDropUp onClick={sortModified}/> : <MdArrowDropDown onClick={sortModified}/>}</th>
+                <th>Created {sortCreatedButton ? <MdArrowDropUp onClick={sortCreated}/> : <MdArrowDropDown onClick={sortCreated}/>}</th>
                 <th colSpan={2}>Permissions</th>
               </tr>
             </thead>
@@ -510,11 +516,25 @@ export default function DataTable(props) {
                       <td style={{ paddingLeft: "0px" }}>
                         {file.permissions.map((permission, index) => (
                           <React.Fragment key={index}>
+                            {Object.keys(groupSnapshots).includes(permission.name) 
+                              ? show
+                                ? <MdArrowDropUp onClick={handleShow}/> 
+                                : <MdArrowDropDown onClick={handleShow}/> 
+                              : <></>}
                             {permission.name +
                               ", " +
                               permission.permission +
                               ", " +
                               permission.access}
+                            {Object.keys(groupSnapshots).includes(permission.name) && show 
+                              ? groupSnapshots[permission.name].map((member) => 
+                                <div style={{textAlign: "right"}} key={member}>
+                                  <React.Fragment key={member}>
+                                    {member}
+                                  </React.Fragment>
+                                </div>
+                              )
+                              : ""}
                             <br />
                           </React.Fragment>
                         ))}

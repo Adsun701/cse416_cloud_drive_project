@@ -43,8 +43,11 @@ export default function LoginPage() {
       // set a state here to change the page upon load
       AxiosClient.get("/allfilesnapshots").then((res) => {
         let fileSnapshots = res.data;
-        AxiosClient.get("/allFiles").then((res) => {
-          navigate("search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+        AxiosClient.get("/allgroupsnapshots").then((res) => {
+          let groupSnapshots = res.data;
+          AxiosClient.get("/allFiles").then((res) => {
+            navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: groupSnapshots }} );
+          });
         });
       });
     });
@@ -64,8 +67,11 @@ export default function LoginPage() {
       // set a state here to change the page upon load
       AxiosClient.get("/allfilesnapshots").then((res) => {
         let fileSnapshots = res.data;
-        AxiosClient.get("/allFiles").then((res) => {
-          navigate("search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+        AxiosClient.get("/allgroupsnapshots").then((res) => {
+          let groupSnapshots = res.data;
+          AxiosClient.get("/allFiles").then((res) => {
+            navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: groupSnapshots }} );
+          });
         });
       });
     });

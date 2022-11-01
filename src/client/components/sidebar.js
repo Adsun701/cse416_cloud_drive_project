@@ -24,8 +24,11 @@ export default function SideBar() {
   const handleSearch = () => {
     AxiosClient.get("/allfilesnapshots").then((res) => {
       let fileSnapshots = res.data;
-      AxiosClient.get("/allFiles").then((res) => {
-        navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots }} );
+      AxiosClient.get("/allgroupsnapshots").then((res) => {
+        let groupSnapshots = res.data;
+        AxiosClient.get("/allFiles").then((res) => {
+          navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: groupSnapshots }} );
+        });
       });
     });
   };
