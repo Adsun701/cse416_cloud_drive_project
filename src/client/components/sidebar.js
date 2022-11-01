@@ -28,7 +28,12 @@ export default function SideBar() {
   };
 
   const handleSnapshot = () => {
-    navigate("/snapshot");
+    AxiosClient.get("/allfilesnapshots").then((res) => {
+      let fileSnapshots = res.data;
+      AxiosClient.get("/allgroupsnapshots").then((res) => {
+        navigate("/snapshot", { state: { fileSnapshots: fileSnapshots, groupSnapshots: res.data}} );
+      });
+    });
   };
 
   let handleAccessControl = () => {
