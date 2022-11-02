@@ -6,6 +6,7 @@ import ListGroup from "react-bootstrap/ListGroup";
 import Button from "react-bootstrap/Button";
 import CloseButton from 'react-bootstrap/CloseButton';
 import Alert from 'react-bootstrap/Alert';
+import FloatingLabel from 'react-bootstrap/FloatingLabel';
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
@@ -353,7 +354,7 @@ export default function DataTable(props) {
         </Row>
         <Row>
           <Stack direction="horizontal" gap={2}>
-            <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}
+            <Col className="mb-3" style={{ textAlign: "left", width: "35em" }}
               onMouseLeave={() => setRecentQueriesVisible(false)}>
               <InputGroup id="search-file">
                 <Form.Control
@@ -480,13 +481,15 @@ export default function DataTable(props) {
               }
             </Col>
             <Col className="mb-3">
-              <Form.Select style={{ width: "70%" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
-                {fileSnapshots.map((snapshot) => (
-                  <option key={snapshot.id} value={snapshot.id}>
-                    {snapshot.timestamp.toLocaleString()}
-                  </option>
-                ))}
-              </Form.Select>
+              <FloatingLabel controlId="floatingSelect" label="Selected File Snapshot">
+                <Form.Select style={{ width: "85%" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
+                  {fileSnapshots.map((snapshot) => (
+                    <option key={snapshot.id} value={snapshot.id}>
+                      {snapshot.timestamp.toLocaleString()}
+                    </option>
+                  ))}
+                </Form.Select>
+              </FloatingLabel>
             </Col>
             <Col className="mb-3" style={{ textAlign: "right" }}>
               {files.filter((e) => e.selected).length > 0 && (
