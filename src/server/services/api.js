@@ -222,6 +222,12 @@ async function getAllFiles(email) {
   return allFiles;
 }
 
+function removeDuplicates(filelist) {
+  const fileIdSet = new Set(filelist.map((file) => file.id));
+  const files = [...fileIdSet].map(id => filelist.find(file => file.id === id)).filter(Boolean);
+  return files;
+}
+
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
   if (searchQuery == null || searchQuery.query == null) return [];
@@ -231,7 +237,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
   searchString = queryArray[0]; // string
   operators = queryArray[1]; // array of strings containing "operation:value"
 
-  const files = [];
+  let files = [];
 
   let fileSnapshot;
   let snapshotFiles;
@@ -303,6 +309,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
       }
     }
   }
+  files = removeDuplicates(files);
   return files;
 }
 
@@ -376,7 +383,7 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
 
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, groupOff, email) {
-  const files = [];
+  let files = [];
   const ids = [];
   const user = await User.find({ email: email });
   const { groupSnapshots } = user[0];
@@ -579,6 +586,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
 
 function sortQuery(query) {
   // words = query.replace(/ +(?= )/g, '').split(' ');
+  console.log(query);
   words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
@@ -597,6 +605,8 @@ function sortQuery(query) {
     const word = words[j].replace(/['"]+/g, '');
     operators.push(word);
   }
+  console.log(s);
+  console.log(operators);
   return [s, operators];
 }
 
