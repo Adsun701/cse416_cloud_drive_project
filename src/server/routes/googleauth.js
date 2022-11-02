@@ -399,8 +399,6 @@ router.get('/adduserfiles', async (req, res) => {
     // eslint-disable-next-line no-await-in-loop
     let fileData = await getFileData(req.session.accessToken, key);
     fileData = fileData.data;
-    console.log("adduserfiles: filedata");
-    console.log(fileData);
     const file = new File({
       id: fileData.id,
       name: fileData.name,

@@ -10,6 +10,8 @@ const FileSchema = new Schema(
     createdTime: { type: Date },
     modifiedTime: { type: Date },
     permissions: { type: [Permission] },
+    owner: { name: { type: String }, email: { type: String } },
+    sharingUser: { name: { type: String }, email: { type: String } }
   },
   { timestamps: true },
 );

@@ -147,14 +147,6 @@ export default function DataTable(props) {
           object = data[i];
           let permissionsArray = [];
 
-          // get owner names
-          let ownerDisplayNames = [];
-          if (object.owners) {
-            for (let j = 0; j < object.owners.length; j++) {
-              ownerDisplayNames.push(object.owners[j].displayName);
-            }
-          }
-
           // get permission data
           if (object.permissions) {
             for (let j = 0; j < object.permissions.length; j++) {
@@ -168,13 +160,18 @@ export default function DataTable(props) {
             }
           }
 
+          let owner = {
+            name: object.owner.name,
+            email: object.owner.email
+          }
+
           // initialize and push file to array.
           file = {
             id: i + 1,
             selected: false,
             expanded: false,
             name: object.name,
-            owner: ownerDisplayNames.join(",\n"),
+            owner: owner,
             type: object.mimeType,
             lastModified: (new Date(object.modifiedTime)).toLocaleString(),
             created: (new Date(object.createdTime)).toLocaleString(),
@@ -510,7 +507,7 @@ export default function DataTable(props) {
                     />
                   </th>
                   <td>{file.name}</td>
-                  <td>{file.owner}</td>
+                  <td>{file.owner.name}</td>
                   <td>{file.type}</td>
                   <td>{file.lastModified}</td>
                   <td>{file.created}</td>
