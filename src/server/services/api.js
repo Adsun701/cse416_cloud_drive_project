@@ -431,6 +431,18 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       }
       break;
     case 'to':
+      snapshotFiles.forEach((val, fileId) => {
+        const perms = val;
+        for (let i = 0; i < perms.length; i++) {
+          if (perms[i].inheritedFrom == null && perms[i].email == value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i++) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
       break;
     case 'readable':
       if (groupOff) {
@@ -553,6 +565,20 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
           const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
           files.push(file);
         }
+      } else if (value == 'domain') {
+        let domain = email.split('@')[1];
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i++) {
+            if (perms[i].email?.split('@')[1] == domain) {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i++) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
       }
       break;
     case 'foldersonly':
@@ -579,7 +605,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
 
 function sortQuery(query) {
   // words = query.replace(/ +(?= )/g, '').split(' ');
-  words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+  words = query.split(/ +(?=(?:(?:[^'"]*'"){2})*[^'"]*$)/g);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
     if (!a.includes(':') && b.includes(':')) return -1;
