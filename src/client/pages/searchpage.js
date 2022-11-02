@@ -17,9 +17,6 @@ export default function SearchPage() {
   const [files, setFiles] = useState([]);
   const [fileSnapshots, setFileSnapshots] = useState([]);
   const [groupSnapshots, setGroupSnapshots] = useState([]);
-  console.log("CONTEXT");
-  console.log(context);
-  console.log("CONTEXT FIN");
 
   const editPermission = useStore((state) => state.editPermission);
 
@@ -53,12 +50,17 @@ export default function SearchPage() {
         }
       }
 
+      let owner = {
+        name: file.owner.name,
+        email: file.owner.email
+      }
+
       let newFile = {
         id: file.id,
         selected: false,
         expanded: false,
         name: file.name,
-        owner: "",
+        owner: owner,
         type: "",
         lastModified: new Date(file.modifiedTime).toLocaleString(),
         created: new Date(file.createdTime).toLocaleString(),
