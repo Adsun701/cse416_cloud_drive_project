@@ -464,14 +464,27 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       }
       break;
     case 'writable':
-      snapshotFiles.forEach((val, fileId) => {
-        const perms = val;
-        for (let i = 0; i < perms.length; i++) {
-          if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
-            ids.push(fileId);
+      if (groupOff) {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i++) {
+            if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
+              ids.push(fileId);
+            }
           }
-        }
-      });
+        });
+      } else {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i++) {
+            if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
+              ids.push(fileId);
+            } else if (perms[i].roles[0] == 'writer' && groupNames.includes(perms[i].displayName)) {
+              ids.push(fileId);
+            }
+          }
+        });
+      }
       for (let i = 0; i < ids.length; i++) {
         const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         files.push(file);
