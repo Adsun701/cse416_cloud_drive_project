@@ -263,9 +263,9 @@ async function getSearchResults(searchQuery, snapshot, email) {
   // iterate through operators
   if (operators.length > 0) {
     for (let i = 0; i < operators.length; i++) {
-      const opPair = operators[i];
-      const op = opPair.substring(0, opPair.indexOf(':'));
-      const val = opPair.substring(opPair.indexOf(':') + 1);
+      let opPair = operators[i];
+      let op = opPair.substring(0, opPair.indexOf(':'));
+      let val = opPair.substring(opPair.indexOf(':') + 1);
 
       if (val == "me") {
         val = email;
@@ -407,7 +407,8 @@ async function searchFilter(op, value, snapshotFiles) {
 }
 
 function sortQuery(query) {
-  words = query.replace(/ +(?= )/g, '').split(' ');
+  // words = query.replace(/ +(?= )/g, '').split(' ');
+  words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
     if (!a.includes(':') && b.includes(':')) return -1;
@@ -422,7 +423,8 @@ function sortQuery(query) {
   }
   operators = [];
   for (j = i; j < words.length; j++) {
-    operators.push(words[j]);
+    let word = words[j].replace(/['"]+/g, '');
+    operators.push(word);
   }
   return [s, operators];
 }
