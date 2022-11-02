@@ -276,7 +276,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
 
       // get search results for the operator
       // eslint-disable-next-line no-await-in-loop
-      const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff);
+      const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff, email);
       if (searchFiles === 'Incorrect op') {
         return 'Incorrect op';
       }
@@ -375,7 +375,7 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
 }
 
 // Filter list of files based on given operator and value
-async function searchFilter(op, value, snapshotFiles, groupOff) {
+async function searchFilter(op, value, snapshotFiles, groupOff, email) {
   const files = [];
   const ids = [];
   const user = await User.find({ email: email });
@@ -390,6 +390,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
   groups.forEach((e) => {
     groupNames.append(e.group);
   });
+  const fileList = [];
   switch (op) {
     case 'drive':
       break;
@@ -410,13 +411,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
       }
       break;
     case 'readable':
-<<<<<<< HEAD
-      snapshotFiles.forEach((val, fileId) => {
-        const perms = val;
-        for (let i = 0; i < perms.length; i++) {
-          if (perms[i].roles[0] == 'reader' && perms[i].email == value) {
-            ids.push(fileId);
-=======
       if (groupOff) {
         snapshotFiles.forEach((val, fileId) => {
           let perms = val;
@@ -426,7 +420,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
             } else if (perms[i].roles[0] == 'reader' && groupNames.includes(value)) {
               ids.push(fileId);
             }
->>>>>>> c1dab99b392d526f603de3daa6983f0867dcc2ab
           }
         });
         for (let i = 0; i < ids.length; i++) {
@@ -446,13 +439,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
           let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
           files.push(file);
         }
-<<<<<<< HEAD
-      });
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        files.push(file);
-=======
->>>>>>> c1dab99b392d526f603de3daa6983f0867dcc2ab
       }
       break;
     case 'writable':
@@ -472,7 +458,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
     case 'to':
       break;
     case 'name':
-      const fileList = [];
       snapshotFiles.forEach((val, fileId) => {
         ids.push(fileId);
       });
@@ -485,6 +470,22 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
         const reg = new RegExp(value, 'gi');
         if (name.match(reg)) {
           files.push(fileList[i]);
+        }
+      }
+      break;
+    case 'folder':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i++) {
+        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i++) {
+        let name = fileList[i].name;
+        const reg = new RegExp(value, "gi");
+        if (name.match(reg) && fileList[i].folder) {
+          files.push(fileList[i])
         }
       }
       break;
