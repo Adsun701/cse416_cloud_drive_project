@@ -5,6 +5,7 @@ import InputGroup from "react-bootstrap/InputGroup";
 import ListGroup from "react-bootstrap/ListGroup";
 import Button from "react-bootstrap/Button";
 import CloseButton from 'react-bootstrap/CloseButton';
+import Alert from 'react-bootstrap/Alert';
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
@@ -40,6 +41,7 @@ export default function DataTable(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
 
   const [recentQueries, setRecentQueries] = useState([]);
+  const [incorrectOp, setIncorrectOp] = useState(false);
 
   const [builder, setBuilder] = useState(false);
   const [drive, setDrive] = useState("");
@@ -122,63 +124,67 @@ export default function DataTable(props) {
       query: s,
       snapshot: snapshotCreated
     }).then((res) => {
-      // get data
-      let data = res.data;
+      if (res.data === "Incorrect op") {
+        setIncorrectOp(true);
+      } else {
+        // get data
+        let data = res.data;
 
-      // if data is null or data length is 0 simply set files to empty list
-      if (data == null || data.length == 0) {
-        setFiles([]);
-        return;
-      }
-
-      // initialize variables
-      let newFiles = [];
-      let file = null;
-      let object = null;
-
-      // iterate through each file to add to list
-      for (let i = 0; i < data.length; i++) {
-        object = data[i];
-        let permissionsArray = [];
-
-        // get owner names
-        let ownerDisplayNames = [];
-        if (object.owners) {
-          for (let j = 0; j < object.owners.length; j++) {
-            ownerDisplayNames.push(object.owners[j].displayName);
-          }
+        // if data is null or data length is 0 simply set files to empty list
+        if (data == null || data.length == 0) {
+          setFiles([]);
+          return;
         }
 
-        // get permission data
-        if (object.permissions) {
-          for (let j = 0; j < object.permissions.length; j++) {
-            let entry = {
-              id: j + 1,
-              name: object.permissions[j].displayName,
-              permission: object.permissions[j].roles[0],
-              access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
-            };
-            permissionsArray.push(entry);
+        // initialize variables
+        let newFiles = [];
+        let file = null;
+        let object = null;
+
+        // iterate through each file to add to list
+        for (let i = 0; i < data.length; i++) {
+          object = data[i];
+          let permissionsArray = [];
+
+          // get owner names
+          let ownerDisplayNames = [];
+          if (object.owners) {
+            for (let j = 0; j < object.owners.length; j++) {
+              ownerDisplayNames.push(object.owners[j].displayName);
+            }
           }
+
+          // get permission data
+          if (object.permissions) {
+            for (let j = 0; j < object.permissions.length; j++) {
+              let entry = {
+                id: j + 1,
+                name: object.permissions[j].displayName,
+                permission: object.permissions[j].roles[0],
+                access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
+              };
+              permissionsArray.push(entry);
+            }
+          }
+
+          // initialize and push file to array.
+          file = {
+            id: i + 1,
+            selected: false,
+            expanded: false,
+            name: object.name,
+            owner: ownerDisplayNames.join(",\n"),
+            type: object.mimeType,
+            lastModified: (new Date(object.modifiedTime)).toLocaleString(),
+            created: (new Date(object.createdTime)).toLocaleString(),
+            permissions: permissionsArray
+          };
+          newFiles.push(file);
         }
 
-        // initialize and push file to array.
-        file = {
-          id: i + 1,
-          selected: false,
-          expanded: false,
-          name: object.name,
-          owner: ownerDisplayNames.join(",\n"),
-          type: object.mimeType,
-          lastModified: (new Date(object.modifiedTime)).toLocaleString(),
-          created: (new Date(object.createdTime)).toLocaleString(),
-          permissions: permissionsArray
-        };
-        newFiles.push(file);
+        // set new files.
+        setFiles(newFiles);    
       }
-
-      // set new files.
-      setFiles(newFiles);
     });
   }
 
@@ -313,6 +319,11 @@ export default function DataTable(props) {
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
+        <Row>
+          <Alert variant="danger" show={incorrectOp} onClose={() => setIncorrectOp(false)} dismissible>
+            <Alert.Heading>Search Operator Not Supported! Cannot Perform Search Query!</Alert.Heading>
+          </Alert>
+        </Row>
         <Row>
           <Stack direction="horizontal" gap={2}>
             <Col className="mb-3" style={{ textAlign: "left", width: "40em" }}

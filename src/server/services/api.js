@@ -272,7 +272,11 @@ async function getSearchResults(searchQuery, snapshot, email) {
       }
   
       // get search results for the operator
+      // eslint-disable-next-line no-await-in-loop
       const searchFiles = await searchFilter(op, val, snapshotFiles);
+      if (searchFiles === 'Incorrect op') {
+        return 'Incorrect op';
+      }
       for (let j = 0; j < searchFiles.length; j++) {
         files.push(searchFiles[j]);
       }
@@ -396,6 +400,8 @@ async function searchFilter(op, value, snapshotFiles) {
         }
       }
       break;
+    default:
+      return 'Incorrect op';
   }
   return files;
 }
