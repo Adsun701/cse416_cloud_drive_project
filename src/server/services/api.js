@@ -410,6 +410,24 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         files.push(file);
       }
       break;
+    case 'from':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i++) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i++) {
+        if (fileList[i].sharingUser) {
+          if (fileList[i].sharingUser.email == value) {
+            files.push(fileList[i]);
+          }
+        }
+      }
+      break;
+    case 'to':
+      break;
     case 'readable':
       if (groupOff) {
         snapshotFiles.forEach((val, fileId) => {
@@ -455,7 +473,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         files.push(file);
       }
       break;
-    case 'to':
+    case 'sharable':
       break;
     case 'name':
       snapshotFiles.forEach((val, fileId) => {
@@ -473,6 +491,8 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         }
       }
       break;
+    case 'inFolder':
+      break;
     case 'folder':
       snapshotFiles.forEach((val, fileId) => {
         ids.push(fileId);
@@ -488,6 +508,8 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
           files.push(fileList[i])
         }
       }
+      break;
+    case 'path':
       break;
     case 'sharing':
       if (value == 'none') {
@@ -513,6 +535,22 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         for (let i = 0; i < ids.length; i++) {
           const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
           files.push(file);
+        }
+      }
+      break;
+    case 'foldersonly':
+      if (value == 'true') {
+        snapshotFiles.forEach((val, fileId) => {
+          ids.push(fileId);
+        });
+        for (let i = 0; i < ids.length; i++) {
+          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          fileList.push(file);
+        }
+        for (let i = 0; i < fileList.length; i++) {
+          if (fileList[i].folder) {
+            files.push(fileList[i])
+          }
         }
       }
       break;
