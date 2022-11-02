@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -14,6 +14,7 @@ import { MdClose, MdAdd } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
 import { useStore } from "../store";
+import AxiosClient from "../AxiosClient";
 
 export default function EditPermission(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
@@ -37,8 +38,8 @@ export default function EditPermission(props) {
             </Container>
             <FilePermission selectedFiles={selectedFiles} />
           </Stack>
-          <AddPermission />
-          <RemovePermission />
+          <AddPermission selectedFiles={selectedFiles}/>
+          <RemovePermission selectedFiles={selectedFiles}/>
         </Stack>
       </Container>
     </div>
@@ -47,7 +48,7 @@ export default function EditPermission(props) {
 
 function FilePermission(props) {
   const selectedFiles = props.selectedFiles;
-
+  const [ role, setRole ] = useState("writer");
   return (
     <Container>
       <Tabs defaultActiveKey="0" className="mb-0" fill>
@@ -84,9 +85,12 @@ function FilePermission(props) {
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
-                            <Dropdown.Item>Editor</Dropdown.Item>
-                            <Dropdown.Item>Reader</Dropdown.Item>
-                            <Dropdown.Item>Viewer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("writer")}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("fileOrganizer")}}>fileOrganizer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("owner")}}>owner</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("organizer")}}>organizer</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("commenter")}}>commenter</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("reader")}}>reader</Dropdown.Item>
                           </Dropdown.Menu>
                         </Dropdown>
                       </td>
@@ -106,7 +110,28 @@ function FilePermission(props) {
   );
 }
 
-function AddPermission() {
+function AddPermission(props) {
+
+  const selectedFiles = props.selectedFiles;
+  const [ role, setRole ] = useState("writer");
+  const [ value, setValue ] = useState("");
+
+  let handleNewSharing = (e) => {
+    e.preventDefault();
+    let fileids = [];
+    selectedFiles.forEach((file, index) => {
+      fileids.push(file.id);
+    })
+    AxiosClient.post('/addpermission', {
+      fileList: fileids,
+      role: role,
+      type: "user",
+      value: value,
+    }).then((res) => {
+      console.log("successfully added new permission sharing!");
+    }).catch();
+  }
+
   return (
     <Container fluid className={"no-gutters"}>
       <Container style={{ border: "1px solid #CFCFCF", borderRadius: "10px" }}>
@@ -119,8 +144,8 @@ function AddPermission() {
           Add People and Groups
         </Row>
         <Stack direction="horizontal" gap={3} className="pt-3">
-          <Form.Control style={{ background: "#E9ECEF" }} />
-          <Button
+          <Form.Control onChange={(e) => setValue(e.target.value)} style={{ background: "#E9ECEF" }} />
+          <Button onClick={(e) => handleNewSharing(e)}
             style={{
               background: "#3484FD",
               borderColor: "#CFCFCF",
@@ -141,14 +166,17 @@ function AddPermission() {
                 color: "black",
               }}
             >
-              Editor
+              {role}
             </Dropdown.Toggle>
 
-            <Dropdown.Menu>
-              <Dropdown.Item>Editor</Dropdown.Item>
-              <Dropdown.Item>Reader</Dropdown.Item>
-              <Dropdown.Item>Viewer</Dropdown.Item>
-            </Dropdown.Menu>
+          <Dropdown.Menu>
+          <Dropdown.Item onClick={() => {setRole("writer")}}>writer</Dropdown.Item>
+              <Dropdown.Item onClick={() => {setRole("fileOrganizer")}}>fileOrganizer</Dropdown.Item>
+              <Dropdown.Item onClick={() => {setRole("owner")}}>owner</Dropdown.Item>              
+              <Dropdown.Item onClick={() => {setRole("organizer")}}>organizer</Dropdown.Item>              
+              <Dropdown.Item onClick={() => {setRole("commenter")}}>commenter</Dropdown.Item>              
+              <Dropdown.Item onClick={() => {setRole("reader")}}>reader</Dropdown.Item>
+          </Dropdown.Menu>
           </Dropdown>
         </Stack>
       </Container>
@@ -156,7 +184,10 @@ function AddPermission() {
   );
 }
 
-function RemovePermission() {
+function RemovePermission(props) {
+
+  const selectedFiles = props.selectedFiles;
+  
   return (
     <Container fluid className={"no-gutters"}>
       <Container style={{ border: "1px solid #CFCFCF", borderRadius: "10px" }}>

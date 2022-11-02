@@ -40,7 +40,7 @@ export default function SearchPage() {
       if (file.permissions) {
         for (let j = 0; j < file.permissions.length; j++) {
           let entry = {
-            id: j + 1,
+            id: file.permissions[j].id,
             name: file.permissions[j].displayName,
             permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
             access:
@@ -54,7 +54,7 @@ export default function SearchPage() {
       }
 
       let newFile = {
-        id: i + 1,
+        id: file.id,
         selected: false,
         expanded: false,
         name: file.name,
