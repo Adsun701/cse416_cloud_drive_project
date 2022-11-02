@@ -483,7 +483,7 @@ export default function DataTable(props) {
               <Form.Select style={{ width: "70%" }} value={selectSnapshot} onChange={handleSelectSnapshot}>
                 {fileSnapshots.map((snapshot) => (
                   <option key={snapshot.id} value={snapshot.id}>
-                    {snapshot.timestamp.toString()}
+                    {snapshot.timestamp.toLocaleString()}
                   </option>
                 ))}
               </Form.Select>

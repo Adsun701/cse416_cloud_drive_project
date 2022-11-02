@@ -34,6 +34,7 @@ export default function SnapshotPage() {
         id: i + 1,
         groupName: location.state.groupSnapshots[i].groupName,
         groupMembers: location.state.groupSnapshots[i].groupMembers,
+        createdAt: location.state.groupSnapshots[i].createdAt,
         selected: false,
         expanded: false,
       };
@@ -163,7 +164,7 @@ export default function SnapshotPage() {
                               onChange={(e) => onSelectFileSnapshot(e, snapshot)}
                             />
                           </th>
-                          <td>{snapshot.timestamp.toString()}</td>
+                          <td>{snapshot.timestamp.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -184,6 +185,7 @@ export default function SnapshotPage() {
                         </th>
                         <th>Group Name</th>
                         <th colSpan={2}>Group Members</th>
+                        <th>Timestamp</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -238,6 +240,7 @@ export default function SnapshotPage() {
                               </td>
                             </>
                           )}
+                          <td>{new Date(snapshot.createdAt).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
