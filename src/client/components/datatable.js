@@ -102,6 +102,7 @@ export default function DataTable(props) {
   };
 
   let handleTextChange = () => {
+    setIncorrectOp(false);
     if (event && event.target && event.target.value != null) setSearchText(event.target.value);
   }
 
