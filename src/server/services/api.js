@@ -241,6 +241,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
   queryArray = sortQuery(searchQuery.query);
   booleans = queryArray[0]; // string
   operators = queryArray[1]; // array of strings containing "operation:value"
+  searchString = queryArray[2];
   console.log("booleans");
   console.log(booleans);
 
@@ -662,7 +663,7 @@ function sortQuery(query) {
   }
   console.log(booleans);
   console.log(operators);
-  return [booleans, operators];
+  return [booleans, operators, s];
 }
 
 module.exports = {
