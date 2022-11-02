@@ -228,14 +228,21 @@ function removeDuplicates(filelist) {
   return files;
 }
 
+function findIntersection(filelist, searchFiles) {
+  const files = searchFiles.filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
+  return files;
+}
+
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
   queryArray = sortQuery(searchQuery.query);
-  searchString = queryArray[0]; // string
+  booleans = queryArray[0]; // string
   operators = queryArray[1]; // array of strings containing "operation:value"
+  console.log("booleans");
+  console.log(booleans);
 
   let files = [];
 
@@ -271,6 +278,8 @@ async function getSearchResults(searchQuery, snapshot, email) {
       let index = operators.indexOf('groups:off');
       operators.splice(index, 1);
     }
+    
+    let counter = 0;
     for (let i = 0; i < operators.length; i++) {
       const opPair = operators[i];
       const op = opPair.substring(0, opPair.indexOf(':'));
@@ -283,11 +292,27 @@ async function getSearchResults(searchQuery, snapshot, email) {
       // get search results for the operator
       // eslint-disable-next-line no-await-in-loop
       const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff, email);
+      console.log("got here");
+      console.log(booleans[counter]);
       if (searchFiles === 'Incorrect op') {
         return 'Incorrect op';
       }
-      for (let j = 0; j < searchFiles.length; j++) {
-        files.push(searchFiles[j]);
+      if (booleans[counter] === "or" && i > 0) { 
+        console.log("OR");
+        for (let j = 0; j < searchFiles.length; j++) {
+          files.push(searchFiles[j]);
+          counter += 1;
+        }
+        files = removeDuplicates(files);
+      } else if (booleans[counter] === "and" && i > 0) {
+          console.log("AND");
+          files = findIntersection(files, searchFiles);
+          counter += 1;
+      } else {
+        for (let j = 0; j < searchFiles.length; j++) {
+          files.push(searchFiles[j]);
+        }
+        files = removeDuplicates(files);
       }
     }
   } else {
@@ -309,7 +334,6 @@ async function getSearchResults(searchQuery, snapshot, email) {
       }
     }
   }
-  files = removeDuplicates(files);
   return files;
 }
 
@@ -612,12 +636,9 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
 
 function sortQuery(query) {
   // words = query.replace(/ +(?= )/g, '').split(' ');
-<<<<<<< HEAD
-  console.log(query);
+
   words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-=======
-  words = query.split(/ +(?=(?:(?:[^'"]*'"){2})*[^'"]*$)/g);
->>>>>>> a4454def4dfe9e9fc433815b242f58021b891167
+  console.log(words);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
     if (!a.includes(':') && b.includes(':')) return -1;
@@ -625,7 +646,11 @@ function sortQuery(query) {
   });
   s = '';
   i = 0;
+  let booleans = []
   while (i < words.length && !words[i].includes(':')) {
+    if (words[i] == "or" || words[i] == "and" || words[i] == "not") {
+      booleans.push(words[i]);
+    }
     if (i > 0) s += ' ';
     s += words[i].trim();
     i++;
@@ -635,9 +660,9 @@ function sortQuery(query) {
     const word = words[j].replace(/['"]+/g, '');
     operators.push(word);
   }
-  console.log(s);
+  console.log(booleans);
   console.log(operators);
-  return [s, operators];
+  return [booleans, operators];
 }
 
 module.exports = {
