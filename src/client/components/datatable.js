@@ -57,6 +57,7 @@ export default function DataTable(props) {
   const [folder, setFolder] = useState("");
   const [path, setPath] = useState("");
   const [sharing, setSharing] = useState("");
+  const [groupOff, setGroupOff] = useState(false);
 
   // select all files
   let onSelectAll = (e) => {
@@ -230,6 +231,7 @@ export default function DataTable(props) {
     setFolder("");
     setPath("");
     setSharing("");
+    setGroupOff(false);
   }
 
   let handleSharingOption = (event) => {
@@ -288,6 +290,9 @@ export default function DataTable(props) {
     let folders = folder === "" ? [] : folder.split(',').map(e => addQuotesTrim(e));
     let paths = path === "" ? [] : path.split(',').map(e => addQuotesTrim(e));
     query = constructQuery(drives, owners, creators, froms, tos, reads, writes, shares, names, inFolders, folders, paths, sharing);
+    if (groupOff) {
+      query = "groups:off and " + query;
+    }
     setSearchText(query);
     setBuilder(false);
     handleResetBuilder();
@@ -451,6 +456,9 @@ export default function DataTable(props) {
                           <option value="individual">individual</option>
                           <option value="domain">domain</option>
                         </Form.Select>
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="groupOff">
+                      <Form.Check type="checkbox" label="Disable Expansion of Group Permissions" onChange={(event) => setGroupOff(!groupOff)}/>
                     </Form.Group>
                     <Row style={{display:'flex', justifyContent:'right', padding: '15px'}}>
                       <Col md="auto">
