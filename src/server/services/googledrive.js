@@ -90,6 +90,9 @@ async function getGoogleFiles(token, email) {
     // eslint-disable-next-line no-await-in-loop
     let fileData = await getFileData(token, key);
     fileData = fileData.data;
+
+    let mimeType = fileData.mimeType.split('.');
+    let isFolder = mimeType[mimeType.length - 1] == "folder";
     
     let owner = { 
       name: fileData.owners[0].displayName, 
@@ -111,7 +114,8 @@ async function getGoogleFiles(token, email) {
       modifiedTime: fileData.modifiedTime,
       permissions: value,
       owner: owner,
-      sharingUser: sharingUser
+      sharingUser: sharingUser,
+      folder: isFolder
     });
     file.save();
     listFiles.push(file);

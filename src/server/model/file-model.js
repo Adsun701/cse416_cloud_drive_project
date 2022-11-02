@@ -11,7 +11,8 @@ const FileSchema = new Schema(
     modifiedTime: { type: Date },
     permissions: { type: [Permission] },
     owner: { name: { type: String }, email: { type: String } },
-    sharingUser: { name: { type: String }, email: { type: String } }
+    sharingUser: { name: { type: String }, email: { type: String } },
+    folder: { type: Boolean }
   },
   { timestamps: true },
 );
