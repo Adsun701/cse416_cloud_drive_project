@@ -209,6 +209,7 @@ export default function DataTable(props) {
 
   let handleQueryBuilder = (event) => {
     setBuilder(true);
+    setSearchText("");
   }
 
   let handleCloseBuilder = (event) => {
@@ -235,37 +236,60 @@ export default function DataTable(props) {
     setSharing(event.target.value);
   }
 
+  let addQuotesTrim = (element) => {
+    if (/\s/g.test(element)) {
+      element = "\'" + element + "\'"; 
+      element.trim();
+    } else { 
+      element.trim();
+    }
+    return element;
+  }
+
+  let constructQuery = (drives, owners, creators, froms, tos, reads, writes, shares, names, inFolders, folders, paths, sharing) => {
+    let query = ""
+    if (drives.length != 0) {
+      drives.forEach(element => {query += "drive:"+element+" and "});
+      if (paths) {
+        paths.forEach(element => {query += "path:"+element+" and "});
+      }
+    }
+    owners.forEach(element => {query += "owner:"+element+" and "});
+    creators.forEach(element => {query += "creator:"+element+" and "});
+    froms.forEach(element => {query += "from:"+element +" and "});
+    tos.forEach(element => {query += "to:"+element+" and "});
+    reads.forEach(element => {query += "readable:"+element+" and "});
+    writes.forEach(element => {query += "writable:"+element+" and "});
+    shares.forEach(element => {query += "shareable:"+element+" and "});
+    names.forEach(element => {query += "name:"+element+" and "});
+    inFolders.forEach(element => {query += "inFolder:"+element+" and "});
+    folders.forEach(element => {query += "folder:"+element+" and "});
+    if (sharing != "") {
+      query += "sharing:"+sharing;
+    }
+    if (query.endsWith(" and ")){
+      query = query.slice(0, -5); 
+    }
+    return query;
+  }
+
   let handleBuilderSearch = (event) => {
     let query = "";
-    let drives = drive === "" ? [] : drive.split(',').map(e => e.trim());
-    let owners = owner === "" ? [] : owner.split(',').map(e => e.trim());
-    let creators = creator === "" ? [] : creator.split(',').map(e => e.trim());
-    let froms = from === "" ? [] : from.split(',').map(e => e.trim());
-    let tos = to === "" ? [] : to.split(',').map(e => e.trim());
-    let reads = readable === "" ? [] : readable.split(',').map(e => e.trim());
-    let writes = writable === "" ? [] : writable.split(',').map(e => e.trim());
-    let shares = shareable === "" ? [] : shareable.split(',').map(e => e.trim());
-    let names = name === "" ? [] : name.split(',').map(e => e.trim());
-    let inFolders = inFolder === "" ? [] : inFolder.split(',').map(e => e.trim());
-    let folders = folder === "" ? [] : folder.split(',').map(e => e.trim());
-    let paths = path === "" ? [] : path.split(',').map(e => e.trim());
-    drives.forEach(element => {query += "drive:"+element+" "});
-    owners.forEach(element => {query += "owner:"+element+" "});
-    creators.forEach(element => {query += "creator:"+element+" "});
-    froms.forEach(element => {query += "from:"+element +" "});
-    tos.forEach(element => {query += "to:"+element+" "});
-    reads.forEach(element => {query += "readable:"+element+" "});
-    writes.forEach(element => {query += "writable:"+element+" "});
-    shares.forEach(element => {query += "shareable:"+element+" "});
-    names.forEach(element => {query += "name:"+element+" "});
-    inFolders.forEach(element => {query += "inFolder:"+element+" "});
-    folders.forEach(element => {query += "folder:"+element+" "});
-    paths.forEach(element => {query += "path:"+element+" "});
-    query += "sharing:"+sharing;
-    query = query.replace(" ", " and ");
+    let drives = drive === "" ? [] : drive.split(',').map(e => addQuotesTrim(e));
+    let owners = owner === "" ? [] : owner.split(',').map(e => addQuotesTrim(e));
+    let creators = creator === "" ? [] : creator.split(',').map(e => addQuotesTrim(e));
+    let froms = from === "" ? [] : from.split(',').map(e => addQuotesTrim(e));
+    let tos = to === "" ? [] : to.split(',').map(e => addQuotesTrim(e));
+    let reads = readable === "" ? [] : readable.split(',').map(e => addQuotesTrim(e));
+    let writes = writable === "" ? [] : writable.split(',').map(e => addQuotesTrim(e));
+    let shares = shareable === "" ? [] : shareable.split(',').map(e => addQuotesTrim(e));
+    let names = name === "" ? [] : name.split(',').map(e => addQuotesTrim(e));
+    let inFolders = inFolder === "" ? [] : inFolder.split(',').map(e => addQuotesTrim(e));
+    let folders = folder === "" ? [] : folder.split(',').map(e => addQuotesTrim(e));
+    let paths = path === "" ? [] : path.split(',').map(e => addQuotesTrim(e));
+    query = constructQuery(drives, owners, creators, froms, tos, reads, writes, shares, names, inFolders, folders, paths, sharing);
     setSearchText(query);
     setBuilder(false);
-    console.log(snapshotCreatedAt);
     handleResetBuilder();
   }
 
