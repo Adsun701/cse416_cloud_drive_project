@@ -426,6 +426,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
     }
   });
   const fileList = [];
+  console.log(snapshotFiles);
   switch (op) {
     case 'drive':
       break;
@@ -433,16 +434,16 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       op = 'owner';
     case 'owner':
       snapshotFiles.forEach((val, fileId) => {
-        const perms = val;
-        for (let i = 0; i < perms.length; i++) {
-          if (perms[i].roles[0] == op && perms[i].email == value) {
-            ids.push(fileId);
-          }
-        }
+        ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i++) {
         const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        files.push(file);
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i++) {
+        if (fileList[i].owner.email == value) {
+          files.push(fileList[i]);
+        }
       }
       break;
     case 'from':
