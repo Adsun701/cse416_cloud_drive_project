@@ -102,7 +102,7 @@ router.post('/addnewaccesscontrolpolicies', isAuthenticated, async (req, res) =>
   const response = await cloudDriveAPI
     .addNewAccessPolicy(req.session.email, req.body.requirement, req.body.ar, req.body.dr, req.body.aw, req.body.dw);
   res.send(JSON.stringify(response));
-  });
+});
 
 router.post('/updateaccesscontrolpolicy', isAuthenticated, async (req, res) => {
   await cloudDriveAPI.updateAccessPolicy(req.body.type, req.body.requirement, req.body.newValue);
@@ -117,11 +117,18 @@ router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
 router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) => {
   await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.prevControl);
   res.status(200).send();
-})
+});
 
 router.post('/editaccesscontrol', isAuthenticated, async (req, res) => {
   await cloudDriveAPI.editAccessControl(req.body.requirement, req.body.type, req.body.prevControl, req.body.newControl);
   res.status(200).send();
+});
+
+router.post('/checkaccesscontrol', isAuthenticated, async (req, res) => {
+  cloudDriveAPI.checkAgainstAccessPolicy(req.session.email, req.body.files, req.body.value, req.body.role).then((response) => {
+    console.log(response);
+    res.status(200).send({ allowed: response });
+  }).catch();
 });
 
 router.post('/searchquery', async (req, res, next) => {
@@ -133,15 +140,15 @@ router.post('/searchquery', async (req, res, next) => {
     const { email } = req.session;
 
     let fileSnapshot = null;
-    if (req.body.snapshot != "") {
+    if (req.body.snapshot != '') {
       const timestamp = new Date(req.body.snapshot);
-  
+
       fileSnapshot = await FileSnapshot.find({ createdAt: timestamp })
-      .sort({ createdAt: -1 })
-      .limit(1);
+        .sort({ createdAt: -1 })
+        .limit(1);
     }
 
-    let query = req.body.query;
+    const { query } = req.body;
     const searchQuery = new SearchQuery({
       query,
     });

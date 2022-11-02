@@ -88,21 +88,16 @@ async function deletingAccessPolicyRequirement(email, requirement) {
   await AccessPolicy.remove({ requirement });
   const user = await User.find({ email });
   const accessControls = user[0].accessPolicies;
-  console.log(removedAccessPolicy);
+  // console.log(removedAccessPolicy);
   const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy._id);
-  console.log(newControls);
+  // console.log(newControls);
   await User.updateOne({ email }, { accessPolicies: newControls });
   return newControls;
 }
 
 async function editAccessControl(requirement, type, prevControl, newControl) {
   const accessPolicy = await AccessPolicy.findOne({ requirement });
-  // console.log("edit access controls");
-  // console.log(accessPolicy);
-  // console.log(accessPolicy["ar"]);
-  // console.log(type);
-  // console.log(accessPolicy[type]);
-  let newControls = accessPolicy[type].filter((old) => old !== prevControl);
+  const newControls = accessPolicy[type].filter((old) => old !== prevControl);
   newControls.push(newControl);
   switch (type) {
     case 'ar':
@@ -125,7 +120,7 @@ async function editAccessControl(requirement, type, prevControl, newControl) {
 
 async function deletingAccessControlsInRequirement(requirement, type, prevControl) {
   const accessPolicy = await AccessPolicy.findOne({ requirement });
-  let newControls = accessPolicy[type].filter((old) => old !== prevControl);
+  const newControls = accessPolicy[type].filter((old) => old !== prevControl);
   switch (type) {
     case 'ar':
       await AccessPolicy.updateOne({ requirement }, { ar: newControls });
@@ -239,9 +234,10 @@ async function getSearchResults(searchQuery, snapshot, email) {
 
   let fileSnapshot;
   let snapshotFiles;
-
+  // console.log("BEFORE THE !");
   // get the most recent file snapshot from the user if snapshot not specified
   if (!snapshot) {
+    // console.log("INSIDE");
     const user = await User.find({ email });
     const { fileSnapshots } = user[0];
     const ids = [];
@@ -252,25 +248,25 @@ async function getSearchResults(searchQuery, snapshot, email) {
     fileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
       .sort({ createdAt: -1 })
       .limit(1);
-  
+    // console.log(fileSnapshot);
     // get all files from snapshot
     snapshotFiles = fileSnapshot[0].files;
   } else {
     // use file snapshot selected by the user
     snapshotFiles = snapshot[0].files;
   }
-
+  // console.log(snapshotFiles);
   // iterate through operators
   if (operators.length > 0) {
     for (let i = 0; i < operators.length; i++) {
-      let opPair = operators[i];
-      let op = opPair.substring(0, opPair.indexOf(':'));
+      const opPair = operators[i];
+      const op = opPair.substring(0, opPair.indexOf(':'));
       let val = opPair.substring(opPair.indexOf(':') + 1);
 
-      if (val == "me") {
+      if (val == 'me') {
         val = email;
       }
-  
+
       // get search results for the operator
       // eslint-disable-next-line no-await-in-loop
       const searchFiles = await searchFilter(op, val, snapshotFiles);
@@ -283,24 +279,92 @@ async function getSearchResults(searchQuery, snapshot, email) {
     }
   } else {
     // default file name search if no operators
-    let fileList = [];
-    let ids = []
+    const fileList = [];
+    const ids = [];
     snapshotFiles.forEach((val, fileId) => {
       ids.push(fileId);
     });
     for (let i = 0; i < ids.length; i++) {
-      let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+      const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
       fileList.push(file);
     }
     for (let i = 0; i < fileList.length; i++) {
-      let name = fileList[i].name;
-      const reg = new RegExp(searchString, "gi");
+      const { name } = fileList[i];
+      const reg = new RegExp(searchString, 'gi');
       if (name.match(reg)) {
-        files.push(fileList[i])
+        files.push(fileList[i]);
       }
     }
   }
   return files;
+}
+
+/*
+Check if the list of files along with the value and role
+are allowed via the user's access control policies
+*/
+async function checkAgainstAccessPolicy(email, files, value, role) {
+  const policies = await getAccessControlPolicies(email);
+  let reader; // true for reader and false for writer
+  switch (role) {
+    case 'reader':
+      reader = true;
+      break;
+    case 'commenter':
+      reader = true;
+      break;
+    default:
+      reader = false;
+      break;
+  }
+  for (let x = 0; x < policies.length; x += 1) {
+    let policy = policies[x];
+    const query = { query: policy.requirement };
+    let res = await getSearchResults(query, false, email);
+    for (let i = 0; i < res.length; i += 1) {
+      for (let j = 0; j < files.length; j += 1) {
+        let fileid = files[j];
+        if (fileid === res[i].id) { // file is part of the query, so check the access controls
+          if (reader) { // check reader roles
+            const { ar } = policy;
+            const { dr } = policy;
+            if (ar.length > 0) {
+              const ans = ar.filter((allowed) => allowed === value);
+              console.log(ans);
+              if (ans.length !== 0) {
+                console.log("ret true");
+                return true;
+              }
+            }
+            if (dr.length > 0) {
+              const ans = dr.filter((allowed) => allowed === value);
+              console.log(ans);
+              if (ans.length !== 0) {
+                return false;
+              }
+            } // passed all reader checks
+          }
+          const { aw } = policy;
+          const { dw } = policy;
+          if (aw.length > 0) {
+            const ans = aw.filter((allowed) => allowed === value);
+            console.log(ans);
+            if (ans.length !== 0) {
+              return true;
+            }
+          }
+          if (dw.length > 0) {
+            const ans = dw.filter((allowed) => allowed === value);
+            console.log(ans);
+            if (ans.length !== 0) {
+              return false;
+            }
+          }
+          return false;
+        }
+      }
+    }
+  }
 }
 
 // Filter list of files based on given operator and value
@@ -314,62 +378,62 @@ async function searchFilter(op, value, snapshotFiles) {
       op = 'owner';
     case 'owner':
       snapshotFiles.forEach((val, fileId) => {
-        let perms = val;
-        for(let i = 0; i < perms.length; i++) {
-          if(perms[i].roles[0] == op && perms[i].email == value) {
+        const perms = val;
+        for (let i = 0; i < perms.length; i++) {
+          if (perms[i].roles[0] == op && perms[i].email == value) {
             ids.push(fileId);
           }
         }
       });
       for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         files.push(file);
       }
       break;
     case 'readable':
       snapshotFiles.forEach((val, fileId) => {
-        let perms = val;
-        for(let i = 0; i < perms.length; i++) {
-          if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
+        const perms = val;
+        for (let i = 0; i < perms.length; i++) {
+          if (perms[i].roles[0] == 'reader' && perms[i].email == value) {
             ids.push(fileId);
           }
         }
       });
       for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         files.push(file);
       }
       break;
     case 'writable':
       snapshotFiles.forEach((val, fileId) => {
-        let perms = val;
-        for(let i = 0; i < perms.length; i++) {
-          if(perms[i].roles[0] == 'writer' && perms[i].email == value) {
+        const perms = val;
+        for (let i = 0; i < perms.length; i++) {
+          if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
             ids.push(fileId);
           }
         }
       });
       for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         files.push(file);
       }
       break;
-    case "to":
+    case 'to':
       break;
     case 'name':
-      let fileList = [];
+      const fileList = [];
       snapshotFiles.forEach((val, fileId) => {
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i++) {
-        let name = fileList[i].name;
-        const reg = new RegExp(value, "gi");
+        const { name } = fileList[i];
+        const reg = new RegExp(value, 'gi');
         if (name.match(reg)) {
-          files.push(fileList[i])
+          files.push(fileList[i]);
         }
       }
       break;
@@ -423,7 +487,7 @@ function sortQuery(query) {
   }
   operators = [];
   for (j = i; j < words.length; j++) {
-    let word = words[j].replace(/['"]+/g, '');
+    const word = words[j].replace(/['"]+/g, '');
     operators.push(word);
   }
   return [s, operators];
@@ -445,4 +509,5 @@ module.exports = {
   deletingAccessPolicyRequirement,
   deletingAccessControlsInRequirement,
   editAccessControl,
+  checkAgainstAccessPolicy,
 };

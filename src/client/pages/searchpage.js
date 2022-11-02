@@ -108,7 +108,7 @@ export default function SearchPage() {
                     setGroupSnapshots={setGroupSnapshots}/>
                 </Col>
                 <Col sm={4} className="px-0">
-                  <EditPermission files={files} />
+                  <EditPermission files={files} fileSnapshots={fileSnapshots}/>
                 </Col>
               </>
             ) : (

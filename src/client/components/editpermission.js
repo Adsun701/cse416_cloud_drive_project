@@ -19,7 +19,7 @@ import AxiosClient from "../AxiosClient";
 export default function EditPermission(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
   const selectedFiles = props.files.filter((e) => e.selected);
-
+  let fileSnapshot = props.fileSnapshot;
   console.log("edit permission page");
   console.log(setEditPermission);
   console.log(selectedFiles);
@@ -38,7 +38,7 @@ export default function EditPermission(props) {
             </Container>
             <FilePermission selectedFiles={selectedFiles} />
           </Stack>
-          <AddPermission selectedFiles={selectedFiles}/>
+          <AddPermission selectedFiles={selectedFiles} fileSnapshot={fileSnapshot}/>
           <RemovePermission selectedFiles={selectedFiles}/>
         </Stack>
       </Container>
@@ -122,13 +122,23 @@ function AddPermission(props) {
     selectedFiles.forEach((file, index) => {
       fileids.push(file.id);
     })
-    AxiosClient.post('/addpermission', {
-      fileList: fileids,
-      role: role,
-      type: "user",
+    AxiosClient.post('/checkaccesscontrol', {
+      files: fileids,
       value: value,
+      role: role
     }).then((res) => {
-      console.log("successfully added new permission sharing!");
+      if (res.data.allowed) {
+      AxiosClient.post('/addpermission', {
+        fileList: fileids,
+        role: role,
+        type: "user",
+        value: value,
+      }).then((res) => {
+        console.log("successfully added new permission sharing!");
+      }).catch();
+    } else {
+      console.log("NOT ALLOWED VIA ACCESS CONTROL!")
+    }
     }).catch();
   }
 
