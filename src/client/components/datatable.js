@@ -309,9 +309,9 @@ export default function DataTable(props) {
   let sortOwner= (event) => {
     let temp = files;
     if (!sortOwnerButton) {
-      temp.sort((a,b) => (a.owner < b.owner) ? 1 : ((b.owner < a.owner) ? -1 : 0));
+      temp.sort((a,b) => (a.owner.name < b.owner.name) ? 1 : ((b.owner.name < a.owner.name) ? -1 : 0));
     } else {
-      temp.sort((a,b) => (a.owner > b.owner) ? 1 : ((b.owner > a.owner) ? -1 : 0));
+      temp.sort((a,b) => (a.owner.name > b.owner.name) ? 1 : ((b.owner.name > a.owner.name) ? -1 : 0));
     }
     setSortOwnerButton(!sortOwnerButton);
     setFiles(temp);
