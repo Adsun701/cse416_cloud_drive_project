@@ -91,31 +91,31 @@ async function getGoogleFiles(token, email) {
     let fileData = await getFileData(token, key);
     fileData = fileData.data;
 
-    let mimeType = fileData.mimeType.split('.');
-    let isFolder = mimeType[mimeType.length - 1] == "folder";
-    
-    let owner = { 
-      name: fileData.owners[0].displayName, 
-      email: fileData.owners[0].emailAddress
+    const mimeType = fileData.mimeType.split('.');
+    const isFolder = mimeType[mimeType.length - 1] === 'folder';
+
+    const owner = {
+      name: fileData.owners[0].displayName,
+      email: fileData.owners[0].emailAddress,
     };
 
     let sharingUser;
     if (fileData.sharingUser) {
       sharingUser = {
         name: fileData.sharingUser.displayName,
-        email: fileData.sharingUser.emailAddress
-      }
+        email: fileData.sharingUser.emailAddress,
+      };
     }
-     
+
     const file = new File({
       id: fileData.id,
       name: fileData.name,
       createdTime: fileData.createdTime,
       modifiedTime: fileData.modifiedTime,
       permissions: value,
-      owner: owner,
-      sharingUser: sharingUser,
-      folder: isFolder
+      owner,
+      sharingUser,
+      folder: isFolder,
     });
     file.save();
     listFiles.push(file);
@@ -219,14 +219,14 @@ async function updatePermission(accessToken, fileid, permid, data) {
 }
 
 /*
-Delete a permission for a google file 
+Delete a permission for a google file
 */
 async function removePermission(accessToken, fileid, permid) {
-  const drive = google.drive({ version: 'v3'});
+  const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.delete({
-    accessToken: accessToken,
+    accessToken,
     fileId: fileid,
-    permissionId: permid
+    permissionId: permid,
   });
   return result;
 }

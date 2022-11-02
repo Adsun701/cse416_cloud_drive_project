@@ -1,3 +1,9 @@
+/*
+  Contains the implementation of taking a snapshot function when authentication was in the backend.
+  Currently in the process of refactoring and moving code
+  to services/api.js, services/googledrive.js.
+*/
+
 // const { authenticate } = require('@google-cloud/local-auth');
 const express = require('express');
 

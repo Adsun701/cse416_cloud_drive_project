@@ -18,9 +18,11 @@ export default function SnapshotPage() {
   const [groupSnapshots, setGroupSnapshots] = useState([]);
   const [selectAllFile, setSelectAllFile] = useState(false);
   const [selectAllGroup, setSelectAllGroup] = useState(false);
+
   let fileTimestamps = [];
   let groupInfo = [];
   if (location.state) {
+    // Get the file snapshots from the state and extract the information needed to be displayed in snapshot table
     for (let i = 0; i < location.state.fileSnapshots.length; i++) {
       let snapshot = {
         id: i + 1,
@@ -29,6 +31,8 @@ export default function SnapshotPage() {
       };
       fileTimestamps.push(snapshot);
     }
+
+    // Get the group snapshots from the state and extract the information needed to be displayed in snapshot table
     for (let i = 0; i < location.state.groupSnapshots.length; i++) {
       let info = {
         id: i + 1,
@@ -47,6 +51,7 @@ export default function SnapshotPage() {
     setGroupSnapshots(groupInfo);
   }, []);
 
+  // select all file snapshots
   let onSelectAllFileSnapshot = (e, item) => {
     let temp = [...fileTimestamps];
     temp.map((snapshot) => (snapshot.selected = e.target.checked));
@@ -55,6 +60,7 @@ export default function SnapshotPage() {
     setFileSnapshots(temp);
   };
 
+  // select a file snapshot
   let onSelectFileSnapshot = (e, item) => {
     let temp = [...fileSnapshots];
     if (selectAllFile) {
@@ -69,6 +75,7 @@ export default function SnapshotPage() {
     setFileSnapshots(temp);
   };
 
+  // select all group snapshots
   let onSelectAllGroupSnapshot = (e, item) => {
     let temp = [...groupInfo];
     temp.map((snapshot) => (snapshot.selected = e.target.checked));
@@ -77,6 +84,7 @@ export default function SnapshotPage() {
     setGroupSnapshots(temp);
   };
 
+  // select a group snapshot
   let onSelectGroupSnapshot = (e, item) => {
     let temp = [...groupSnapshots];
     if (selectAllGroup) {
@@ -91,6 +99,7 @@ export default function SnapshotPage() {
     setGroupSnapshots(temp);
   };
 
+  // expand group members list
   let onExpand = (e, item) => {
     let temp = [...groupSnapshots];
     temp.map((snapshot) => {

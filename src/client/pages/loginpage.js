@@ -41,6 +41,7 @@ export default function LoginPage() {
       email: res.profileObj.email,
     }).then((response) => {
       // set a state here to change the page upon load
+      // get files, file snapshots, and group snapshots stored in database, pass them to the search page as state when navigating
       AxiosClient.get("/allfilesnapshots").then((res) => {
         let fileSnapshots = res.data;
         AxiosClient.get("/allgroupsnapshots").then((res) => {
@@ -65,6 +66,7 @@ export default function LoginPage() {
       email: data.mail,
     }).then((response) => {
       // set a state here to change the page upon load
+      // get files and file snapshots stored in database, pass them to the search page as state when navigating
       AxiosClient.get("/allfilesnapshots").then((res) => {
         let fileSnapshots = res.data;
           AxiosClient.get("/allFiles").then((res) => {

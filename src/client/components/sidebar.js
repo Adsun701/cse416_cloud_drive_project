@@ -22,6 +22,7 @@ export default function SideBar() {
   };
 
   const handleSearch = () => {
+    // Get files, file snapshots and group snapshots stored in database, pass them to the search page as state when navigating
     AxiosClient.get("/allfilesnapshots").then((res) => {
       let fileSnapshots = res.data;
       AxiosClient.get("/allgroupsnapshots").then((res) => {
@@ -34,6 +35,7 @@ export default function SideBar() {
   };
 
   const handleSnapshot = () => {
+    // Get file snapshots and group snapshots stored in database, pass them to the snapshot page as state when navigating
     AxiosClient.get("/allfilesnapshots").then((res) => {
       let fileSnapshots = res.data;
       AxiosClient.get("/allgroupsnapshots").then((res) => {

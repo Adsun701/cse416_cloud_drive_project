@@ -1,3 +1,7 @@
+/*
+  Current Implementaion of taking a Group Snapshot for Google Drive
+*/
+
 // const { authenticate } = require('@google-cloud/local-auth');
 const express = require('express');
 
@@ -37,6 +41,7 @@ router.post(
     const data = fs.readFileSync(req.file.path).toString('utf-8');
     while (data.indexOf(profileprefix, start) > -1) {
       start = data.indexOf(profileprefix, start) + prefixlength;
+      // eslint-disable-next-line no-useless-escape
       user = data.substring(start, data.indexOf('\"', start));
       memberarray.push(user);
     }

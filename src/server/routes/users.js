@@ -1,3 +1,8 @@
+/*
+  Contains the implementation of microsoft api functions when authentication was in the backend.
+  Currently in the process of refactoring and moving code to services/api.js, services/microsoft.js.
+*/
+
 const express = require('express');
 
 const router = express.Router();

@@ -3,6 +3,9 @@ const cloudDriveAPI = require('../services/api');
 
 const router = express.Router();
 
+/*
+  Store the access token, relevant drive, and user information into the express session
+*/
 router.post('/', async (req, res) => {
   if (req.session.isAuthenticated) {
     res.send('Already Authenticated');

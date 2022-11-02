@@ -7,7 +7,7 @@ const GroupSnapshotSchema = new Schema(
     groupName: String,
     groupAddress: String,
     groupMembers: [String],
-    timestamp: Date
+    timestamp: Date,
   },
   { timestamps: true },
 );

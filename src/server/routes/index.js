@@ -1,3 +1,7 @@
+/*
+  Contains backend routes that will call functions
+  in our cloud drive adapter interface, services/api.js
+*/
 const express = require('express');
 const cloudDriveAPI = require('../services/api');
 
@@ -17,7 +21,7 @@ function isAuthenticated(req, res, next) {
 
 router.get('/filesnapshot', isAuthenticated, async (req, res) => {
   const snapshot = await cloudDriveAPI
-    .fileSnapshot(req.session.clouddrive, req.session.accessToken, req.session.email);
+    .takeFileSnapshot(req.session.clouddrive, req.session.accessToken, req.session.email);
   res.send(snapshot);
 });
 
@@ -25,6 +29,7 @@ router.get('/allfilesnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
   const { fileSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
+  // eslint-disable-next-line no-unused-expressions
   (fileSnapshots != null) && fileSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
     ids.push(element._id);
@@ -38,6 +43,7 @@ router.get('/allgroupsnapshots', async (req, res) => {
   const user = await User.find({ email: req.session.email });
   const { groupSnapshots } = (user && user.length > 0 && user[0]) ? user[0] : [];
   const ids = [];
+  // eslint-disable-next-line no-unused-expressions
   (groupSnapshots != null) && groupSnapshots.forEach((element) => {
     // eslint-disable-next-line no-underscore-dangle
     ids.push(element._id);
@@ -94,13 +100,19 @@ router.post('/logout', isAuthenticated, async (req, res) => {
 
 router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
-  console.log(response);
+  // console.log(response);
   res.send(response);
 });
 
 router.post('/addnewaccesscontrolpolicies', isAuthenticated, async (req, res) => {
-  const response = await cloudDriveAPI
-    .addNewAccessPolicy(req.session.email, req.body.requirement, req.body.ar, req.body.dr, req.body.aw, req.body.dw);
+  const response = await cloudDriveAPI.addNewAccessPolicy(
+    req.session.email,
+    req.body.requirement,
+    req.body.ar,
+    req.body.dr,
+    req.body.aw,
+    req.body.dw,
+  );
   res.send(JSON.stringify(response));
 });
 
@@ -115,22 +127,37 @@ router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
 });
 
 router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) => {
-  await cloudDriveAPI.deletingAccessControlsInRequirement(req.body.requirement, req.body.type, req.body.prevControl);
+  await cloudDriveAPI.deletingAccessControlsInRequirement(
+    req.body.requirement,
+    req.body.type,
+    req.body.prevControl,
+  );
   res.status(200).send();
 });
 
 router.post('/editaccesscontrol', isAuthenticated, async (req, res) => {
-  await cloudDriveAPI.editAccessControl(req.body.requirement, req.body.type, req.body.prevControl, req.body.newControl);
+  await cloudDriveAPI.editAccessControl(
+    req.body.requirement,
+    req.body.type,
+    req.body.prevControl,
+    req.body.newControl,
+  );
   res.status(200).send();
 });
 
 router.post('/checkaccesscontrol', isAuthenticated, async (req, res) => {
-  cloudDriveAPI.checkAgainstAccessPolicy(req.session.email, req.body.files, req.body.value, req.body.role).then((response) => {
-    console.log(response);
+  cloudDriveAPI.checkAgainstAccessPolicy(
+    req.session.email,
+    req.body.files,
+    req.body.value,
+    req.body.role,
+  ).then((response) => {
+    // console.log(response);
     res.status(200).send({ allowed: response });
   }).catch();
 });
 
+// eslint-disable-next-line consistent-return
 router.post('/searchquery', async (req, res, next) => {
   if (!req.session.accessToken) {
     return res.send('nope');
@@ -140,7 +167,7 @@ router.post('/searchquery', async (req, res, next) => {
     const { email } = req.session;
 
     let fileSnapshot = null;
-    if (req.body.snapshot != '') {
+    if (req.body.snapshot !== '') {
       const timestamp = new Date(req.body.snapshot);
 
       fileSnapshot = await FileSnapshot.find({ createdAt: timestamp })

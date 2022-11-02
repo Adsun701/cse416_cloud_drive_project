@@ -211,8 +211,6 @@ async function addPermissions(accessToken, files, value, role) {
   return ans;
 }
 
-
-
 module.exports = {
   microsoftAuth,
   saveSnapshot,

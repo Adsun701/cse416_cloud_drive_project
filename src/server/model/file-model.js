@@ -12,7 +12,7 @@ const FileSchema = new Schema(
     permissions: { type: [Permission] },
     owner: { name: { type: String }, email: { type: String } },
     sharingUser: { name: { type: String }, email: { type: String } },
-    folder: { type: Boolean }
+    folder: { type: Boolean },
   },
   { timestamps: true },
 );

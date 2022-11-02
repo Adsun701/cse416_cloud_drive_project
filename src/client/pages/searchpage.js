@@ -24,11 +24,13 @@ export default function SearchPage() {
     console.log("failed operation: ", err);
   };
 
+  // retrieve the states passed from previous page, if there are any
   const location = useLocation();
   let allFiles = [];
   let allFileSnapshots = [];
   let allGroupSnapshots = [];
   if (location.state) {
+    // Get the files from the state and extract the information needed to be passed as props to datatable component
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
       if (file == null) continue;
@@ -68,7 +70,10 @@ export default function SearchPage() {
       };
       allFiles.push(newFile);
     }
+    // sort the files alphabetically
     allFiles.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+
+    // Get the file snapshots from the state and extract the information needed to be passed as props to datatable component
     for (let i = 0; i < location.state.fileSnapshots.length; i++) {
       let snapshot = {
         id: i + 1,
@@ -78,6 +83,8 @@ export default function SearchPage() {
       };
       allFileSnapshots.push(snapshot);
     }
+
+    // Get the group snapshots from the state and extract the information needed to be passed as props to datatable component
     for (let i = 0; i < location.state.groupSnapshots.length; i++) {
       allGroupSnapshots[location.state.groupSnapshots[i].groupName] = location.state.groupSnapshots[i].groupMembers;
     }

@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-underscore-dangle */
 /*
 Main interface to act as cloud drive adapter and to perform database operations
 */
@@ -22,7 +24,7 @@ async function auth(clouddrive, token, email) {
 }
 
 // saveSnapshot - take and save a file snapshot to the DB
-async function fileSnapshot(clouddrive, token, email) {
+async function takeFileSnapshot(clouddrive, token, email) {
   let snapshot = {};
   if (clouddrive === 'google') {
     snapshot = googledrive.saveSnapshot(token, email);
@@ -168,7 +170,6 @@ async function getAccessControlPolicies(email) {
   const accessControls = user.accessPolicies;
   const ids = [];
   accessControls.forEach((element) => {
-    // eslint-disable-next-line no-underscore-dangle
     ids.push(element._id);
   });
   const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
@@ -198,7 +199,6 @@ async function getRecentQueries(email) {
   const queries = user[0].recentQueries;
   const ids = [];
   queries.forEach((element) => {
-    // eslint-disable-next-line no-underscore-dangle
     ids.push(element._id);
   });
   const recentQueries = await SearchQuery.find({ _id: { $in: ids } })
@@ -214,23 +214,282 @@ async function getAllFiles(email) {
   const { files } = user[0];
   const ids = [];
   files.forEach((element) => {
-    // eslint-disable-next-line no-underscore-dangle
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
-  console.log(allFiles);
+  // console.log(allFiles);
   return allFiles;
 }
 
 function removeDuplicates(filelist) {
   const fileIdSet = new Set(filelist.map((file) => file.id));
-  const files = [...fileIdSet].map(id => filelist.find(file => file.id === id)).filter(Boolean);
+  const files = [...fileIdSet].map((id) => filelist.find((file) => file.id === id)).filter(Boolean);
   return files;
 }
 
 function findIntersection(filelist, searchFiles) {
-  const files = searchFiles.filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
+  const files = searchFiles
+    .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
   return files;
+}
+
+// Filter list of files based on given operator and value
+async function searchFilter(op, value, snapshotFiles, groupOff, email) {
+  const files = [];
+  const ids = [];
+  const user = await User.find({ email });
+  const { groupSnapshots } = user[0];
+  const groupIds = [];
+  groupSnapshots.forEach((element) => {
+    groupIds.push(element._id);
+  });
+  const groups = await GroupSnapshot.find({ _id: { $in: groupIds } });
+  const groupNames = [];
+  groups.forEach((e) => {
+    if (e.groupMembers.includes(value)) {
+      if (!groupNames.includes(e.groupName)) {
+        groupNames.push(e.groupName.trim());
+      }
+    }
+  });
+  const fileList = [];
+  // console.log(snapshotFiles);
+  switch (op) {
+    case 'drive':
+      break;
+    case 'creator':
+    case 'owner':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        if (fileList[i].owner.email === value) {
+          files.push(fileList[i]);
+        }
+      }
+      break;
+    case 'from':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        if (fileList[i].sharingUser) {
+          if (fileList[i].sharingUser.email === value) {
+            files.push(fileList[i]);
+          }
+        }
+      }
+      break;
+    case 'to':
+      snapshotFiles.forEach((val, fileId) => {
+        const perms = val;
+        for (let i = 0; i < perms.length; i += 1) {
+          if (perms[i].inheritedFrom == null && perms[i].email === value) {
+            ids.push(fileId);
+          }
+        }
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case 'readable':
+      if (groupOff) {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].roles[0] === 'reader' && perms[i].email === value) {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      } else {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].roles[0] === 'reader' && perms[i].email === value) {
+              ids.push(fileId);
+            } else if (perms[i].roles[0] === 'reader' && groupNames.includes(perms[i].displayName)) {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      }
+      break;
+    case 'writable':
+      if (groupOff) {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].roles[0] === 'writer' && perms[i].email === value) {
+              ids.push(fileId);
+            }
+          }
+        });
+      } else {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].roles[0] === 'writer' && perms[i].email === value) {
+              ids.push(fileId);
+            } else if (perms[i].roles[0] === 'writer' && groupNames.includes(perms[i].displayName)) {
+              ids.push(fileId);
+            }
+          }
+        });
+      }
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
+      break;
+    case 'sharable':
+      break;
+    case 'name':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        const { name } = fileList[i];
+        const reg = new RegExp(value, 'gi');
+        if (name.match(reg)) {
+          files.push(fileList[i]);
+        }
+      }
+      break;
+    case 'inFolder':
+      break;
+    case 'folder':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        const { name } = fileList[i];
+        const reg = new RegExp(value, 'gi');
+        if (name.match(reg) && fileList[i].folder) {
+          files.push(fileList[i]);
+        }
+      }
+      break;
+    case 'path':
+      break;
+    case 'sharing':
+      if (value === 'none') {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          if (perms.length === 1 && perms[0].roles[0] === 'owner') {
+            ids.push(fileId);
+          }
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      } else if (value === 'anyone') {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].id === 'anyoneWithLink') {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      } else if (value === 'domain') {
+        const domain = email.split('@')[1];
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            if (perms[i].email?.split('@')[1] === domain) {
+              ids.push(fileId);
+            }
+          }
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          files.push(file);
+        }
+      }
+      break;
+    case 'foldersonly':
+      if (value === 'true') {
+        snapshotFiles.forEach((val, fileId) => {
+          ids.push(fileId);
+        });
+        for (let i = 0; i < ids.length; i += 1) {
+          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          fileList.push(file);
+        }
+        for (let i = 0; i < fileList.length; i += 1) {
+          if (fileList[i].folder) {
+            files.push(fileList[i]);
+          }
+        }
+      }
+      break;
+    default:
+      return 'Incorrect op';
+  }
+  return files;
+}
+
+function sortQuery(query) {
+  // words = query.replace(/ +(?= )/g, '').split(' ');
+
+  const words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+  // console.log(words);
+  words.sort((a, b) => {
+    if (a.includes(':') && !b.includes(':')) return 1;
+    if (!a.includes(':') && b.includes(':')) return -1;
+    return 0;
+  });
+  let s = '';
+  let i = 0;
+  const booleans = [];
+  while (i < words.length && !words[i].includes(':')) {
+    if (words[i] === 'or' || words[i] === 'and' || words[i] === 'not') {
+      booleans.push(words[i]);
+    }
+    if (i > 0) s += ' ';
+    s += words[i].trim();
+    i += 1;
+  }
+  const operators = [];
+  for (let j = i; j < words.length; j += 1) {
+    const word = words[j].replace(/['"]+/g, '');
+    operators.push(word);
+  }
+  // console.log(booleans);
+  // console.log(operators);
+  return [booleans, operators, s];
 }
 
 // Get search results from file snapshots given search query
@@ -238,12 +497,12 @@ async function getSearchResults(searchQuery, snapshot, email) {
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
-  queryArray = sortQuery(searchQuery.query);
-  booleans = queryArray[0]; // string
-  operators = queryArray[1]; // array of strings containing "operation:value"
-  searchString = queryArray[2];
-  console.log("booleans");
-  console.log(booleans);
+  const queryArray = sortQuery(searchQuery.query);
+  const booleans = queryArray[0]; // string
+  const operators = queryArray[1]; // array of strings containing "operation:value"
+  const searchString = queryArray[2];
+  // console.log("booleans");
+  // console.log(booleans);
 
   let files = [];
 
@@ -257,7 +516,6 @@ async function getSearchResults(searchQuery, snapshot, email) {
     const { fileSnapshots } = user[0];
     const ids = [];
     fileSnapshots.forEach((element) => {
-      // eslint-disable-next-line no-underscore-dangle
       ids.push(element._id);
     });
     fileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
@@ -276,41 +534,40 @@ async function getSearchResults(searchQuery, snapshot, email) {
     let groupOff = false;
     if (operators.includes('groups:off')) {
       groupOff = true;
-      let index = operators.indexOf('groups:off');
+      const index = operators.indexOf('groups:off');
       operators.splice(index, 1);
     }
-    
+
     let counter = 0;
-    for (let i = 0; i < operators.length; i++) {
+    for (let i = 0; i < operators.length; i += 1) {
       const opPair = operators[i];
       const op = opPair.substring(0, opPair.indexOf(':'));
       let val = opPair.substring(opPair.indexOf(':') + 1);
 
-      if (val == 'me') {
+      if (val === 'me') {
         val = email;
       }
 
       // get search results for the operator
-      // eslint-disable-next-line no-await-in-loop
       const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff, email);
-      console.log("got here");
-      console.log(booleans[counter]);
+      // console.log('got here');
+      // console.log(booleans[counter]);
       if (searchFiles === 'Incorrect op') {
         return 'Incorrect op';
       }
-      if (booleans[counter] === "or" && i > 0) { 
-        console.log("OR");
-        for (let j = 0; j < searchFiles.length; j++) {
+      if (booleans[counter] === 'or' && i > 0) {
+        // console.log('OR');
+        for (let j = 0; j < searchFiles.length; j += 1) {
           files.push(searchFiles[j]);
           counter += 1;
         }
         files = removeDuplicates(files);
-      } else if (booleans[counter] === "and" && i > 0) {
-          console.log("AND");
-          files = findIntersection(files, searchFiles);
-          counter += 1;
+      } else if (booleans[counter] === 'and' && i > 0) {
+        // console.log('AND');
+        files = findIntersection(files, searchFiles);
+        counter += 1;
       } else {
-        for (let j = 0; j < searchFiles.length; j++) {
+        for (let j = 0; j < searchFiles.length; j += 1) {
           files.push(searchFiles[j]);
         }
         files = removeDuplicates(files);
@@ -323,11 +580,11 @@ async function getSearchResults(searchQuery, snapshot, email) {
     snapshotFiles.forEach((val, fileId) => {
       ids.push(fileId);
     });
-    for (let i = 0; i < ids.length; i++) {
+    for (let i = 0; i < ids.length; i += 1) {
       const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
       fileList.push(file);
     }
-    for (let i = 0; i < fileList.length; i++) {
+    for (let i = 0; i < fileList.length; i += 1) {
       const { name } = fileList[i];
       const reg = new RegExp(searchString, 'gi');
       if (name.match(reg)) {
@@ -342,6 +599,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
 Check if the list of files along with the value and role
 are allowed via the user's access control policies
 */
+// eslint-disable-next-line consistent-return
 async function checkAgainstAccessPolicy(email, files, value, role) {
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
@@ -357,27 +615,27 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
       break;
   }
   for (let x = 0; x < policies.length; x += 1) {
-    let policy = policies[x];
+    const policy = policies[x];
     const query = { query: policy.requirement };
-    let res = await getSearchResults(query, false, email);
+    const res = await getSearchResults(query, false, email);
     for (let i = 0; i < res.length; i += 1) {
       for (let j = 0; j < files.length; j += 1) {
-        let fileid = files[j];
+        const fileid = files[j];
         if (fileid === res[i].id) { // file is part of the query, so check the access controls
           if (reader) { // check reader roles
             const { ar } = policy;
             const { dr } = policy;
             if (ar.length > 0) {
               const ans = ar.filter((allowed) => allowed === value);
-              console.log(ans);
+              // console.log(ans);
               if (ans.length !== 0) {
-                console.log("ret true");
+                // console.log('ret true');
                 return true;
               }
             }
             if (dr.length > 0) {
               const ans = dr.filter((allowed) => allowed === value);
-              console.log(ans);
+              // console.log(ans);
               if (ans.length !== 0) {
                 return false;
               }
@@ -387,14 +645,14 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
           const { dw } = policy;
           if (aw.length > 0) {
             const ans = aw.filter((allowed) => allowed === value);
-            console.log(ans);
+            // console.log(ans);
             if (ans.length !== 0) {
               return true;
             }
           }
           if (dw.length > 0) {
             const ans = dw.filter((allowed) => allowed === value);
-            console.log(ans);
+            // console.log(ans);
             if (ans.length !== 0) {
               return false;
             }
@@ -406,270 +664,9 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
-// Filter list of files based on given operator and value
-async function searchFilter(op, value, snapshotFiles, groupOff, email) {
-  let files = [];
-  const ids = [];
-  const user = await User.find({ email: email });
-  const { groupSnapshots } = user[0];
-  const groupIds = [];
-  groupSnapshots.forEach((element) => {
-    // eslint-disable-next-line no-underscore-dangle
-    groupIds.push(element._id);
-  });
-  const groups = await GroupSnapshot.find({ _id: { $in: groupIds } });
-  const groupNames = [];
-  groups.forEach((e) => {
-    if (e.groupMembers.includes(value)) {
-      if (!groupNames.includes(e.groupName)) {
-        groupNames.push(e.groupName.trim());
-      }
-    }
-  });
-  const fileList = [];
-  console.log(snapshotFiles);
-  switch (op) {
-    case 'drive':
-      break;
-    case 'creator':
-      op = 'owner';
-    case 'owner':
-      snapshotFiles.forEach((val, fileId) => {
-        ids.push(fileId);
-      });
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        fileList.push(file);
-      }
-      for (let i = 0; i < fileList.length; i++) {
-        if (fileList[i].owner.email == value) {
-          files.push(fileList[i]);
-        }
-      }
-      break;
-    case 'from':
-      snapshotFiles.forEach((val, fileId) => {
-        ids.push(fileId);
-      });
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        fileList.push(file);
-      }
-      for (let i = 0; i < fileList.length; i++) {
-        if (fileList[i].sharingUser) {
-          if (fileList[i].sharingUser.email == value) {
-            files.push(fileList[i]);
-          }
-        }
-      }
-      break;
-    case 'to':
-      snapshotFiles.forEach((val, fileId) => {
-        const perms = val;
-        for (let i = 0; i < perms.length; i++) {
-          if (perms[i].inheritedFrom == null && perms[i].email == value) {
-            ids.push(fileId);
-          }
-        }
-      });
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        files.push(file);
-      }
-      break;
-    case 'readable':
-      if (groupOff) {
-        snapshotFiles.forEach((val, fileId) => {
-          let perms = val;
-          for(let i = 0; i < perms.length; i++) {
-            if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
-              ids.push(fileId);
-            }
-          }
-        });
-        for (let i = 0; i < ids.length; i++) {
-          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          files.push(file);
-        }
-      } else {
-        snapshotFiles.forEach((val, fileId) => {
-          let perms = val;
-          for(let i = 0; i < perms.length; i++) {
-            if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
-              ids.push(fileId);
-            } else if (perms[i].roles[0] == 'reader' && groupNames.includes(perms[i].displayName)) {
-              ids.push(fileId);
-            }
-          }
-        });
-        for (let i = 0; i < ids.length; i++) {
-          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          files.push(file);
-        }
-      }
-      break;
-    case 'writable':
-      if (groupOff) {
-        snapshotFiles.forEach((val, fileId) => {
-          const perms = val;
-          for (let i = 0; i < perms.length; i++) {
-            if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
-              ids.push(fileId);
-            }
-          }
-        });
-      } else {
-        snapshotFiles.forEach((val, fileId) => {
-          const perms = val;
-          for (let i = 0; i < perms.length; i++) {
-            if (perms[i].roles[0] == 'writer' && perms[i].email == value) {
-              ids.push(fileId);
-            } else if (perms[i].roles[0] == 'writer' && groupNames.includes(perms[i].displayName)) {
-              ids.push(fileId);
-            }
-          }
-        });
-      }
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        files.push(file);
-      }
-      break;
-    case 'sharable':
-      break;
-    case 'name':
-      snapshotFiles.forEach((val, fileId) => {
-        ids.push(fileId);
-      });
-      for (let i = 0; i < ids.length; i++) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        fileList.push(file);
-      }
-      for (let i = 0; i < fileList.length; i++) {
-        const { name } = fileList[i];
-        const reg = new RegExp(value, 'gi');
-        if (name.match(reg)) {
-          files.push(fileList[i]);
-        }
-      }
-      break;
-    case 'inFolder':
-      break;
-    case 'folder':
-      snapshotFiles.forEach((val, fileId) => {
-        ids.push(fileId);
-      });
-      for (let i = 0; i < ids.length; i++) {
-        let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-        fileList.push(file);
-      }
-      for (let i = 0; i < fileList.length; i++) {
-        let name = fileList[i].name;
-        const reg = new RegExp(value, "gi");
-        if (name.match(reg) && fileList[i].folder) {
-          files.push(fileList[i])
-        }
-      }
-      break;
-    case 'path':
-      break;
-    case 'sharing':
-      if (value == 'none') {
-        snapshotFiles.forEach((val, fileId) => {
-          const perms = val;
-          if (perms.length == 1 && perms[0].roles[0] == 'owner') {
-            ids.push(fileId);
-          }
-        });
-        for (let i = 0; i < ids.length; i++) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          files.push(file);
-        }
-      } else if (value == 'anyone') {
-        snapshotFiles.forEach((val, fileId) => {
-          const perms = val;
-          for (let i = 0; i < perms.length; i++) {
-            if (perms[i].id == 'anyoneWithLink') {
-              ids.push(fileId);
-            }
-          }
-        });
-        for (let i = 0; i < ids.length; i++) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          files.push(file);
-        }
-      } else if (value == 'domain') {
-        let domain = email.split('@')[1];
-        snapshotFiles.forEach((val, fileId) => {
-          const perms = val;
-          for (let i = 0; i < perms.length; i++) {
-            if (perms[i].email?.split('@')[1] == domain) {
-              ids.push(fileId);
-            }
-          }
-        });
-        for (let i = 0; i < ids.length; i++) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          files.push(file);
-        }
-      }
-      break;
-    case 'foldersonly':
-      if (value == 'true') {
-        snapshotFiles.forEach((val, fileId) => {
-          ids.push(fileId);
-        });
-        for (let i = 0; i < ids.length; i++) {
-          let file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
-          fileList.push(file);
-        }
-        for (let i = 0; i < fileList.length; i++) {
-          if (fileList[i].folder) {
-            files.push(fileList[i])
-          }
-        }
-      }
-      break;
-    default:
-      return 'Incorrect op';
-  }
-  return files;
-}
-
-function sortQuery(query) {
-  // words = query.replace(/ +(?= )/g, '').split(' ');
-
-  words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-  console.log(words);
-  words.sort((a, b) => {
-    if (a.includes(':') && !b.includes(':')) return 1;
-    if (!a.includes(':') && b.includes(':')) return -1;
-    return 0;
-  });
-  s = '';
-  i = 0;
-  let booleans = []
-  while (i < words.length && !words[i].includes(':')) {
-    if (words[i] == "or" || words[i] == "and" || words[i] == "not") {
-      booleans.push(words[i]);
-    }
-    if (i > 0) s += ' ';
-    s += words[i].trim();
-    i++;
-  }
-  operators = [];
-  for (j = i; j < words.length; j++) {
-    const word = words[j].replace(/['"]+/g, '');
-    operators.push(word);
-  }
-  console.log(booleans);
-  console.log(operators);
-  return [booleans, operators, s];
-}
-
 module.exports = {
   auth,
-  fileSnapshot,
+  takeFileSnapshot,
   addPermissions,
   updatePermission,
   updateAccessPolicy,

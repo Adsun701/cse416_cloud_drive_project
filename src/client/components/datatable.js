@@ -128,6 +128,7 @@ export default function DataTable(props) {
       snapshot: snapshotCreated
     }).then((res) => {
       if (res.data === "Incorrect op") {
+        // invalid search operator sent
         setIncorrectOp(true);
       } else {
         // get data
@@ -216,6 +217,7 @@ export default function DataTable(props) {
   }
 
   let handleResetBuilder = (event) => {
+    // clears all fields in query builder
     setDrive("");
     setOwner("");
     setCreator("");
@@ -238,6 +240,7 @@ export default function DataTable(props) {
 
   let addQuotesTrim = (element) => {
     if (/\s/g.test(element)) {
+      // if element contains spaces, wrap it in quotes
       element = "\'" + element + "\'"; 
       element.trim();
     } else { 
@@ -248,9 +251,11 @@ export default function DataTable(props) {
 
   let constructQuery = (drives, owners, creators, froms, tos, reads, writes, shares, names, inFolders, folders, paths, sharing) => {
     let query = ""
+    // for each operator, append it to the search query string, followed by an " and "
     if (drives.length != 0) {
       drives.forEach(element => {query += "drive:"+element+" and "});
       if (paths) {
+        // path operator can only be used in conjunction with the drive operator
         paths.forEach(element => {query += "path:"+element+" and "});
       }
     }
@@ -268,6 +273,7 @@ export default function DataTable(props) {
       query += "sharing:"+sharing;
     }
     if (query.endsWith(" and ")){
+      // remove the " and " at the end of the query if it exists
       query = query.slice(0, -5); 
     }
     return query;
@@ -275,6 +281,7 @@ export default function DataTable(props) {
 
   let handleBuilderSearch = (event) => {
     let query = "";
+    // if multiple entries entered on one operator filed, split using comma, and then add quotes if needed
     let drives = drive === "" ? [] : drive.split(',').map(e => addQuotesTrim(e));
     let owners = owner === "" ? [] : owner.split(',').map(e => addQuotesTrim(e));
     let creators = creator === "" ? [] : creator.split(',').map(e => addQuotesTrim(e));
@@ -289,14 +296,17 @@ export default function DataTable(props) {
     let paths = path === "" ? [] : path.split(',').map(e => addQuotesTrim(e));
     query = constructQuery(drives, owners, creators, froms, tos, reads, writes, shares, names, inFolders, folders, paths, sharing);
     if (groupOff) {
+      // if disable group expansions checked, add "groups:off" directive to the beginning of the query 
       query = "groups:off and " + query;
     }
-    setSearchText(query);
-    setBuilder(false);
+    setSearchText(query); 
+    // close and reset builder
+    setBuilder(false); 
     handleResetBuilder();
   }
 
   let sortName = (event) => {
+    // sort by name
     let temp = files;
     if (!sortNameButton) {
       temp.sort((a,b) => (a.name < b.name) ? 1 : ((b.name < a.name) ? -1 : 0));
@@ -308,6 +318,7 @@ export default function DataTable(props) {
   }
 
   let sortOwner= (event) => {
+    // sort by owner name
     let temp = files;
     if (!sortOwnerButton) {
       temp.sort((a,b) => (a.owner.name < b.owner.name) ? 1 : ((b.owner.name < a.owner.name) ? -1 : 0));
@@ -319,6 +330,7 @@ export default function DataTable(props) {
   }
 
   let sortModified= (event) => {
+    // sort by last modified time
     let temp = files;
     if (!sortModifiedButton) {
       temp.sort((a,b) => (a.lastModified < b.lastModified) ? 1 : ((b.lastModified < a.lastModified) ? -1 : 0));
@@ -330,6 +342,7 @@ export default function DataTable(props) {
   }
 
   let sortCreated= (event) => {
+    // sort by created at time
     let temp = files;
     if (!sortCreatedButton) {
       temp.sort((a,b) => (a.created < b.created) ? 1 : ((b.created < a.created) ? -1 : 0));
@@ -341,6 +354,7 @@ export default function DataTable(props) {
   }
 
   let handleShow = () => {
+    // shows/hides group permission expansion in table results
     setShow(!show);
   }
 
