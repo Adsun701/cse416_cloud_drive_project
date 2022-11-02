@@ -280,7 +280,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
   
       // get search results for the operator
       // eslint-disable-next-line no-await-in-loop
-      const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff);
+      const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff, email);
       if (searchFiles === 'Incorrect op') {
         return 'Incorrect op';
       }
@@ -311,7 +311,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
 }
 
 // Filter list of files based on given operator and value
-async function searchFilter(op, value, snapshotFiles, groupOff) {
+async function searchFilter(op, value, snapshotFiles, groupOff, email) {
   const files = [];
   const ids = [];
   const user = await User.find({ email: email });
@@ -324,7 +324,11 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
   const groups = await GroupSnapshot.find({ _id: { $in: groupIds } });
   const groupNames = [];
   groups.forEach((e) => {
-    groupNames.append(e.group);
+    if (e.groupMembers.includes(value)) {
+      if (!groupNames.includes(e.groupName)) {
+        groupNames.push(e.groupName.trim());
+      }
+    }
   });
   switch (op) {
     case 'drive':
@@ -352,8 +356,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
           for(let i = 0; i < perms.length; i++) {
             if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
               ids.push(fileId);
-            } else if (perms[i].roles[0] == 'reader' && groupNames.includes(value)) {
-              ids.push(fileId);
             }
           }
         });
@@ -366,6 +368,8 @@ async function searchFilter(op, value, snapshotFiles, groupOff) {
           let perms = val;
           for(let i = 0; i < perms.length; i++) {
             if(perms[i].roles[0] == 'reader' && perms[i].email == value) {
+              ids.push(fileId);
+            } else if (perms[i].roles[0] == 'reader' && groupNames.includes(perms[i].displayName)) {
               ids.push(fileId);
             }
           }
