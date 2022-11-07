@@ -52,3 +52,9 @@ body {
 #search-file {
   width: inherit;
 }
+
+/* .list-group-items{
+  max-height: 50px;
+  overflow:scroll;
+  -webkit-overflow-scrolling: touch;
+} */

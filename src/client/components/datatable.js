@@ -11,7 +11,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
 import Stack from "react-bootstrap/Stack";
-import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
+import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp, MdEdit } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -516,6 +516,7 @@ export default function DataTable(props) {
                   }}
                   onClick={setEditPermission}
                 >
+                  <MdEdit />
                   Edit Permission
                 </Button>
               )}

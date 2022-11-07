@@ -3,6 +3,7 @@ import { Context } from "../Context";
 import Nav from "react-bootstrap/Nav";
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
+import { MdAdd } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -64,6 +65,7 @@ export default function SideBar() {
               color: "#3A3A3A",
             }}
           >
+            <MdAdd />
             Add Snapshot
           </Dropdown.Toggle>
 
