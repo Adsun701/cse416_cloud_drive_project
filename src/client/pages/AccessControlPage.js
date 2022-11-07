@@ -353,9 +353,13 @@ export default function AccessControlPage() {
                   <Form.Group controlId="ar" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
                       {policy.ar?.map((ar) => 
                         <Stack direction="horizontal" gap={1}>
-                          <Form.Control style={{ marginTop: "5px" }} placeholder="Allowed readers" value={ar} onChange={(e) => setNewEditValue(e.target.value)} />
-                          <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "ar", ar)}>Edit</Button>
-                          <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "ar", ar)}>Delete</Button>
+                          {ar != "" &&
+                            <>
+                            <Form.Control style={{ marginTop: "5px" }} placeholder="Allowed readers" value={ar} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "ar", ar)}>Edit</Button>
+                            <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "ar", ar)}>Delete</Button>
+                            </>
+                          }
                         </Stack>
                       )}
                   </Form.Group>
@@ -369,9 +373,13 @@ export default function AccessControlPage() {
                   <Form.Group controlId="dr" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
                       {policy.dr?.map((dr) => 
                         <Stack direction="horizontal" gap={1}>
-                          <Form.Control style={{ marginTop: "5px" }} placeholder="Denied readers" value={dr} onChange={(e) => setNewEditValue(e.target.value)} />
-                          <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dr", dr)}>Edit</Button>
-                          <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dr", dr)}>Delete</Button>
+                          {dr != "" &&
+                            <>
+                            <Form.Control style={{ marginTop: "5px" }} placeholder="Denied readers" value={dr} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dr", dr)}>Edit</Button>
+                            <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dr", dr)}>Delete</Button>
+                            </>
+                          }
                         </Stack>
                       )}
                   </Form.Group>
@@ -385,9 +393,13 @@ export default function AccessControlPage() {
                   <Form.Group controlId="aw" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
                       {policy.aw?.map((aw) => 
                         <Stack direction="horizontal" gap={1}>
-                          <Form.Control style={{ marginTop: "5px" }} placeholder="Allowed writers" value={aw} onChange={(e) => setNewEditValue(e.target.value)} />
-                          <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "aw", aw)}>Edit</Button>
-                          <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "aw", aw)}>Delete</Button>
+                          {aw != "" &&
+                            <>
+                            <Form.Control style={{ marginTop: "5px" }} placeholder="Allowed writers" value={aw} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "aw", aw)}>Edit</Button>
+                            <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "aw", aw)}>Delete</Button>
+                            </>
+                          }
                         </Stack>
                       )}
                   </Form.Group>
@@ -401,9 +413,13 @@ export default function AccessControlPage() {
                   <Form.Group controlId="dw" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
                       {policy.dw?.map((dw) => 
                         <Stack direction="horizontal" gap={1}>
-                          <Form.Control style={{ marginTop: "5px" }} placeholder="Denied Writers" value={dw} onChange={(e) => setNewEditValue(e.target.value)} />
-                          <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</Button>
-                          <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dw", dw)}>Delete</Button>
+                          {dw != "" &&
+                            <>
+                            <Form.Control style={{ marginTop: "5px" }} placeholder="Denied Writers" value={dw} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</Button>
+                            <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dw", dw)}>Delete</Button>
+                            </>
+                          }  
                         </Stack>
                       )}
                   </Form.Group>
