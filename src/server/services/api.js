@@ -231,7 +231,6 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
-  // console.log(allFiles);
   return allFiles;
 }
 
@@ -267,7 +266,6 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
     }
   });
   const fileList = [];
-  // console.log(snapshotFiles);
   switch (op) {
     case 'drive':
       break;
@@ -476,10 +474,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
 }
 
 function sortQuery(query) {
-  // words = query.replace(/ +(?= )/g, '').split(' ');
-
   const words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
-  // console.log(words);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
     if (!a.includes(':') && b.includes(':')) return -1;
@@ -501,8 +496,6 @@ function sortQuery(query) {
     const word = words[j].replace(/['"]+/g, '');
     operators.push(word);
   }
-  // console.log(booleans);
-  // console.log(operators);
   return [booleans, operators, s];
 }
 
@@ -515,17 +508,13 @@ async function getSearchResults(searchQuery, snapshot, email) {
   const booleans = queryArray[0]; // string
   const operators = queryArray[1]; // array of strings containing "operation:value"
   const searchString = queryArray[2];
-  // console.log("booleans");
-  // console.log(booleans);
 
   let files = [];
 
   let fileSnapshot;
   let snapshotFiles;
-  // console.log("BEFORE THE !");
   // get the most recent file snapshot from the user if snapshot not specified
   if (!snapshot) {
-    // console.log("INSIDE");
     const user = await User.find({ email });
     const { fileSnapshots } = user[0];
     const ids = [];
@@ -535,14 +524,12 @@ async function getSearchResults(searchQuery, snapshot, email) {
     fileSnapshot = await FileSnapshot.find({ _id: { $in: ids } })
       .sort({ createdAt: -1 })
       .limit(1);
-    // console.log(fileSnapshot);
     // get all files from snapshot
     snapshotFiles = fileSnapshot[0].files;
   } else {
     // use file snapshot selected by the user
     snapshotFiles = snapshot[0].files;
   }
-  // console.log(snapshotFiles);
   // iterate through operators
   if (operators.length > 0) {
     let groupOff = false;
@@ -564,20 +551,16 @@ async function getSearchResults(searchQuery, snapshot, email) {
 
       // get search results for the operator
       const searchFiles = await searchFilter(op, val, snapshotFiles, groupOff, email);
-      // console.log('got here');
-      // console.log(booleans[counter]);
       if (searchFiles === 'Incorrect op') {
         return 'Incorrect op';
       }
       if (booleans[counter] === 'or' && i > 0) {
-        // console.log('OR');
         for (let j = 0; j < searchFiles.length; j += 1) {
           files.push(searchFiles[j]);
           counter += 1;
         }
         files = removeDuplicates(files);
       } else if (booleans[counter] === 'and' && i > 0) {
-        // console.log('AND');
         files = findIntersection(files, searchFiles);
         counter += 1;
       } else {
@@ -641,15 +624,12 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
             const { dr } = policy;
             if (ar.length > 0) {
               const ans = ar.filter((allowed) => allowed === value);
-              // console.log(ans);
               if (ans.length !== 0) {
-                // console.log('ret true');
                 return true;
               }
             }
             if (dr.length > 0) {
               const ans = dr.filter((allowed) => allowed === value);
-              // console.log(ans);
               if (ans.length !== 0) {
                 return false;
               }
@@ -659,14 +639,12 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
           const { dw } = policy;
           if (aw.length > 0) {
             const ans = aw.filter((allowed) => allowed === value);
-            // console.log(ans);
             if (ans.length !== 0) {
               return true;
             }
           }
           if (dw.length > 0) {
             const ans = dw.filter((allowed) => allowed === value);
-            // console.log(ans);
             if (ans.length !== 0) {
               return false;
             }
