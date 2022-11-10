@@ -63,57 +63,70 @@ async function deletePermission(clouddrive, token, fileid, permid) {
   }
 }
 
+// get the id of the user's access control policy for the specific requirement/query
+async function getOneAccessControlPolicy(email, requirement) {
+  const user = await User.findOne({ email });
+  const accessControls = user.accessPolicies;
+  let id = null;
+  accessControls.forEach((element) => {
+    if (element.requirement === requirement) {
+      id = element._id;
+    }
+  });
+  return id;
+}
+
 /*
 Updating access policy in the DB
 (requirement is the search query associated with the access policy)
 */
 // eslint-disable-next-line consistent-return
-async function updateAccessPolicy(type, requirement, newValue) {
+async function updateAccessPolicy(type, requirement, newValue, email) {
+  const id = await getOneAccessControlPolicy(email, requirement);
   if (type === 'ar') {
-    AccessPolicy.updateOne({ requirement }, { $push: { ar: newValue } })
+    AccessPolicy.updateOne({ _id: id }, { $push: { ar: newValue } })
       .then(() => requirement);
   } else if (type === 'dr') {
-    AccessPolicy.updateOne({ requirement }, { $push: { dr: newValue } })
+    AccessPolicy.updateOne({ _id: id }, { $push: { dr: newValue } })
       .then(() => requirement);
   } else if (type === 'aw') {
-    AccessPolicy.updateOne({ requirement }, { $push: { aw: newValue } })
+    AccessPolicy.updateOne({ _id: id }, { $push: { aw: newValue } })
       .then(() => requirement);
   } else if (type === 'dw') {
-    AccessPolicy.updateOne({ requirement }, { $push: { dw: newValue } })
+    AccessPolicy.updateOne({ _id: id }, { $push: { dw: newValue } })
       .then(() => requirement);
   } else {
     return null;
   }
 }
 
-async function deletingAccessPolicyRequirement(email, requirement) {
-  const removedAccessPolicy = await AccessPolicy.findOne({ requirement });
-  await AccessPolicy.remove({ requirement });
+async function deletingAccessPolicyRequirement(requirement, email) {
+  const id = await getOneAccessControlPolicy(email, requirement);
+  await AccessPolicy.remove({ _id: id });
   const user = await User.find({ email });
   const accessControls = user[0].accessPolicies;
-  // console.log(removedAccessPolicy);
-  const newControls = accessControls.filter((policy) => policy !== removedAccessPolicy._id);
-  // console.log(newControls);
+  const newControls = accessControls.filter((policy) => policy._id !== id);
   await User.updateOne({ email }, { accessPolicies: newControls });
   return newControls;
 }
 
-async function editAccessControl(requirement, type, prevControl, newControl) {
-  const accessPolicy = await AccessPolicy.findOne({ requirement });
+async function editAccessControl(requirement, type, prevControl, newControl, email) {
+  const id = await getOneAccessControlPolicy(email, requirement);
+  const accessPolicy = await AccessPolicy.findOne({ _id: id });
   const newControls = accessPolicy[type].filter((old) => old !== prevControl);
   newControls.push(newControl);
   switch (type) {
     case 'ar':
-      await AccessPolicy.updateOne({ requirement }, { ar: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { ar: newControls });
       break;
     case 'aw':
-      await AccessPolicy.updateOne({ requirement }, { aw: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { aw: newControls });
       break;
     case 'dw':
-      await AccessPolicy.updateOne({ requirement }, { dw: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { dw: newControls });
       break;
     case 'dr':
-      await AccessPolicy.updateOne({ requirement }, { dr: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { dr: newControls });
       break;
     default:
       break;
@@ -121,21 +134,22 @@ async function editAccessControl(requirement, type, prevControl, newControl) {
   return newControls;
 }
 
-async function deletingAccessControlsInRequirement(requirement, type, prevControl) {
-  const accessPolicy = await AccessPolicy.findOne({ requirement });
+async function deletingAccessControlsInRequirement(requirement, type, prevControl, email) {
+  const id = await getOneAccessControlPolicy(email, requirement);
+  const accessPolicy = await AccessPolicy.findOne({ _id: id });
   const newControls = accessPolicy[type].filter((old) => old !== prevControl);
   switch (type) {
     case 'ar':
-      await AccessPolicy.updateOne({ requirement }, { ar: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { ar: newControls });
       break;
     case 'aw':
-      await AccessPolicy.updateOne({ requirement }, { aw: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { aw: newControls });
       break;
     case 'dw':
-      await AccessPolicy.updateOne({ requirement }, { dw: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { dw: newControls });
       break;
     case 'dr':
-      await AccessPolicy.updateOne({ requirement }, { dr: newControls });
+      await AccessPolicy.updateOne({ _id: id }, { dr: newControls });
       break;
     default:
       break;
@@ -165,6 +179,7 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
   return accessPolicy;
 }
 
+// get all the user's access control policies
 async function getAccessControlPolicies(email) {
   const user = await User.findOne({ email });
   const accessControls = user.accessPolicies;
@@ -173,7 +188,6 @@ async function getAccessControlPolicies(email) {
     ids.push(element._id);
   });
   const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
-  // console.log(allPolicies);
   return allPolicies;
 }
 

@@ -100,7 +100,6 @@ router.post('/logout', isAuthenticated, async (req, res) => {
 
 router.get('/getaccesscontrolpolicies', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.getAccessControlPolicies(req.session.email);
-  // console.log(response);
   res.send(response);
 });
 
@@ -117,12 +116,17 @@ router.post('/addnewaccesscontrolpolicies', isAuthenticated, async (req, res) =>
 });
 
 router.post('/updateaccesscontrolpolicy', isAuthenticated, async (req, res) => {
-  await cloudDriveAPI.updateAccessPolicy(req.body.type, req.body.requirement, req.body.newValue);
+  await cloudDriveAPI.updateAccessPolicy(
+    req.body.type,
+    req.body.requirement,
+    req.body.newValue,
+    req.session.email,
+  );
   res.status(200).send();
 });
 
 router.post('/deleteaccesscontrolpolicy', isAuthenticated, async (req, res) => {
-  await cloudDriveAPI.deletingAccessPolicyRequirement(req.session.email, req.body.requirement);
+  await cloudDriveAPI.deletingAccessPolicyRequirement(req.body.requirement, req.session.email);
   res.status(200).send();
 });
 
@@ -131,6 +135,7 @@ router.post('/deleteoneaccesscontrolpolicy', isAuthenticated, async (req, res) =
     req.body.requirement,
     req.body.type,
     req.body.prevControl,
+    req.session.email,
   );
   res.status(200).send();
 });
@@ -141,6 +146,7 @@ router.post('/editaccesscontrol', isAuthenticated, async (req, res) => {
     req.body.type,
     req.body.prevControl,
     req.body.newControl,
+    req.session.email,
   );
   res.status(200).send();
 });
@@ -152,17 +158,12 @@ router.post('/checkaccesscontrol', isAuthenticated, async (req, res) => {
     req.body.value,
     req.body.role,
   ).then((response) => {
-    // console.log(response);
     res.status(200).send({ allowed: response });
   }).catch();
 });
 
 // eslint-disable-next-line consistent-return
-router.post('/searchquery', async (req, res, next) => {
-  if (!req.session.accessToken) {
-    return res.send('nope');
-  }
-
+router.post('/searchquery', isAuthenticated, async (req, res, next) => {
   try {
     const { email } = req.session;
 
