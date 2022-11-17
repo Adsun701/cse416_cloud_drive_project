@@ -268,6 +268,20 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
   const fileList = [];
   switch (op) {
     case 'drive':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        const { drive } = fileList[i];
+        const reg = new RegExp(value, 'gi');
+        if (drive.match(reg)) {
+          files.push(fileList[i]);
+        }
+      }
       break;
     case 'creator':
     case 'owner':

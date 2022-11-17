@@ -52,9 +52,12 @@ export default function SearchPage() {
         }
       }
 
-      let owner = {
-        name: file.owner.name,
-        email: file.owner.email
+      let owner;
+      if (file.owner) {
+        owner = {
+          name: file.owner.name,
+          email: file.owner.email
+        }
       }
 
       let newFile = {
@@ -63,7 +66,7 @@ export default function SearchPage() {
         expanded: false,
         name: file.name,
         owner: owner,
-        type: "",
+        drive: file.drive,
         lastModified: new Date(file.modifiedTime).toLocaleString(),
         created: new Date(file.createdTime).toLocaleString(),
         permissions: permissionsArray,

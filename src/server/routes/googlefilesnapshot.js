@@ -29,6 +29,8 @@ async function getSnapshot(token) {
   const result = await drive.files.list({
     access_token: token,
     fields: 'files(id, name, permissions), nextPageToken',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true
   });
   nextPage = result.data.nextPageToken;
   // console.log(nextPage);
@@ -56,6 +58,8 @@ async function getSnapshot(token) {
       access_token: token,
       pageToken: nextPage,
       fields: 'files(id, name, permissions), nextPageToken',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     });
     // console.log(nextPage);
     nextPage = res.data.nextPageToken;

@@ -14,12 +14,13 @@ async function getFilesAndPerms(token) {
   let nextPage = null;
   const result = await drive.files.list({
     access_token: token,
-    fields: 'files(id, name, permissions), nextPageToken',
+    fields: 'files(id, name, permissions, permissionIds), nextPageToken',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true
   });
   nextPage = result.data.nextPageToken;
-  // console.log(nextPage);
   let f = result.data.files;
-  f.forEach((element) => {
+  for (const element of f) {  
     const newPermsList = [];
     if (element.permissions) {
       for (let i = 0; i < element.permissions.length; i += 1) {
@@ -33,19 +34,39 @@ async function getFilesAndPerms(token) {
         newPermission.save();
         newPermsList.push(newPermission);
       }
+    } 
+    else {
+      // Get permission data for files in shared drives
+      if (element.permissionIds) {
+        for (let i = 0; i < element.permissionIds.length; i++) {
+          let permissionData = await getPermissionData(token, element.id, element.permissionIds[i]);
+          let permission = permissionData.data;
+          const newPermission = new Permission({
+            id: permission.id,
+            email: permission.emailAddress,
+            displayName: permission.displayName,
+            roles: [permission.permissionDetails[0].role],
+            inheritedFrom: permission.permissionDetails[0].inheritedFrom? permission.permissionDetails[0].inheritedFrom : null,
+          });
+          newPermission.save();
+          newPermsList.push(newPermission);
+        }
+      }
     }
     files[element.id] = newPermsList;
-  });
+  }
   while (nextPage) {
     // eslint-disable-next-line no-await-in-loop
     const res = await drive.files.list({
       access_token: token,
       pageToken: nextPage,
-      fields: 'files(id, name, permissions), nextPageToken',
+      fields: 'files(id, name, permissions, permissionIds), nextPageToken',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     });
     nextPage = res.data.nextPageToken;
     f = res.data.files;
-    f.forEach((element) => {
+    for (const element of f) {  
       const newPermsList = [];
       if (element.permissions) {
         for (let i = 0; i < element.permissions.length; i += 1) {
@@ -60,8 +81,26 @@ async function getFilesAndPerms(token) {
           newPermsList.push(newPermission);
         }
       }
+      else {
+        // Get permission data for files in shared drives
+        if (element.permissionIds) {
+          for (let i = 0; i < element.permissionIds.length; i++) {
+            let permissionData = await getPermissionData(token, element.id, element.permissionIds[i]);
+            let permission = permissionData.data;
+            const newPermission = new Permission({
+              id: permission.id,
+              email: permission.emailAddress,
+              displayName: permission.displayName,
+              roles: [permission.permissionDetails[0].role],
+              inheritedFrom: permission.permissionDetails[0].inheritedFrom? permission.permissionDetails[0].inheritedFrom : null,
+            });
+            newPermission.save();
+            newPermsList.push(newPermission);
+          }
+        }
+      }
       files[element.id] = newPermsList;
-    });
+    }
   }
   return files;
 }
@@ -75,8 +114,21 @@ async function getFileData(token, fileid) {
     access_token: token,
     fileId: fileid,
     fields: '*',
+    supportsAllDrives: true
   });
   return fileData;
+}
+
+/*
+Get drive metadata for a specific drive using its drive id
+*/
+async function getDriveData(token, driveid) {
+  const drive = google.drive({ version: 'v3' });
+  const driveData = await drive.drives.get({
+    access_token: token,
+    driveId: driveid
+  });
+  return driveData;
 }
 
 /*
@@ -94,10 +146,13 @@ async function getGoogleFiles(token, email) {
     const mimeType = fileData.mimeType.split('.');
     const isFolder = mimeType[mimeType.length - 1] === 'folder';
 
-    const owner = {
-      name: fileData.owners[0].displayName,
-      email: fileData.owners[0].emailAddress,
-    };
+    let owner;
+    if (fileData.owners) {
+      owner = {
+        name: fileData.owners[0].displayName,
+        email: fileData.owners[0].emailAddress,
+      };
+    }
 
     let sharingUser;
     if (fileData.sharingUser) {
@@ -105,6 +160,12 @@ async function getGoogleFiles(token, email) {
         name: fileData.sharingUser.displayName,
         email: fileData.sharingUser.emailAddress,
       };
+    }
+
+    let drive = "My Drive";
+    if (fileData.driveId) {
+      driveData = await getDriveData(token, fileData.driveId);
+      drive = driveData.data.name;
     }
 
     const file = new File({
@@ -116,6 +177,7 @@ async function getGoogleFiles(token, email) {
       owner,
       sharingUser,
       folder: isFolder,
+      drive: drive
     });
     file.save();
     listFiles.push(file);
@@ -173,6 +235,21 @@ Retrieve the list of permissons for a file
 //   });
 //   return result;
 // }
+
+/*
+Retrieve the data for a permission of a file
+*/
+async function getPermissionData(accessToken, fileid, permissionid) {
+  const drive = google.drive({ version: 'v3' });
+  const result = await drive.permissions.get({
+    access_token: accessToken, // req.session.googleToken,
+    fileId: fileid,
+    permissionId: permissionid,
+    fields: '*',
+    supportsAllDrives: true
+  });
+  return result;
+}
 
 /*
 Add a new permission for a single file or multiple files

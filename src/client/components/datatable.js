@@ -35,6 +35,7 @@ export default function DataTable(props) {
 
   const [sortNameButton, setSortNameButton] = useState(false);
   const [sortOwnerButton, setSortOwnerButton] = useState(false);
+  const [sortDriveButton, setSortDriveButton] = useState(false);
   const [sortModifiedButton, setSortModifiedButton] = useState(false);
   const [sortCreatedButton, setSortCreatedButton] = useState(false);
   const [show, setShow] = useState(false);
@@ -162,10 +163,13 @@ export default function DataTable(props) {
               permissionsArray.push(entry);
             }
           }
-
-          let owner = {
-            name: object.owner.name,
-            email: object.owner.email
+          
+          let owner;
+          if (object.owner) {
+            owner = {
+              name: object.owner.name,
+              email: object.owner.email
+            }
           }
 
           // initialize and push file to array.
@@ -175,7 +179,7 @@ export default function DataTable(props) {
             expanded: false,
             name: object.name,
             owner: owner,
-            type: object.mimeType,
+            drive: object.drive,
             lastModified: (new Date(object.modifiedTime)).toLocaleString(),
             created: (new Date(object.createdTime)).toLocaleString(),
             permissions: permissionsArray
@@ -317,7 +321,7 @@ export default function DataTable(props) {
     setFiles(temp);
   }
 
-  let sortOwner= (event) => {
+  let sortOwner = (event) => {
     // sort by owner name
     let temp = files;
     if (!sortOwnerButton) {
@@ -326,6 +330,18 @@ export default function DataTable(props) {
       temp.sort((a,b) => (a.owner.name > b.owner.name) ? 1 : ((b.owner.name > a.owner.name) ? -1 : 0));
     }
     setSortOwnerButton(!sortOwnerButton);
+    setFiles(temp);
+  }
+
+  let sortDrive = (event) => {
+    // sort by drive name
+    let temp = files;
+    if (!sortDriveButton) {
+      temp.sort((a,b) => (a.drive < b.drive) ? 1 : ((b.drive < a.drive) ? -1 : 0));
+    } else {
+      temp.sort((a,b) => (a.drive > b.drive) ? 1 : ((b.drive > a.drive) ? -1 : 0));
+    }
+    setSortDriveButton(!sortDriveButton);
     setFiles(temp);
   }
 
@@ -341,7 +357,7 @@ export default function DataTable(props) {
     setFiles(temp);
   }
 
-  let sortCreated= (event) => {
+  let sortCreated = (event) => {
     // sort by created at time
     let temp = files;
     if (!sortCreatedButton) {
@@ -538,7 +554,7 @@ export default function DataTable(props) {
                 </th>
                 <th>Name {sortNameButton ? <MdArrowDropUp onClick={sortName}/> : <MdArrowDropDown onClick={sortName}/>}</th>
                 <th>Owner {sortOwnerButton ? <MdArrowDropUp onClick={sortOwner}/> : <MdArrowDropDown onClick={sortOwner}/>}</th>
-                <th>Type</th>
+                <th>Drive {sortDriveButton ? <MdArrowDropUp onClick={sortDrive}/> : <MdArrowDropDown onClick={sortDrive}/>}</th>
                 <th>Last Modified {sortModifiedButton ? <MdArrowDropUp onClick={sortModified}/> : <MdArrowDropDown onClick={sortModified}/>}</th>
                 <th>Created {sortCreatedButton ? <MdArrowDropUp onClick={sortCreated}/> : <MdArrowDropDown onClick={sortCreated}/>}</th>
                 <th colSpan={2}>Permissions</th>
@@ -557,8 +573,8 @@ export default function DataTable(props) {
                     />
                   </th>
                   <td>{file.name}</td>
-                  <td>{file.owner.name}</td>
-                  <td>{file.type}</td>
+                  <td>{file.owner && file.owner.name}</td>
+                  <td>{file.drive}</td>
                   <td>{file.lastModified}</td>
                   <td>{file.created}</td>
                   {file.expanded ? (
