@@ -13,7 +13,8 @@ const FileSchema = new Schema(
     owner: { name: { type: String }, email: { type: String } },
     sharingUser: { name: { type: String }, email: { type: String } },
     folder: { type: Boolean },
-    drive: { type: String }
+    drive: { type: String },
+    parents: { type: [{ id : String, name : String }] }
   },
   { timestamps: true },
 );

@@ -231,6 +231,7 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
+  console.log(allFiles);
   return allFiles;
 }
 
@@ -333,7 +334,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if (perms[i].roles[0] === 'reader' && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && perms[i].email === value) {
               ids.push(fileId);
             }
           }
@@ -346,9 +347,9 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if (perms[i].roles[0] === 'reader' && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && perms[i].email === value) {
               ids.push(fileId);
-            } else if (perms[i].roles[0] === 'reader' && groupNames.includes(perms[i].displayName)) {
+            } else if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && groupNames.includes(perms[i].displayName)) {
               ids.push(fileId);
             }
           }
@@ -405,6 +406,23 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       }
       break;
     case 'inFolder':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      // Get files with direct parent that matches query value 
+      for (let i = 0; i < fileList.length; i += 1) {
+        if (fileList[i].parents[0]) {
+          const { name } = fileList[i].parents[0];
+          const reg = new RegExp(value, 'gi');
+          if (name.match(reg)) {
+            files.push(fileList[i]);
+          }
+        }
+      }
       break;
     case 'folder':
       snapshotFiles.forEach((val, fileId) => {
@@ -414,11 +432,17 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
         const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
         fileList.push(file);
       }
+      // Get files with any parent (including subfolders) that matches query value 
       for (let i = 0; i < fileList.length; i += 1) {
-        const { name } = fileList[i];
-        const reg = new RegExp(value, 'gi');
-        if (name.match(reg) && fileList[i].folder) {
-          files.push(fileList[i]);
+        if (fileList[i].parents) {
+          for (let j = 0; j < fileList[i].parents.length; j += 1) {
+            const { name } = fileList[i].parents[j];
+            const reg = new RegExp(value, 'gi');
+            if (name.match(reg)) {
+              files.push(fileList[i]);
+              break;
+            } 
+          }
         }
       }
       break;

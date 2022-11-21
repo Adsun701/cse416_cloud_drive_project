@@ -146,6 +146,25 @@ async function getGoogleFiles(token, email) {
     const mimeType = fileData.mimeType.split('.');
     const isFolder = mimeType[mimeType.length - 1] === 'folder';
 
+    // get all parents of a file
+    let parents = [];
+    if (fileData.parents) {
+      let parentId = fileData.parents[0];
+      while (parentId) {
+        let parentData = await getFileData(token, parentId);
+        let parent = {
+          id: parentData.data.id,
+          name: parentData.data.name
+        };
+        parents.push(parent);
+        if (parentData.data.parents) {
+          parentId = parentData.data.parents[0];
+        } else {
+          break;
+        }
+      }
+    }
+
     let owner;
     if (fileData.owners) {
       owner = {
@@ -177,7 +196,8 @@ async function getGoogleFiles(token, email) {
       owner,
       sharingUser,
       folder: isFolder,
-      drive: drive
+      drive: drive,
+      parents: parents
     });
     file.save();
     listFiles.push(file);
