@@ -18,6 +18,7 @@ export default function SnapshotPage() {
   const [groupSnapshots, setGroupSnapshots] = useState([]);
   const [selectAllFile, setSelectAllFile] = useState(false);
   const [selectAllGroup, setSelectAllGroup] = useState(false);
+  const [sharingOption, setSharingOption] = useState(null);
 
   let fileTimestamps = [];
   let groupInfo = [];
@@ -111,6 +112,12 @@ export default function SnapshotPage() {
     setGroupSnapshots(temp);
   };
 
+  // handle select sharing option.
+  let handleSelectSharingOption = (e) => {
+    console.log(e?.target?.value);
+    setSharingOption(e?.target?.value);
+  };
+
   return (
     <div>
       <Header />
@@ -123,8 +130,9 @@ export default function SnapshotPage() {
             <Col>
               <Row>
                 <Col style={{display:'flex', justifyContent:'left', padding: '15px'}}>
-                  <Form.Select>
-                    <option value="">Analyze Sharing</option>
+                  <Form.Select aria-label="Analyze Sharing"
+                    onChange={handleSelectSharingOption}>
+                    <option value="redundant">Redundant Sharing</option>
                     <option value="deviant">Deviant Sharing</option>
                     <option value="folder">File-Folder Sharing Differences</option>
                     <option value="changes">Sharing Changes</option>
