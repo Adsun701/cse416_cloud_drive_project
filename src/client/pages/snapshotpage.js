@@ -114,7 +114,6 @@ export default function SnapshotPage() {
 
   // handle select sharing option.
   let handleSelectSharingOption = (e) => {
-    console.log(e?.target?.value);
     setSharingOption(e?.target?.value);
   };
 
