@@ -18,7 +18,11 @@ export default function SnapshotPage() {
   const [groupSnapshots, setGroupSnapshots] = useState([]);
   const [selectAllFile, setSelectAllFile] = useState(false);
   const [selectAllGroup, setSelectAllGroup] = useState(false);
-  const [sharingOption, setSharingOption] = useState(null);
+  const [sharingOption, setSharingOption] = useState('redundant');
+  const [analysisDone, setAnalysisDone] = useState(false);
+
+  console.log(sharingOption);
+  console.log(analysisDone);
 
   let fileTimestamps = [];
   let groupInfo = [];
@@ -117,6 +121,11 @@ export default function SnapshotPage() {
     setSharingOption(e?.target?.value);
   };
 
+  // handle set analysis done.
+  let handleSelectAnalysisDone = () => {
+    setAnalysisDone(true);
+  };
+
   return (
     <div>
       <Header />
@@ -126,7 +135,7 @@ export default function SnapshotPage() {
             <Col sm={2} className="px-0">
               <SideBar />
             </Col>
-            <Col>
+            {!analysisDone && <Col>
               <Row>
                 <Col style={{display:'flex', justifyContent:'left', padding: '15px'}}>
                   <Form.Select aria-label="Analyze Sharing"
@@ -138,7 +147,8 @@ export default function SnapshotPage() {
                   </Form.Select>
                 </Col>
                 <Col style={{display:'flex', justifyContent:'left', padding: '15px'}}>
-                  <Button>
+                  <Button
+                    onClick={handleSelectAnalysisDone}>
                     Analyze
                   </Button>
                 </Col>
@@ -263,7 +273,103 @@ export default function SnapshotPage() {
                   </Table>
                 </Col>
               </Row>
-            </Col>
+            </Col>}
+            {analysisDone && sharingOption === 'redundant' && <Col>
+              <Row>
+                <Col style={{justifyContent:'left'}}>
+                  <Table style={{ textAlign: "left" }}>
+                    <thead style={{ borderTop: "1px solid #CFCFCF" }}>
+                      <tr>
+                        <th>File Name</th>
+                        <th>Metadata</th>
+                        <th colSpan={2}>Redundant Permissions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileSnapshots.map((snapshot) => (
+                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
+                          <td>{snapshot.id}</td>
+                          <td>{snapshot.timestamp.toLocaleString()}</td>
+                          <td colSpan={2}>{snapshot.id}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Col>
+              </Row>
+            </Col>}
+            {analysisDone && sharingOption === 'deviant' && <Col>
+              <Row>
+                <Col style={{justifyContent:'left'}}>
+                  <Table style={{ textAlign: "left" }}>
+                    <thead style={{ borderTop: "1px solid #CFCFCF" }}>
+                      <tr>
+                        <th>File Name</th>
+                        <th>Metadata</th>
+                        <th colSpan={2}>Deviant Permissions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileSnapshots.map((snapshot) => (
+                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
+                          <td>{snapshot.id}</td>
+                          <td>{snapshot.timestamp.toLocaleString()}</td>
+                          <td colSpan={2}>{snapshot.id}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Col>
+              </Row>
+            </Col>}
+            {analysisDone && sharingOption === 'folder' && <Col>
+              <Row>
+                <Col style={{justifyContent:'left'}}>
+                  <Table style={{ textAlign: "left" }}>
+                    <thead style={{ borderTop: "1px solid #CFCFCF" }}>
+                      <tr>
+                        <th>File Name</th>
+                        <th>Metadata</th>
+                        <th colSpan={2}>Permission Differences</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileSnapshots.map((snapshot) => (
+                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
+                          <td>{snapshot.id}</td>
+                          <td>{snapshot.timestamp.toLocaleString()}</td>
+                          <td colSpan={2}>{snapshot.id}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Col>
+              </Row>
+            </Col>}
+            {analysisDone && sharingOption === 'changes' && <Col>
+              <Row>
+                <Col style={{justifyContent:'left'}}>
+                  <Table style={{ textAlign: "left" }}>
+                    <thead style={{ borderTop: "1px solid #CFCFCF" }}>
+                      <tr>
+                        <th>File Name</th>
+                        <th>Metadata</th>
+                        <th colSpan={2}>Sharing Changes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileSnapshots.map((snapshot) => (
+                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
+                          <td>{snapshot.id}</td>
+                          <td>{snapshot.timestamp.toLocaleString()}</td>
+                          <td colSpan={2}>{snapshot.id}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Col>
+              </Row>
+            </Col>}
           </Row>
         </div>
       </Container>
