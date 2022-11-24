@@ -312,11 +312,13 @@ export default function SnapshotPage() {
                     </thead>
                     <tbody>
                       {fileSnapshots.map((snapshot) => (
-                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
-                          <td>{snapshot.id}</td>
-                          <td>{snapshot.timestamp.toLocaleString()}</td>
-                          <td colSpan={2}>{snapshot.id}</td>
+                        snapshot?.files[Object.keys(snapshot?.files)[0]]?.map((file) => (
+                          <tr key={file.id} className={"file-snapshot"}>
+                          <td>{file.displayName}</td>
+                          <td>{file.email}</td>
+                          <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
+                        ))
                       ))}
                     </tbody>
                   </Table>
@@ -336,11 +338,13 @@ export default function SnapshotPage() {
                     </thead>
                     <tbody>
                       {fileSnapshots.map((snapshot) => (
-                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
-                          <td>{snapshot.id}</td>
-                          <td>{snapshot.timestamp.toLocaleString()}</td>
-                          <td colSpan={2}>{snapshot.id}</td>
+                        snapshot?.files[Object.keys(snapshot?.files)[0]]?.map((file) => (
+                          <tr key={file.id} className={"file-snapshot"}>
+                          <td>{file.displayName}</td>
+                          <td>{file.email}</td>
+                          <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
+                        ))
                       ))}
                     </tbody>
                   </Table>
@@ -360,11 +364,13 @@ export default function SnapshotPage() {
                     </thead>
                     <tbody>
                       {fileSnapshots.map((snapshot) => (
-                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
-                          <td>{snapshot.id}</td>
-                          <td>{snapshot.timestamp.toLocaleString()}</td>
-                          <td colSpan={2}>{snapshot.id}</td>
+                        snapshot?.files[Object.keys(snapshot?.files)[0]]?.map((file) => (
+                          <tr key={file.id} className={"file-snapshot"}>
+                          <td>{file.displayName}</td>
+                          <td>{file.email}</td>
+                          <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
+                        ))
                       ))}
                     </tbody>
                   </Table>
