@@ -21,16 +21,15 @@ export default function SnapshotPage() {
   const [sharingOption, setSharingOption] = useState('redundant');
   const [analysisDone, setAnalysisDone] = useState(false);
 
-  console.log(sharingOption);
-  console.log(analysisDone);
-
   let fileTimestamps = [];
   let groupInfo = [];
   if (location.state) {
     // Get the file snapshots from the state and extract the information needed to be displayed in snapshot table
     for (let i = 0; i < location.state.fileSnapshots.length; i++) {
+      //console.log(location.state.fileSnapshots[i]);
       let snapshot = {
         id: i + 1,
+        files: location.state.fileSnapshots[i].files,
         timestamp: new Date(location.state.fileSnapshots[i].createdAt),
         selected: false,
       };
@@ -287,11 +286,13 @@ export default function SnapshotPage() {
                     </thead>
                     <tbody>
                       {fileSnapshots.map((snapshot) => (
-                        <tr key={snapshot.id} className={snapshot.selected ? "selected" : ""}>
-                          <td>{snapshot.id}</td>
-                          <td>{snapshot.timestamp.toLocaleString()}</td>
-                          <td colSpan={2}>{snapshot.id}</td>
+                        snapshot?.files[Object.keys(snapshot?.files)[0]]?.map((file) => (
+                          <tr key={file.id} className={"file-snapshot"}>
+                          <td>{file.displayName}</td>
+                          <td>{file.email}</td>
+                          <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
+                        ))
                       ))}
                     </tbody>
                   </Table>
