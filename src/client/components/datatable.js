@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { Context } from "../Context";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -20,6 +21,7 @@ import AxiosClient from "../AxiosClient";
 
 export default function DataTable(props) {
   const navigate = useNavigate();
+  const [context, setContext] = useContext(Context);
 
   const files = props.files;
   const setFiles = props.setFiles;
@@ -53,7 +55,7 @@ export default function DataTable(props) {
   const [to, setTo] = useState("");
   const [readable, setReadable] = useState("");
   const [writable, setWritable] = useState("");
-  const [shareable, setShareable] = useState("");
+  const [sharable, setSharable] = useState("");
   const [name, setName] = useState("");
   const [inFolder, setInFolder] = useState("");
   const [folder, setFolder] = useState("");
@@ -229,7 +231,7 @@ export default function DataTable(props) {
     setTo("");
     setReadable("");
     setWritable("");
-    setShareable("");
+    setSharable("");
     setName("");
     setInFolder("");
     setFolder("");
@@ -269,7 +271,7 @@ export default function DataTable(props) {
     tos.forEach(element => {query += "to:"+element+" and "});
     reads.forEach(element => {query += "readable:"+element+" and "});
     writes.forEach(element => {query += "writable:"+element+" and "});
-    shares.forEach(element => {query += "shareable:"+element+" and "});
+    shares.forEach(element => {query += "sharable:"+element+" and "});
     names.forEach(element => {query += "name:"+element+" and "});
     inFolders.forEach(element => {query += "inFolder:"+element+" and "});
     folders.forEach(element => {query += "folder:"+element+" and "});
@@ -293,7 +295,7 @@ export default function DataTable(props) {
     let tos = to === "" ? [] : to.split(',').map(e => addQuotesTrim(e));
     let reads = readable === "" ? [] : readable.split(',').map(e => addQuotesTrim(e));
     let writes = writable === "" ? [] : writable.split(',').map(e => addQuotesTrim(e));
-    let shares = shareable === "" ? [] : shareable.split(',').map(e => addQuotesTrim(e));
+    let shares = sharable === "" ? [] : sharable.split(',').map(e => addQuotesTrim(e));
     let names = name === "" ? [] : name.split(',').map(e => addQuotesTrim(e));
     let inFolders = inFolder === "" ? [] : inFolder.split(',').map(e => addQuotesTrim(e));
     let folders = folder === "" ? [] : folder.split(',').map(e => addQuotesTrim(e));
@@ -452,9 +454,9 @@ export default function DataTable(props) {
                         <Form.Label>Writable</Form.Label>
                         <Form.Control placeholder="User" value={writable} onChange={(event) => setWritable(event.target.value)}/>
                       </Form.Group>
-                      <Form.Group as={Col} controlId="shareable">
-                        <Form.Label>Shareable</Form.Label>
-                        <Form.Control placeholder="User" value={shareable} onChange={(event) => setShareable(event.target.value)}/>
+                      <Form.Group as={Col} controlId="sharable">
+                        <Form.Label>Sharable</Form.Label>
+                        <Form.Control placeholder="User" value={sharable} onChange={(event) => setSharable(event.target.value)}/>
                       </Form.Group>
                     </Row>
                     <Row className="mb-3">
@@ -554,7 +556,7 @@ export default function DataTable(props) {
                 </th>
                 <th>Name {sortNameButton ? <MdArrowDropUp onClick={sortName}/> : <MdArrowDropDown onClick={sortName}/>}</th>
                 <th>Owner {sortOwnerButton ? <MdArrowDropUp onClick={sortOwner}/> : <MdArrowDropDown onClick={sortOwner}/>}</th>
-                <th>Drive {sortDriveButton ? <MdArrowDropUp onClick={sortDrive}/> : <MdArrowDropDown onClick={sortDrive}/>}</th>
+                {context[0] === "google" ? <th>Drive {sortDriveButton ? <MdArrowDropUp onClick={sortDrive}/> : <MdArrowDropDown onClick={sortDrive}/>}</th> : <></>}
                 <th>Last Modified {sortModifiedButton ? <MdArrowDropUp onClick={sortModified}/> : <MdArrowDropDown onClick={sortModified}/>}</th>
                 <th>Created {sortCreatedButton ? <MdArrowDropUp onClick={sortCreated}/> : <MdArrowDropDown onClick={sortCreated}/>}</th>
                 <th colSpan={2}>Permissions</th>
@@ -574,7 +576,7 @@ export default function DataTable(props) {
                   </th>
                   <td>{file.name}</td>
                   <td>{file.owner && file.owner.name}</td>
-                  <td>{file.drive}</td>
+                  {context === "google" ? <td>{file.drive}</td> : <></>}
                   <td>{file.lastModified}</td>
                   <td>{file.created}</td>
                   {file.expanded ? (

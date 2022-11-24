@@ -70,7 +70,7 @@ export default function LoginPage() {
       AxiosClient.get("/allfilesnapshots").then((res) => {
         let fileSnapshots = res.data;
           AxiosClient.get("/allFiles").then((res) => {
-            navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: groupSnapshots }} );
+            navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: [] }} );
           });
       });
     });
