@@ -294,6 +294,13 @@ export default function SnapshotPage() {
                         </tr>
                         ))
                       ))}
+                      {groupSnapshots.map((snapshot) => (
+                          <tr key={snapshot.id} className={"group-snapshot"}>
+                          <td>{snapshot.groupName}</td>
+                          <td>{snapshot.createdAt}</td>
+                          <td colSpan={2}>{snapshot.groupMembers.join(", ")}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </Table>
                 </Col>
@@ -319,6 +326,13 @@ export default function SnapshotPage() {
                           <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
                         ))
+                      ))}
+                      {groupSnapshots.map((snapshot) => (
+                          <tr key={snapshot.id} className={"group-snapshot"}>
+                          <td>{snapshot.groupName}</td>
+                          <td>{snapshot.createdAt}</td>
+                          <td colSpan={2}>{snapshot.groupMembers.join(", ")}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </Table>
@@ -346,6 +360,13 @@ export default function SnapshotPage() {
                         </tr>
                         ))
                       ))}
+                      {groupSnapshots.map((snapshot) => (
+                          <tr key={snapshot.id} className={"group-snapshot"}>
+                          <td>{snapshot.groupName}</td>
+                          <td>{snapshot.createdAt}</td>
+                          <td colSpan={2}>{snapshot.groupMembers.join(", ")}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </Table>
                 </Col>
@@ -371,6 +392,13 @@ export default function SnapshotPage() {
                           <td colSpan={2}>{file.roles.join(", ")}</td>
                         </tr>
                         ))
+                      ))}
+                      {groupSnapshots.map((snapshot) => (
+                          <tr key={snapshot.id} className={"group-snapshot"}>
+                          <td>{snapshot.groupName}</td>
+                          <td>{snapshot.createdAt}</td>
+                          <td colSpan={2}>{snapshot.groupMembers.join(", ")}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </Table>
