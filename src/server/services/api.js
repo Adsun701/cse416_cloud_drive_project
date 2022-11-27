@@ -388,6 +388,34 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       }
       break;
     case 'sharable':
+      // only owners, organizers, fileOrganizers, and writers can share files
+      if (groupOff) {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            let role = perms[i].roles[0];
+            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+              ids.push(fileId);
+            }
+          }
+        });
+      } else {
+        snapshotFiles.forEach((val, fileId) => {
+          const perms = val;
+          for (let i = 0; i < perms.length; i += 1) {
+            let role = perms[i].roles[0];
+            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+              ids.push(fileId);
+            } else if (groupNames.includes(perms[i].displayName) && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+              ids.push(fileId);
+            }
+          }
+        });
+      }
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        files.push(file);
+      }
       break;
     case 'name':
       snapshotFiles.forEach((val, fileId) => {
