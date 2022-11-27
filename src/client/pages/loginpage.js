@@ -102,7 +102,9 @@ export default function LoginPage() {
             graphScopes={[
               "User.Read",
               "Files.Read",
+              "Files.Read.All",
               "Files.ReadWrite.All",
+              "Sites.Read.All",
               "Sites.ReadWrite.All",
             ]}
             authCallback={handleMicrosoft}
