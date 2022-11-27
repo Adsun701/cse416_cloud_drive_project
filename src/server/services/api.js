@@ -475,6 +475,37 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
       }
       break;
     case 'path':
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      let folders = value.split('/').reverse();
+      let pathMatches = false;
+      // Get files with direct parent that matches query value 
+      for (let i = 0; i < fileList.length; i += 1) {
+        if (fileList[i].parents[0]) {
+          let parent = fileList[i].parents[0];
+          pathMatches = true;
+          // check if parents[0] is equal to first entry in folders.
+          for (let j = 0; j < folders.length; j++) {
+
+            let folder = folders[j];
+            if (folder !== parent) {
+              pathMatches = false;
+              break;
+            }
+            const parentFile = await File.findOne({ name: parent }).sort({ createdAt: -1 });
+            parent = parentFile.name;
+          }
+
+          if (pathMatches === true) {
+            files.push(fileList[i]);
+          }
+        }
+      }
       break;
     case 'sharing':
       if (value === 'none') {
