@@ -14,7 +14,9 @@ async function getFilesAndPerms(token) {
   let nextPage = null;
   const result = await drive.files.list({
     access_token: token,
+    corpora: "allDrives",
     fields: 'files(id, name, permissions, permissionIds), nextPageToken',
+    q: "trashed = false",
     supportsAllDrives: true,
     includeItemsFromAllDrives: true
   });
@@ -250,7 +252,7 @@ async function getGoogleFiles(token, email) {
 
     const mimeType = fileData.mimeType.split('.');
     const isFolder = mimeType[mimeType.length - 1] === 'folder';
-
+    
     const childrenFiles = [];
     if (isFolder) {
       let children = await getChildren(token, fileData.id);

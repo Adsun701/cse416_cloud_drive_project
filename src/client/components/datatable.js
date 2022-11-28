@@ -521,6 +521,8 @@ export default function DataTable(props) {
     {file.showFolder ? <>{file.children.map((child) => expandFolder(child))}</> : <></> }</>;
   }
 
+  console.log(files);
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
