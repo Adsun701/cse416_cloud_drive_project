@@ -64,30 +64,124 @@ export default function DataTable(props) {
   const [sharing, setSharing] = useState("");
   const [groupOff, setGroupOff] = useState(false);
 
+  let totalFileCount = () => {
+    let count = 0;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].folder) {
+        count += nestedFilesCount(files[i]);
+      }
+      count++;
+    }
+    return count;
+  };
+
+  let nestedFilesCount = (file) => {
+    let count = 0;
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        count += nestedFilesCount(file.children[i]);
+      }
+      count++;
+    }
+    return count;
+  };
+
+  let totalSelectedCount = () => {
+    let count = 0;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].folder) {
+        count += nestedSelectedFilesCount(files[i]);
+      }
+      if (files[i].selected) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+  let nestedSelectedFilesCount = (file) => {
+    let count = 0;
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        count += nestedSelectedFilesCount(file.children[i]);
+      }
+      if (file.children[i].selected) {
+        count++;
+      }
+    }
+    return count;
+  };
+
   // select all files
   let onSelectAll = (e) => {
     let tempFiles = [...files];
-    tempFiles.map((file) => (file.selected = e.target.checked));
+    tempFiles.map((file) => {
+      file.selected = e.target.checked;
+      if (file.folder) {
+        selectAllNested(file, e.target.checked);
+      }
+    });
 
+    console.log(totalSelectedCount());
     setSelectAll(e.target.checked);
     setFiles(tempFiles);
   };
 
+  let selectAllNested = (file, checked) => {
+    for (let i = 0; i < file.children.length; i++) {
+      file.children[i].selected = checked;
+      if (file.children[i].folder) {
+        selectAllNested(file.children[i], checked);
+      }
+    }
+  };
+
   // update selected file
   let onSelectFile = (e, item) => {
+    console.log(item.name);
     let tempFiles = [...files];
     tempFiles.map((file) => {
       if (file.id === item.id) {
         file.selected = e.target.checked;
+      } else if (file.children.includes(item)) {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].id === item.id) {
+            file.children[i].selected = e.target.checked;
+          }
+        }
+      } else {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].folder) {
+            selectNestedFile(file.children[i], item, e.target.checked);
+          }
+        }
       }
       return file;
     });
 
-    const totalFiles = files.length;
-    const totalSelectedFiles = tempFiles.filter((e) => e.selected).length;
-
+    const totalFiles = totalFileCount();
+    const totalSelectedFiles = totalSelectedCount();
+    console.log(totalSelectedCount());
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
+  };
+
+  let selectNestedFile = (file, item, checked) => {
+    if (file.id === item.id) {
+      file.selected = checked;
+    } else if (file.children.includes(item)) {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].id === item.id) {
+          file.children[i].selected = checked;
+        }
+      }
+    } else {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].folder) {
+          selectNestedFile(file.children[i], item, checked);
+        }
+      }
+    }
   };
 
   // expand permissions
@@ -101,8 +195,8 @@ export default function DataTable(props) {
       return file;
     });
 
-    const totalFiles = files.length;
-    const totalSelectedFiles = tempFiles.filter((e) => e.selected).length;
+    const totalFiles = totalFileCount();
+    const totalSelectedFiles = totalSelectedCount();
 
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
@@ -403,8 +497,8 @@ export default function DataTable(props) {
       return file;
     });
 
-    const totalFiles = files.length;
-    const totalSelectedFiles = tempFiles.filter((e) => e.selected).length;
+    const totalFiles = totalFileCount();
+    const totalSelectedFiles = totalSelectedCount();
 
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
@@ -671,7 +765,7 @@ export default function DataTable(props) {
               </FloatingLabel>
             </Col>
             <Col className="mb-3" style={{ textAlign: "right" }}>
-              {files.filter((e) => e.selected).length > 0 && (
+              {totalSelectedCount() > 0 && (
                 <Button
                   style={{
                     background: "#3484FD",

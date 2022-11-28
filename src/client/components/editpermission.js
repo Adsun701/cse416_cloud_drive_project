@@ -18,11 +18,36 @@ import AxiosClient from "../AxiosClient";
 
 export default function EditPermission(props) {
   const setEditPermission = useStore((state) => state.setEditPermission);
-  const selectedFiles = props.files.filter((e) => e.selected);
+  const selectedFiles = allSelected(props.files);//props.files.filter((e) => e.selected);
   let fileSnapshot = props.fileSnapshot;
   console.log("edit permission page");
   console.log(setEditPermission);
   console.log(selectedFiles);
+
+  function allSelected(files) {
+    let selected = [];
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].folder) {
+        nestedSelectedFiles(files[i], selected);
+      }
+      if (files[i].selected) {
+        selected.push(files[i]);
+      }
+    }
+    return selected;
+  };
+
+  function nestedSelectedFiles(file, selected){
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        nestedSelectedFiles(file.children[i], selected);
+      }
+      if (file.children[i].selected) {
+        console.log(file.children[i]);
+        selected.push(file.children[i]);
+      }
+    }
+  };
 
   return (
     <div style={{ height: "100vh", borderLeft: "1px solid #CFCFCF" }}>

@@ -41,7 +41,7 @@ export default function GroupSnapshotPage() {
   return (
     <div>
       <Header />
-      <Container fluid className={"no-gutters mx-0 px-0"}>Snapshot Page
+      <Container fluid className={"no-gutters mx-0 px-0"}>
         <div className="row no-gutters">
           <Row className="no-gutters">
             <>
@@ -49,29 +49,32 @@ export default function GroupSnapshotPage() {
                 <SideBar />
               </Col>
               <Col sm={10} className="px-0">
-                <form method="post" encType="multipart/form-data" onSubmit={handleSubmit} >
-                <label>
-                  Group Name:
-                  <input type="text" name="groupname" onChange={handleName} />
-                </label>
-                <br />
-                <label>
-                  Group Address:
-                  <input type="text" name="groupaddress" onChange={handleAddress} />
-                </label>
-                <br />
-                <label>
-                Timestamp:
-                <input type="datetime-local" name="timestamp" onChange={handleTimestamp} />
-                </label>
-                <br />
-                <label>
-                  Html File:
-                  <input type="file" name="memberpagehtml" accept="text/html" onChange={handleFile} />
-                </label>
-                <br />
-                <button type="button" onClick={handleSubmit}>Submit</button>
-                </form>
+                <Row style={{justifyContent: "center"}}>Upload Group Snapshot</Row>
+                <Row style={{justifyContent: "center"}}>
+                  <form method="post" encType="multipart/form-data" onSubmit={handleSubmit} >
+                    <label>
+                      Group Name:
+                      <input type="text" name="groupname" onChange={handleName} />
+                    </label>
+                    <br />
+                    <label>
+                      Group Address:
+                      <input type="text" name="groupaddress" onChange={handleAddress} />
+                    </label>
+                    <br />
+                    <label>
+                    Timestamp:
+                    <input type="datetime-local" name="timestamp" onChange={handleTimestamp} />
+                    </label>
+                    <br />
+                    <label>
+                      Html File:
+                      <input type="file" name="memberpagehtml" accept="text/html" onChange={handleFile} />
+                    </label>
+                    <br />
+                    <button type="button" onClick={handleSubmit}>Submit</button>
+                  </form>
+                </Row>
               </Col>
             </>
           </Row>

@@ -146,13 +146,38 @@ export default function SearchPage() {
     setGroupSnapshots(allGroupSnapshots);
   }, []);
 
+  function allSelected(files) {
+    let selected = [];
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].folder) {
+        nestedSelectedFiles(files[i], selected);
+      }
+      if (files[i].selected) {
+        selected.push(files[i]);
+      }
+    }
+    return selected;
+  };
+
+  function nestedSelectedFiles(file, selected){
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        nestedSelectedFiles(file.children[i], selected);
+      }
+      if (file.children[i].selected) {
+        console.log(file.children[i]);
+        selected.push(file.children[i]);
+      }
+    }
+  };
+
   return (
     <div>
       <Header />
       <Container fluid className={"no-gutters mx-0 px-0"}>
         <div className="row no-gutters">
           <Row className="no-gutters">
-            {editPermission && files.filter((e) => e.selected).length > 0 ? (
+            {editPermission && allSelected(files).length > 0 ? (
               <>
                 <Col sm={1} className="px-0">
                   <SideBar />
