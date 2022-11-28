@@ -12,6 +12,14 @@ const GroupSnapshot = require('../model/group-snapshot-model');
 const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 
+const winston = require('winston');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [new winston.transports.Console()],
+});
+
 /*
 Handling the aftermath of authentication for the specifc clouddrive
 */
@@ -21,6 +29,7 @@ async function auth(clouddrive, token, email) {
   } else if (clouddrive === 'microsoft') {
     onedrive.microsoftAuth(token, email);
   }
+  logger.info(`${clouddrive} account ${email} authenticated.`);
 }
 
 // saveSnapshot - take and save a file snapshot to the DB
@@ -31,6 +40,7 @@ async function takeFileSnapshot(clouddrive, token, email) {
   } else if (clouddrive === 'microsoft') {
     snapshot = onedrive.saveSnapshot(token, email);
   }
+  logger.info(`file snapshot taken for ${clouddrive} account ${email}`);
   return snapshot;
 }
 
@@ -41,6 +51,8 @@ async function updatePermission(clouddrive, token, fileid, permid, googledata, o
   } else if (clouddrive === 'microsoft') {
     onedrive.updatePermission(token, onedriveRole, fileid, permid);
   }
+
+  logger.info(`Permission updated for ${clouddrive} file ${fileid} with permission ${permid}`);
 }
 
 // addPermissions for a singular file or multiple files
@@ -50,6 +62,8 @@ async function addPermissions(clouddrive, token, files, value, role, type = '') 
   } else if (clouddrive === 'microsoft') {
     onedrive.addPermissions(token, files, value, role);
   }
+
+  logger.info(`Permissions (with type ${type} and role ${role}) for user ${value} added for ${clouddrive} files ${files.join(",")}`);
 }
 
 /*
@@ -61,6 +75,7 @@ async function deletePermission(clouddrive, token, fileid, permid) {
   } else if (clouddrive === 'microsoft') {
     onedrive.removePermission(token, fileid, permid);
   }
+  logger.info(`Permission ${permid} for ${clouddrive} file ${fileid} deleted`);
 }
 
 // get all the user's access control policies
@@ -72,6 +87,7 @@ async function getAccessControlPolicies(email) {
     ids.push(element._id);
   });
   const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
+  logger.info(`Obtained access control policies for account ${email}.`);
   return allPolicies;
 }
 
@@ -89,6 +105,7 @@ async function getOneAccessControlPolicy(email, requirement) {
   }
   console.log("getting one access control policy");
   console.log(id);
+  logger.info(`Obtained access control policy for account ${email} and requirement ${requirement}: ${id}.`);
   return id;
 }
 
@@ -98,6 +115,7 @@ Updating access policy in the DB
 */
 // eslint-disable-next-line consistent-return
 async function updateAccessPolicy(type, requirement, newValue, email) {
+  logger.info(`Updating access policy of type ${type}, with requirement ${requirement}, a new value of ${newValue}, for account ${email}.`);
   const id = await getOneAccessControlPolicy(email, requirement);
   if (type === 'ar') {
     AccessPolicy.updateOne({ _id: id }, { $push: { ar: newValue } })
@@ -123,6 +141,7 @@ async function deletingAccessPolicyRequirement(requirement, email) {
   const accessControls = user[0].accessPolicies;
   const newControls = accessControls.filter((policy) => policy._id !== id);
   await User.updateOne({ email }, { accessPolicies: newControls });
+  logger.info(`Deleting access policy requirement ${requirement} for account ${email}.`);
   return newControls;
 }
 
@@ -147,6 +166,7 @@ async function editAccessControl(requirement, type, prevControl, newControl, ema
     default:
       break;
   }
+  logger.info(`Edited access control with requirement ${requirement}, type ${type}, changed from ${prevControl} to ${newControl}, for account ${email}.`);
   return newControls;
 }
 
@@ -170,6 +190,7 @@ async function deletingAccessControlsInRequirement(requirement, type, prevContro
     default:
       break;
   }
+  logger.info(`Deleted access controls in requirement ${requirement} of type ${type} for account ${email}.`)
   return newControls;
 }
 
@@ -192,6 +213,7 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
   accessPolicy.save().then(() => {});
   User.updateOne({ email }, { $push: { accessPolicies: accessPolicy } })
     .then(() => {});
+  logger.info(`Added new access policy for account ${email} with requirement ${requirement}, with arStr ${arStr}, drStr ${drStr}, awStr ${awStr}, and dwStr ${dwStr}.`);
   return accessPolicy;
 }
 
@@ -206,6 +228,7 @@ async function addQuery(email, query) {
   searchQuery.save().then(() => {});
   User.updateOne({ email }, { $push: { recentQueries: searchQuery } })
     .then(() => {});
+  logger.info(`Added query ${query} for account ${email}.`);
   return searchQuery;
 }
 
@@ -221,6 +244,7 @@ async function getRecentQueries(email) {
   });
   const recentQueries = await SearchQuery.find({ _id: { $in: ids } })
     .sort({ createdAt: -1 }).limit(5);
+  logger.info(`Retrieved ${email}'s recent queries.`);
   return recentQueries;
 }
 
@@ -238,6 +262,7 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
+  logger.info(`Retrieved all files for account ${email}.`);
   return allFiles;
 }
 
