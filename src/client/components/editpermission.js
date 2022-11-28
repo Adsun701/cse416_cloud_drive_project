@@ -49,6 +49,41 @@ export default function EditPermission(props) {
 function FilePermission(props) {
   const selectedFiles = props.selectedFiles;
   const [ role, setRole ] = useState("writer");
+  const [ value, setValue ] = useState("");
+
+  let handleDeletePermission = (e, fileid, permid) => {
+    e.preventDefault();
+    AxiosClient.post('/deletePermission', {
+      fileid: fileid,
+      permid: permid
+    }).then((res) => {
+      console.log("deleted permissions");
+    }).catch();
+  }
+
+  let handleUpdateSharing = (e, fileid, permid, permName) => {
+    e.preventDefault();
+    let fileids = [fileid];
+    AxiosClient.post('/checkaccesscontrol', {
+      files: fileids,
+      value: permName,
+      role: role
+    }).then((res) => {
+      if (res.data.allowed) {
+      AxiosClient.post('/updatePermission', {
+        fileid: fileid,
+        permid: permid,
+        googledata: {"role": role},
+        onedriveRole: {"emailAddress": permName, "role": role},
+      }).then((res) => {
+        console.log("successfully updated permissions!");
+      }).catch();
+    } else {
+      console.log("NOT ALLOWED VIA ACCESS CONTROL!")
+    }
+    }).catch();
+  }
+
   return (
     <Container>
       <Tabs defaultActiveKey="0" className="mb-0" fill>
@@ -85,18 +120,18 @@ function FilePermission(props) {
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => {setRole("writer")}}>writer</Dropdown.Item>
-                          <Dropdown.Item onClick={() => {setRole("fileOrganizer")}}>fileOrganizer</Dropdown.Item>
-                          <Dropdown.Item onClick={() => {setRole("owner")}}>owner</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("organizer")}}>organizer</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("commenter")}}>commenter</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("reader")}}>reader</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.name);}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id);}}>fileOrganizer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("owner");handleUpdateSharing(e, file.id, permission.id);}}>owner</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id);}}>organizer</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id);}}>commenter</Dropdown.Item>              
+                          <Dropdown.Item onClick={() => {setRole("reader");handleUpdateSharing(e, file.id, permission.id);}}>reader</Dropdown.Item>
                           </Dropdown.Menu>
                         </Dropdown>
                       </td>
                       <td>{permission.access}</td>
                       <td>
-                        <MdClose size={24} style={{ color: "#CFCFCF" }} />
+                        <MdClose onClick={(e) => {handleDeletePermission(e, file.id, permission.id)}} size={24} style={{ color: "#CFCFCF" }} />
                       </td>
                     </tr>
                   ))}
@@ -197,7 +232,37 @@ function AddPermission(props) {
 function RemovePermission(props) {
 
   const selectedFiles = props.selectedFiles;
+  const [ value, setValue ] = useState("");
   
+  let removeSharing = (e) => {
+    e.preventDefault();
+    let fileids = [];
+    selectedFiles.forEach((file, index) => {
+      fileids.push(file.id);
+    })
+    // get list of permissions of a file containing a specific email
+    // remove the list of permissions
+
+    // AxiosClient.post('/checkaccesscontrol', {
+    //   files: fileids,
+    //   value: value,
+    //   role: role
+    // }).then((res) => {
+    //   if (res.data.allowed) {
+    //   AxiosClient.post('/addpermission', {
+    //     fileList: fileids,
+    //     role: role,
+    //     type: "user",
+    //     value: value,
+    //   }).then((res) => {
+    //     console.log("successfully added new permission sharing!");
+    //   }).catch();
+    // } else {
+    //   console.log("NOT ALLOWED VIA ACCESS CONTROL!")
+    // }
+    // }).catch();
+  }
+
   return (
     <Container fluid className={"no-gutters"}>
       <Container style={{ border: "1px solid #CFCFCF", borderRadius: "10px" }}>
@@ -210,7 +275,7 @@ function RemovePermission(props) {
           Remove People and Groups
         </Row>
         <Stack direction="horizontal" gap={3} className="pt-3 pb-3">
-          <Form.Control style={{ background: "#E9ECEF" }} />
+          <Form.Control onChange={(e) => setValue(e.target.value)} style={{ background: "#E9ECEF" }} />
           <Button
             style={{
               background: "#F06B6B",
@@ -218,6 +283,7 @@ function RemovePermission(props) {
               borderRadius: "10px",
               color: "white",
             }}
+            onClick={removeSharing}
           >
             Remove
           </Button>
