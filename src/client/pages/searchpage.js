@@ -64,12 +64,15 @@ export default function SearchPage() {
         id: file.id,
         selected: false,
         expanded: false,
+        showFolder: false,
         name: file.name,
         owner: owner,
         drive: file.drive,
         lastModified: new Date(file.modifiedTime).toLocaleString(),
         created: new Date(file.createdTime).toLocaleString(),
         permissions: permissionsArray,
+        folder: file.folder,
+        children: getNestedChildren(file),
       };
       allFiles.push(newFile);
     }
@@ -91,6 +94,50 @@ export default function SearchPage() {
     for (let i = 0; i < location.state.groupSnapshots.length; i++) {
       allGroupSnapshots[location.state.groupSnapshots[i].groupName] = location.state.groupSnapshots[i].groupMembers;
     }
+  }
+
+  function getNestedChildren(file) {
+    let files = [];
+    let children = []
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        children = getNestedChildren(file.children[i]);
+      }
+      let nestedFile = {
+        id: file.children[i].id,
+        selected: false,
+        expanded: false,
+        showFolder: false,
+        name: file.children[i].name,
+        owner: file.children[i].owner,
+        drive: file.children[i].drive,
+        lastModified: new Date(file.children[i].modifiedTime).toLocaleString(),
+        created: new Date(file.children[i].createdTime).toLocaleString(),
+        permissions: getPermissions(file.children[i]),
+        folder: file.children[i].folder,
+        children: children,
+      }
+      files.push(nestedFile);
+    }
+    return files;
+  }
+
+  function getPermissions(file) {
+    let permissionsArray = [];
+    for (let j = 0; j < file.permissions.length; j++) {
+      let entry = {
+        id: file.permissions[j].id,
+        name: file.permissions[j].displayName,
+        permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
+        access:
+          file.permissions[j].inheritedFrom == null
+            ? "Direct"
+            : "Inherited",
+        expanded: false,
+      };
+      permissionsArray.push(entry);
+    }
+    return permissionsArray;
   }
 
   useEffect(() => {

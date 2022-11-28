@@ -12,7 +12,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Table from "react-bootstrap/Table";
 import Stack from "react-bootstrap/Stack";
-import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp, MdEdit } from "react-icons/md";
+import { MdSearch, MdArrowRight, MdArrowDropDown, MdArrowDropUp, MdEdit, MdFolder } from "react-icons/md";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -41,6 +41,7 @@ export default function DataTable(props) {
   const [sortModifiedButton, setSortModifiedButton] = useState(false);
   const [sortCreatedButton, setSortCreatedButton] = useState(false);
   const [show, setShow] = useState(false);
+  //const [showFolder, setShowFolder] = useState(false);
 
   const setEditPermission = useStore((state) => state.setEditPermission);
 
@@ -376,6 +377,141 @@ export default function DataTable(props) {
     setShow(!show);
   }
 
+  let handleShowFolder = (e, item) => {
+    // shows/hides folder expansion in table results
+    let tempFiles = [...files];
+    let itemFound = false;
+    tempFiles.map((file) => {
+      if (file.id === item.id) {
+        file.showFolder = !file.showFolder;
+        itemFound = true;
+      } else if (file.folder && !itemFound) {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].id === item.id) {
+            file.children[i].showFolder = !file.children[i].showFolder;
+            itemFound = true;
+          } else if (file.children[i].folder && !itemFound) {
+            checkNestedFolders(file.children[i], item);
+          }
+        }
+      }
+      return file;
+    });
+
+    const totalFiles = files.length;
+    const totalSelectedFiles = tempFiles.filter((e) => e.selected).length;
+
+    setSelectAll(totalFiles === totalSelectedFiles);
+    setFiles(tempFiles);
+
+  };
+
+  let checkNestedFolders = (file, item) => {
+    let itemFound = false;
+    if (file.id === item.id) {
+      file.showFolder = !file.showFolder;
+      itemFound = true;
+    } else if (file.folder && !itemFound) {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].id === item.id) {
+          file.children[i].showFolder = !file.children[i].showFolder;
+          itemFound = true;
+        } else if (file.children[i].folder && !itemFound) {
+          checkNestedFolders(file.children[i]);
+        } 
+      }
+    }
+  }
+
+  let expandFolder = (file) => {
+    return <><tr key={file.id} className={file.selected ? "selected" : ""}>
+      <th scope="row">
+        <input
+          type="checkbox"
+          checked={file.selected}
+          className="form-check-input"
+          id="rowcheck{file.id}"
+          onChange={(e) => onSelectFile(e, file)}
+        />
+      </th>
+      <td>{file.folder ? file.showFolder ? <MdArrowDropUp size={24} style={{ color: "#CFCFCF" }} onClick={(e) => handleShowFolder(e, file)}/> 
+                                    : <MdArrowRight size={24} style={{ color: "#CFCFCF" }} onClick={(e) => handleShowFolder(e, file)}/> 
+                                    : <MdArrowRight size={24} style={{ opacity: "0.0" }}/>}
+          {file.name}
+          {file.folder ? <MdFolder style={{ color: "#CFCFCF"}}/> : <></>}</td>
+      <td>{file.owner && file.owner.name}</td>
+      {context[0] === "google" ? <td>{file.drive}</td> : <></>}
+      <td>{file.lastModified}</td>
+      <td>{file.created}</td>
+      {file.expanded ? (
+        <>
+          <td style={{ paddingRight: "0px" }}>
+            {file.permissions.length > 2 && 
+              <MdArrowDropDown
+                size={24}
+                style={{ color: "#CFCFCF" }}
+                onClick={(e) => onExpand(e, file)}
+              />
+            }
+          </td>
+          <td style={{ paddingLeft: "0px" }}>
+            {file.permissions.map((permission, index) => (
+              <React.Fragment key={index}>
+                {Object.keys(groupSnapshots).includes(permission.name) 
+                  ? show
+                    ? <MdArrowDropUp onClick={handleShow}/> 
+                    : <MdArrowDropDown onClick={handleShow}/> 
+                  : <></>}
+                {permission.name +
+                  ", " +
+                  permission.permission +
+                  ", " +
+                  permission.access}
+                {Object.keys(groupSnapshots).includes(permission.name) && show 
+                  ? groupSnapshots[permission.name].map((member) => 
+                    <div style={{textAlign: "right"}} key={member}>
+                      <React.Fragment key={member}>
+                        {member}
+                      </React.Fragment>
+                    </div>
+                  )
+                  : ""}
+                <br />
+              </React.Fragment>
+            ))}
+          </td>
+        </>
+      ) : (
+        <>
+          <td style={{ paddingRight: "0px" }}>
+            {file.permissions.length > 2 && 
+              <MdArrowRight
+                size={24}
+                style={{ color: "#CFCFCF" }}
+                onClick={(e) => onExpand(e, file)}
+              />
+            }
+          </td>
+          <td style={{ paddingLeft: "0px" }}>
+            {file.permissions
+              .slice(0, 2)
+              .map((permission, index) => (
+                <React.Fragment key={index}>
+                  {permission.name +
+                    ", " +
+                    permission.permission +
+                    ", " +
+                    permission.access}
+                  <br />
+                </React.Fragment>
+              ))}
+          </td>
+        </>
+      )}
+    </tr>
+    {file.showFolder ? <>{file.children.map((child) => expandFolder(child))}</> : <></> }</>;
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -564,6 +700,7 @@ export default function DataTable(props) {
             </thead>
             <tbody>
               {files.map((file) => (
+                <>
                 <tr key={file.id} className={file.selected ? "selected" : ""}>
                   <th scope="row">
                     <input
@@ -574,9 +711,12 @@ export default function DataTable(props) {
                       onChange={(e) => onSelectFile(e, file)}
                     />
                   </th>
-                  <td>{file.name}</td>
+                  <td>{file.folder ? file.showFolder ? <MdArrowDropUp size={24} style={{ color: "#CFCFCF" }} onClick={(e) => handleShowFolder(e, file)}/> 
+                                                : <MdArrowRight size={24} style={{ color: "#CFCFCF" }} onClick={(e) => handleShowFolder(e, file)}/> : <></>}
+                      {file.name}
+                      {file.folder ? <MdFolder style={{ color: "#CFCFCF"}}/> : <></>}</td>
                   <td>{file.owner && file.owner.name}</td>
-                  {context === "google" ? <td>{file.drive}</td> : <></>}
+                  {context[0] === "google" ? <td>{file.drive}</td> : <></>}
                   <td>{file.lastModified}</td>
                   <td>{file.created}</td>
                   {file.expanded ? (
@@ -645,6 +785,7 @@ export default function DataTable(props) {
                     </>
                   )}
                 </tr>
+                {file.showFolder ? <>{file.children.map((child) => expandFolder(child))}</> : <></> }</>
               ))}
             </tbody>
           </Table>

@@ -77,6 +77,7 @@ async function createAndSaveFile(fileObject, permissionsList, isFolder, children
     createdTime: fileObject.fileSystemInfo.createdDateTime,
     modifiedTime: fileObject.fileSystemInfo.lastModifiedDateTime,
     permissions: permissionsList,
+    owner: { name: fileObject.createdBy.user.displayName, email: fileObject.createdBy.user.email },
     folder: isFolder,
     children: childrenFiles,
   });
@@ -147,7 +148,7 @@ async function getFilesAndPerms(accessToken) {
     const childrenFiles = [];
     const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i].id}/children/`, accessToken);
     const children = childrenResponse.value;
-    if (children) {
+    if (children.length !== 0) {
       isFolder = true;
       for (let m = 0; m < children.length; m += 1) {
         const myDrive = true;
@@ -177,7 +178,7 @@ async function getFilesAndPerms(accessToken) {
     const childrenFiles = [];
     const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
     const children = childrenResponse.value;
-    if (children) {
+    if (children.length !== 0) {
       isFolder = true;
       for (let m = 0; m < children.length; m += 1) {
         const myDrive = false;
@@ -272,7 +273,7 @@ async function saveSnapshot(accessToken, email) {
 
     const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i].id}/children/`, accessToken);
     const children = childrenResponse.value;
-    if (children) {
+    if (children.length !== 0) {
       for (let m = 0; m < children.length; m += 1) {
         const myDrive = true;
         // eslint-disable-next-line no-unused-vars
@@ -290,7 +291,7 @@ async function saveSnapshot(accessToken, email) {
 
     const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
     const children = childrenResponse.value;
-    if (children) {
+    if (children.length !== 0) {
       for (let m = 0; m < children.length; m += 1) {
         const myDrive = false;
         // eslint-disable-next-line no-unused-vars

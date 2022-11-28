@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { Context } from "../Context";
 import Header from '../components/header';
 import Container from "react-bootstrap/Container";
 import SideBar from "../components/sidebar";
@@ -14,6 +15,8 @@ import AxiosClient from "../AxiosClient";
 
 export default function SnapshotPage() {
   const location = useLocation();
+  const [context, setContext] = useContext(Context);
+
   const [fileSnapshots, setFileSnapshots] = useState([]);
   const [groupSnapshots, setGroupSnapshots] = useState([]);
   const [selectAllFile, setSelectAllFile] = useState(false);
@@ -37,16 +40,18 @@ export default function SnapshotPage() {
     }
 
     // Get the group snapshots from the state and extract the information needed to be displayed in snapshot table
-    for (let i = 0; i < location.state.groupSnapshots.length; i++) {
-      let info = {
-        id: i + 1,
-        groupName: location.state.groupSnapshots[i].groupName,
-        groupMembers: location.state.groupSnapshots[i].groupMembers,
-        createdAt: location.state.groupSnapshots[i].createdAt,
-        selected: false,
-        expanded: false,
-      };
-      groupInfo.push(info);
+    if (context[0] === "google") {
+      for (let i = 0; i < location.state.groupSnapshots.length; i++) {
+        let info = {
+          id: i + 1,
+          groupName: location.state.groupSnapshots[i].groupName,
+          groupMembers: location.state.groupSnapshots[i].groupMembers,
+          createdAt: location.state.groupSnapshots[i].createdAt,
+          selected: false,
+          expanded: false,
+        };
+        groupInfo.push(info);
+      }
     }
   }
 
@@ -156,9 +161,11 @@ export default function SnapshotPage() {
                 <Col style={{display:'flex', justifyContent:'left', padding: '15px', fontSize: '20px'}}>
                   File Snapshots
                 </Col>
+                {context[0] === "google" ? 
                 <Col style={{display:'flex', justifyContent:'left', padding: '15px', fontSize: '20px'}}>
                   Group Snapshots
                 </Col>
+                : <></>}
               </Row>
               <Row>
                 <Col style={{justifyContent:'left'}}>
@@ -195,6 +202,7 @@ export default function SnapshotPage() {
                     </tbody>
                   </Table>
                 </Col>
+                {context[0] === "google" ?
                 <Col style={{justifyContent:'left'}}>
                   <Table style={{ textAlign: "left" }}>
                     <thead style={{ borderTop: "1px solid #CFCFCF" }}>
@@ -271,6 +279,7 @@ export default function SnapshotPage() {
                     </tbody>
                   </Table>
                 </Col>
+              : <></>}
               </Row>
             </Col>}
             {analysisDone && sharingOption === 'redundant' && <Col>
