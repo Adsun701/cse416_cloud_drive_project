@@ -63,16 +63,32 @@ async function deletePermission(clouddrive, token, fileid, permid) {
   }
 }
 
-// get the id of the user's access control policy for the specific requirement/query
-async function getOneAccessControlPolicy(email, requirement) {
+// get all the user's access control policies
+async function getAccessControlPolicies(email) {
   const user = await User.findOne({ email });
   const accessControls = user.accessPolicies;
-  let id = null;
+  const ids = [];
   accessControls.forEach((element) => {
-    if (element.requirement === requirement) {
-      id = element._id;
-    }
+    ids.push(element._id);
   });
+  const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
+  return allPolicies;
+}
+
+// get the id of the user's access control policy for the specific requirement/query
+async function getOneAccessControlPolicy(email, requirement) {
+  const accessControls = await getAccessControlPolicies(email);
+  console.log(accessControls);
+  console.log(requirement);
+  let id = null;
+  for (let i = 0; i < accessControls.length; i += 1) {
+    console.log(accessControls[i].requirement);
+    if (accessControls[i].requirement === requirement) {
+      id = accessControls[i]._id;
+    }
+  }
+  console.log("getting one access control policy");
+  console.log(id);
   return id;
 }
 
@@ -177,18 +193,6 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
   User.updateOne({ email }, { $push: { accessPolicies: accessPolicy } })
     .then(() => {});
   return accessPolicy;
-}
-
-// get all the user's access control policies
-async function getAccessControlPolicies(email) {
-  const user = await User.findOne({ email });
-  const accessControls = user.accessPolicies;
-  const ids = [];
-  accessControls.forEach((element) => {
-    ids.push(element._id);
-  });
-  const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
-  return allPolicies;
 }
 
 /*

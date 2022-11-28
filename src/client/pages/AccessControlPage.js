@@ -56,6 +56,9 @@ export default function AccessControlPage() {
   let handleAddNewAccessControl = async (e) => {
     setShowForm(false);
     e.preventDefault();
+    console.log("testing adding new requirement");
+    console.log(requirementStr);
+    console.log(arStr);
     AxiosClient.post("/addnewaccesscontrolpolicies", {
       requirement: requirementStr,
       ar: arStr,
@@ -68,6 +71,8 @@ export default function AccessControlPage() {
   };
 
   let handleDeleteRequirement = async (requirement) => {
+    console.log("deleting req");
+    console.log(requirement);
     AxiosClient.post("/deleteaccesscontrolpolicy", {
       requirement: requirement,
     })
@@ -78,6 +83,10 @@ export default function AccessControlPage() {
   };
 
   let handleAddUpdateAccessControl = async (e, requirement, type) => {
+    console.log("updating access control");
+    console.log(requirement);
+    console.log(type);
+    console.log(newValue);
     AxiosClient.post("/updateaccesscontrolpolicy", {
       requirement: requirement,
       type: type,
@@ -93,6 +102,10 @@ export default function AccessControlPage() {
   };
 
   let handleEditAccessControl = async (requirement, type, prevControl) => {
+    console.log("editing access control");
+    console.log(requirement);
+    console.log(prevControl);
+    console.log(newEdit);
     AxiosClient.post("/editaccesscontrol", {
       requirement: requirement,
       type: type,
@@ -108,6 +121,10 @@ export default function AccessControlPage() {
   };
 
   let handleDeleteSingleAccessControl = async (requirement, type, prevControl) => {
+    console.log('deleting single access control');
+    console.log(requirement);
+    console.log(type);
+    console.log(prevControl);
     AxiosClient.post("/deleteoneaccesscontrolpolicy", {
       requirement: requirement,
       type: type,
@@ -351,7 +368,7 @@ export default function AccessControlPage() {
                   <h5 style={{ marginBottom: "15px" }}>Requirement: {policy.requirement}</h5>
                   <p style={{ marginBottom: "3px" }}>Allowed Readers</p>
                   <Form.Group controlId="ar" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
-                      {policy.ar?.map((ar) => 
+                      {policy.ar?.map((ar) =>
                         <Stack direction="horizontal" gap={1}>
                           {ar != "" &&
                             <>
@@ -371,7 +388,7 @@ export default function AccessControlPage() {
                   </Form.Group>
                   <p style={{ marginBottom: "3px" }}>Denied Readers</p>
                   <Form.Group controlId="dr" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
-                      {policy.dr?.map((dr) => 
+                      {policy.dr?.map((dr) =>
                         <Stack direction="horizontal" gap={1}>
                           {dr != "" &&
                             <>
@@ -391,7 +408,7 @@ export default function AccessControlPage() {
                   </Form.Group>
                   <p style={{ marginBottom: "3px" }}>Allowed Writers</p>
                   <Form.Group controlId="aw" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
-                      {policy.aw?.map((aw) => 
+                      {policy.aw?.map((aw) =>
                         <Stack direction="horizontal" gap={1}>
                           {aw != "" &&
                             <>
@@ -411,7 +428,7 @@ export default function AccessControlPage() {
                   </Form.Group>
                   <p style={{ marginBottom: "3px" }}>Denied Writers</p>
                   <Form.Group controlId="dw" style={{ maxHeight: "130px", overflowX: "hide", overflowY: "auto" }}>
-                      {policy.dw?.map((dw) => 
+                      {policy.dw?.map((dw) =>
                         <Stack direction="horizontal" gap={1}>
                           {dw != "" &&
                             <>
@@ -419,7 +436,7 @@ export default function AccessControlPage() {
                             <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</Button>
                             <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dw", dw)}>Delete</Button>
                             </>
-                          }  
+                          }
                         </Stack>
                       )}
                   </Form.Group>
