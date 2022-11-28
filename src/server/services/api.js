@@ -238,7 +238,6 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
-  console.log(allFiles);
   return allFiles;
 }
 

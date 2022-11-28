@@ -132,11 +132,116 @@ async function getDriveData(token, driveid) {
 }
 
 /*
+Get list of children files for a folder
+*/
+async function getChildren(token, folderid) {
+  const drive = google.drive({ version: 'v3' });
+  const childrenList = await drive.files.list({
+    access_token: token,
+    q: `'${folderid}' in parents`,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true
+  });
+  return childrenList;
+}
+
+/*
+  Check if folder contains folder using Graph API. Different fetch routes
+  depending on if its a folder in own drive or shared.
+*/
+async function checkForNestedChildren(nestedFile, token, filesMap) {
+  const mimeType = nestedFile.mimeType.split('.');
+  const isFolder = mimeType[mimeType.length - 1] === 'folder';
+  const childrenFiles = [];
+  if (isFolder) {
+    let children = await getChildren(token, nestedFile.id);
+    for (let i = 0; i < children.data.files.length; i += 1) {
+      const nested = await checkForNestedChildren(children.data.files[i], token, filesMap);
+      const childIsFolder = nested.isFolder;
+      const nestedChildren = nested.childrenFiles;
+      for (const [key, value] of Object.entries(filesMap)) {
+        if (children.data.files[i].id === key) {
+          let childrenData = await getFileData(token, key);
+          childrenData = childrenData.data;
+          const childFile = await createAndSaveFile(childrenData, value, childIsFolder, nestedChildren, token);
+          childrenFiles.push(childFile);
+          break;
+        }
+      }
+    }
+  }
+  return { isFolder, childrenFiles };
+}
+
+/*
+  Creates and saves file object to DB, returns file object
+*/
+async function createAndSaveFile(fileData, permissionsList, isFolder, childrenFiles, token) {
+  // get all parents of a file
+  let parents = [];
+  if (fileData.parents) {
+    let parentId = fileData.parents[0];
+    while (parentId) {
+      let parentData = await getFileData(token, parentId);
+      let parent = {
+        id: parentData.data.id,
+        name: parentData.data.name
+      };
+      parents.push(parent);
+      if (parentData.data.parents) {
+        parentId = parentData.data.parents[0];
+      } else {
+        break;
+      }
+    }
+  }
+  
+  let owner;
+  if (fileData.owners) {
+    owner = {
+      name: fileData.owners[0].displayName,
+      email: fileData.owners[0].emailAddress,
+    };
+  }
+  
+  let sharingUser;
+  if (fileData.sharingUser) {
+    sharingUser = {
+      name: fileData.sharingUser.displayName,
+      email: fileData.sharingUser.emailAddress,
+    };
+  }
+  
+  let drive = "My Drive";
+  if (fileData.driveId) {
+    driveData = await getDriveData(token, fileData.driveId);
+    drive = driveData.data.name;
+  }
+  
+  const file = new File({
+    id: fileData.id,
+    name: fileData.name,
+    createdTime: fileData.createdTime,
+    modifiedTime: fileData.modifiedTime,
+    permissions: permissionsList,
+    owner,
+    sharingUser,
+    folder: isFolder,
+    drive: drive,
+    parents: parents,
+    children: childrenFiles
+  });
+  file.save();
+  return file;
+}
+
+/*
 Get a list of all google drive files and add to the user's profile
 */
 async function getGoogleFiles(token, email) {
   const filesMap = await getFilesAndPerms(token);
   const listFiles = [];
+  const childrenArr = [];
   // eslint-disable-next-line no-restricted-syntax
   for (const [key, value] of Object.entries(filesMap)) {
     // eslint-disable-next-line no-await-in-loop
@@ -146,63 +251,32 @@ async function getGoogleFiles(token, email) {
     const mimeType = fileData.mimeType.split('.');
     const isFolder = mimeType[mimeType.length - 1] === 'folder';
 
-    // get all parents of a file
-    let parents = [];
-    if (fileData.parents) {
-      let parentId = fileData.parents[0];
-      while (parentId) {
-        let parentData = await getFileData(token, parentId);
-        let parent = {
-          id: parentData.data.id,
-          name: parentData.data.name
-        };
-        parents.push(parent);
-        if (parentData.data.parents) {
-          parentId = parentData.data.parents[0];
-        } else {
-          break;
+    const childrenFiles = [];
+    if (isFolder) {
+      let children = await getChildren(token, fileData.id);
+      for (let i = 0; i < children.data.files.length; i += 1) {
+        const nested = await checkForNestedChildren(children.data.files[i], token, filesMap);
+        const childIsFolder = nested.isFolder;
+        const nestedChildren = nested.childrenFiles;
+        for (const [key, value] of Object.entries(filesMap)) {
+          if (children.data.files[i].id === key) {
+            let childrenData = await getFileData(token, key);
+            childrenData = childrenData.data;
+            const childFile = await createAndSaveFile(childrenData, value, childIsFolder, nestedChildren, token);
+            childrenFiles.push(childFile);
+            childrenArr.push(childFile);
+            break;
+          }
         }
       }
     }
-
-    let owner;
-    if (fileData.owners) {
-      owner = {
-        name: fileData.owners[0].displayName,
-        email: fileData.owners[0].emailAddress,
-      };
-    }
-
-    let sharingUser;
-    if (fileData.sharingUser) {
-      sharingUser = {
-        name: fileData.sharingUser.displayName,
-        email: fileData.sharingUser.emailAddress,
-      };
-    }
-
-    let drive = "My Drive";
-    if (fileData.driveId) {
-      driveData = await getDriveData(token, fileData.driveId);
-      drive = driveData.data.name;
-    }
-
-    const file = new File({
-      id: fileData.id,
-      name: fileData.name,
-      createdTime: fileData.createdTime,
-      modifiedTime: fileData.modifiedTime,
-      permissions: value,
-      owner,
-      sharingUser,
-      folder: isFolder,
-      drive: drive,
-      parents: parents
-    });
-    file.save();
+    const file = await createAndSaveFile(fileData, value, isFolder, childrenFiles, token);
     listFiles.push(file);
   }
-  User.updateOne({ email }, { $set: { files: listFiles } }).then(() => {});
+  // Remove files that are children from the list
+  const fileIdSet = new Set(childrenArr.map((file) => file.id));
+  const files = listFiles.filter(file => !fileIdSet.has(file.id));
+  User.updateOne({ email }, { $set: { files: files } }).then(() => {});
   return true;
 }
 
