@@ -267,12 +267,14 @@ async function getAllFiles(email) {
 }
 
 function removeDuplicates(filelist) {
+  logger.info(`Removing duplicates for filelist ${filelist}.`);
   const fileIdSet = new Set(filelist.map((file) => file.id));
   const files = [...fileIdSet].map((id) => filelist.find((file) => file.id === id)).filter(Boolean);
   return files;
 }
 
 function findIntersection(filelist, searchFiles) {
+  logger.info(`Finding intersection for filelist ${filelist} with search files ${searchfiles}.`);
   const files = searchFiles
     .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
   return files;
@@ -280,6 +282,7 @@ function findIntersection(filelist, searchFiles) {
 
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, groupOff, email) {
+  logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`)
   const files = [];
   const ids = [];
   const user = await User.find({ email });
@@ -602,6 +605,7 @@ async function searchFilter(op, value, snapshotFiles, groupOff, email) {
 }
 
 function sortQuery(query) {
+  logger.info(`Sorting query ${query}.`);
   const words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
@@ -629,6 +633,7 @@ function sortQuery(query) {
 
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
+  logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
@@ -726,6 +731,7 @@ are allowed via the user's access control policies
 */
 // eslint-disable-next-line consistent-return
 async function checkAgainstAccessPolicy(email, files, value, role) {
+  logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
   switch (role) {
