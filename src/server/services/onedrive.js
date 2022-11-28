@@ -107,6 +107,7 @@ async function createAndSaveFile(fileObject, permissionsList, isFolder, children
 */
 async function checkForNestedChildren(nestedFile, accessToken, myDrive, driveId) {
   let isFolder = false;
+  isFolder = nestedFile.folder !== undefined;
   const childrenFiles = [];
   const childrenResponse = await fetch(myDrive ? `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${nestedFile.id}/children/` : `${GRAPH_API_ENDPOINT}v1.0/drives/${driveId}/items/${nestedFile.id}/children/`, accessToken);
   const children = childrenResponse.value;
@@ -145,6 +146,7 @@ async function getFilesAndPerms(accessToken) {
     const permissionsList = await getPermissionData(permissionResponse);
 
     let isFolder = false;
+    isFolder = files[i].folder !== undefined;
     const childrenFiles = [];
     const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i].id}/children/`, accessToken);
     const children = childrenResponse.value;

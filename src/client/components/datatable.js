@@ -92,6 +92,7 @@ export default function DataTable(props) {
 
   // expand permissions
   let onExpand = (e, item) => {
+    console.log(item);
     let tempFiles = [...files];
     tempFiles.map((file) => {
       if (file.id === item.id) {
@@ -385,12 +386,16 @@ export default function DataTable(props) {
       if (file.id === item.id) {
         file.showFolder = !file.showFolder;
         itemFound = true;
-      } else if (file.folder && !itemFound) {
+      } else if (file.children.includes(item)) { 
         for (let i = 0; i < file.children.length; i++) {
           if (file.children[i].id === item.id) {
             file.children[i].showFolder = !file.children[i].showFolder;
             itemFound = true;
-          } else if (file.children[i].folder && !itemFound) {
+          }
+        }
+      } else if (!itemFound) {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].folder) {
             checkNestedFolders(file.children[i], item);
           }
         }
@@ -411,14 +416,18 @@ export default function DataTable(props) {
     if (file.id === item.id) {
       file.showFolder = !file.showFolder;
       itemFound = true;
-    } else if (file.folder && !itemFound) {
+    } else if (file.children.includes(item)) {
       for (let i = 0; i < file.children.length; i++) {
         if (file.children[i].id === item.id) {
           file.children[i].showFolder = !file.children[i].showFolder;
           itemFound = true;
-        } else if (file.children[i].folder && !itemFound) {
-          checkNestedFolders(file.children[i]);
-        } 
+        }
+      }
+    } else if (!itemFound) {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].folder) {
+          checkNestedFolders(file.children[i], item);
+        }
       }
     }
   }
