@@ -225,6 +225,9 @@ Retrieve all of the user's files
 */
 async function getAllFiles(email) {
   const user = await User.find({ email });
+  if (user.length === 0) {
+    return [];
+  }
   const { files } = user[0];
   const ids = [];
   files.forEach((element) => {

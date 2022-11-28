@@ -43,10 +43,12 @@ export default function LoginPage() {
       // set a state here to change the page upon load
       // get files, file snapshots, and group snapshots stored in database, pass them to the search page as state when navigating
       AxiosClient.get("/allfilesnapshots").then((res) => {
+        console.log("filesnaps");
         let fileSnapshots = res.data;
         AxiosClient.get("/allgroupsnapshots").then((res) => {
           let groupSnapshots = res.data;
           AxiosClient.get("/allFiles").then((res) => {
+            console.log("all files");
             navigate("/search", { state: { files: res.data, fileSnapshots: fileSnapshots, groupSnapshots: groupSnapshots }} );
           });
         });
@@ -65,6 +67,8 @@ export default function LoginPage() {
       name: data.account.name,
       email: data.mail,
     }).then((response) => {
+      // console.log("microsoft");
+      // console.log(response);
       // set a state here to change the page upon load
       // get files and file snapshots stored in database, pass them to the search page as state when navigating
       AxiosClient.get("/allfilesnapshots").then((res) => {
@@ -74,7 +78,7 @@ export default function LoginPage() {
           });
       });
     });
-    navigate("search");
+    // navigate("search");
   };
 
   return (

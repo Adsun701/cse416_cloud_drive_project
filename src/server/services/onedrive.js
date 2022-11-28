@@ -171,39 +171,43 @@ async function getFilesAndPerms(accessToken) {
     listFiles.push(file);
   }
   for (let i = 0; i < sharedFiles.length; i += 1) {
-    const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
-    const permissionsList = await getPermissionData(permissionResponse);
+    try {
+      const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
+      const permissionsList = await getPermissionData(permissionResponse);
 
-    let isFolder = false;
-    const childrenFiles = [];
-    const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
-    const children = childrenResponse.value;
-    if (children.length !== 0) {
-      isFolder = true;
-      for (let m = 0; m < children.length; m += 1) {
-        const myDrive = false;
-        const nested = await checkForNestedChildren(
-          children[m],
-          accessToken,
-          myDrive,
-          sharedFiles[i].remoteItem.parentReference.driveId,
-        );
-        const childIsFolder = nested.isFolder;
-        const nestedChildren = nested.childrenFiles;
-        const childPermissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${children[m].id}/permissions/`, accessToken);
-        const childPermissionsList = await getPermissionData(childPermissionResponse);
-        const childFile = await createAndSaveFile(
-          children[m],
-          childPermissionsList,
-          childIsFolder,
-          nestedChildren,
-        );
-        childrenFiles.push(childFile);
+      let isFolder = false;
+      const childrenFiles = [];
+      const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
+      const children = childrenResponse.value;
+      if (children.length !== 0) {
+        isFolder = true;
+        for (let m = 0; m < children.length; m += 1) {
+          const myDrive = false;
+          const nested = await checkForNestedChildren(
+            children[m],
+            accessToken,
+            myDrive,
+            sharedFiles[i].remoteItem.parentReference.driveId,
+          );
+          const childIsFolder = nested.isFolder;
+          const nestedChildren = nested.childrenFiles;
+          const childPermissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${children[m].id}/permissions/`, accessToken);
+          const childPermissionsList = await getPermissionData(childPermissionResponse);
+          const childFile = await createAndSaveFile(
+            children[m],
+            childPermissionsList,
+            childIsFolder,
+            nestedChildren,
+          );
+          childrenFiles.push(childFile);
+        }
       }
-    }
 
-    const file = await createAndSaveFile(sharedFiles[i], permissionsList, isFolder, childrenFiles);
-    listFiles.push(file);
+      const file = await createAndSaveFile(sharedFiles[i], permissionsList, isFolder, childrenFiles);
+      listFiles.push(file);
+    } catch {
+      continue;
+    }
   }
   return listFiles;
 }
@@ -230,6 +234,7 @@ async function microsoftAuth(accessToken, email) {
       newUser.save().then(() => {});
     }
   });
+  return listFiles;
 }
 
 /*
