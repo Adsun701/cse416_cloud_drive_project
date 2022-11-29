@@ -435,7 +435,11 @@ async function updatePermission(accessToken, fileid, permid, data) {
 Delete a permission for a google file
 */
 async function removePermission(accessToken, fileid, permid) {
+  console.log("deleting perm for a google file");
   const drive = google.drive({ version: 'v3' });
+  console.log(accessToken);
+  console.log(fileid);
+  console.log(permid);
   const result = await drive.permissions.delete({
     accessToken,
     fileId: fileid,

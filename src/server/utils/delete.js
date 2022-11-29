@@ -1,6 +1,9 @@
 const axios = require('axios');
 
 async function fetchdelete(endpoint, accessToken, body) {
+  console.log("fetchdelete");
+  console.log(accessToken);
+  console.log(body);
   const options = {
     headers: {
       Authorization: `Bearer ${accessToken}`,
