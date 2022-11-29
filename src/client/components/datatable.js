@@ -191,6 +191,18 @@ export default function DataTable(props) {
     tempFiles.map((file) => {
       if (file.id === item.id) {
         file.expanded = !file.expanded;
+      } else if (file.children.includes(item)) {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].id === item.id) {
+            file.children[i].expanded = !file.children[i].expanded;
+          }
+        }
+      } else {
+        for (let i = 0; i < file.children.length; i++) {
+          if (file.children[i].folder) {
+            expandNestedFile(file.children[i], item);
+          }
+        }
       }
       return file;
     });
@@ -200,6 +212,24 @@ export default function DataTable(props) {
 
     setSelectAll(totalFiles === totalSelectedFiles);
     setFiles(tempFiles);
+  };
+
+  let expandNestedFile = (file, item) => {
+    if (file.id === item.id) {
+      file.expanded = !file.expanded;
+    } else if (file.children.includes(item)) {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].id === item.id) {
+          file.children[i].expanded = !file.children[i].expanded;
+        }
+      }
+    } else {
+      for (let i = 0; i < file.children.length; i++) {
+        if (file.children[i].folder) {
+          expandNestedFile(file.children[i], item);
+        }
+      }
+    }
   };
 
   let handleTextChange = () => {

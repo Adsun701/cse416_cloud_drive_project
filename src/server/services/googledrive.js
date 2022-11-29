@@ -14,45 +14,61 @@ async function getFilesAndPerms(token) {
   let nextPage = null;
   const result = await drive.files.list({
     access_token: token,
-    corpora: "allDrives",
-    fields: 'files(id, name, permissions, permissionIds), nextPageToken',
-    q: "trashed = false",
+    corpora: 'allDrives',
+    fields: 'files(id, name, permissions, permissionIds, shortcutDetails, driveId), nextPageToken',
+    q: 'trashed = false',
     supportsAllDrives: true,
-    includeItemsFromAllDrives: true
+    includeItemsFromAllDrives: true,
   });
   nextPage = result.data.nextPageToken;
   let f = result.data.files;
-  for (const element of f) {  
+  // eslint-disable-next-line no-restricted-syntax
+  for (const element of f) {
     const newPermsList = [];
     if (element.permissions) {
       for (let i = 0; i < element.permissions.length; i += 1) {
         const newPermission = new Permission({
           id: element.permissions[i].id,
           email: element.permissions[i].emailAddress,
-          displayName: element.permissions[i].displayName,
+          displayName: element.permissions[i].displayName ? element.permissions[i].displayName : element.permissions[i].id,
           roles: [element.permissions[i].role],
           inheritedFrom: null,
         });
         newPermission.save();
         newPermsList.push(newPermission);
       }
-    } 
-    else {
-      // Get permission data for files in shared drives
-      if (element.permissionIds) {
-        for (let i = 0; i < element.permissionIds.length; i++) {
-          let permissionData = await getPermissionData(token, element.id, element.permissionIds[i]);
-          let permission = permissionData.data;
-          const newPermission = new Permission({
-            id: permission.id,
-            email: permission.emailAddress,
-            displayName: permission.displayName,
-            roles: [permission.permissionDetails[0].role],
-            inheritedFrom: permission.permissionDetails[0].inheritedFrom? permission.permissionDetails[0].inheritedFrom : null,
-          });
-          newPermission.save();
-          newPermsList.push(newPermission);
-        }
+    } else if (element.shortcutDetails) {
+      let permissions = await getPermissionListByFileId(token, element.shortcutDetails.targetId);
+      permissions = permissions.data.permissions;
+      for (let i = 0; i < permissions.length; i++) {
+        const permissionData = await getPermissionData(token, element.shortcutDetails.targetId, permissions[i].id);
+        const permission = permissionData.data;
+        const newPermission = new Permission({
+          id: permission.id,
+          email: permission.emailAddress,
+          displayName: permission.displayName ? permission.displayName : permission.id,
+          roles: [permission.role],
+          inheritedFrom: null,
+        });
+        newPermission.save();
+        newPermsList.push(newPermission);
+      }
+    } else if (element.driveId) {
+      let permissions = await getPermissionListByFileId(token, element.id);
+      permissions = permissions.data.permissions;
+      for (let i = 0; i < permissions.length; i++) {
+        const permissionData = await getPermissionData(token, element.id, permissions[i].id);
+        const permission = permissionData.data;
+        // console.log(permission);
+        const newPermission = new Permission({
+          id: permission.id,
+          email: permission.emailAddress,
+          displayName: permission.displayName ? permission.displayName : permission.id,
+          roles: [permission.permissionDetails[0].role],
+          inheritedFrom: permission.permissionDetails[0].inheritedFrom ? permission.permissionDetails[0].inheritedFrom : null,
+        });
+        newPermission.save();
+        newPermsList.push(newPermission);
       }
     }
     files[element.id] = newPermsList;
@@ -64,41 +80,58 @@ async function getFilesAndPerms(token) {
       pageToken: nextPage,
       fields: 'files(id, name, permissions, permissionIds), nextPageToken',
       supportsAllDrives: true,
-      includeItemsFromAllDrives: true
+      includeItemsFromAllDrives: true,
     });
     nextPage = res.data.nextPageToken;
     f = res.data.files;
-    for (const element of f) {  
+    // eslint-disable-next-line no-restricted-syntax
+    for (const element of f) {
       const newPermsList = [];
       if (element.permissions) {
         for (let i = 0; i < element.permissions.length; i += 1) {
           const newPermission = new Permission({
             id: element.permissions[i].id,
             email: element.permissions[i].emailAddress,
-            displayName: element.permissions[i].displayName,
+            displayName: element.permissions[i].displayName ? element.permissions[i].displayName : element.permissions[i].id,
             roles: [element.permissions[i].role],
             inheritedFrom: null,
           });
           newPermission.save();
           newPermsList.push(newPermission);
         }
-      }
-      else {
-        // Get permission data for files in shared drives
-        if (element.permissionIds) {
-          for (let i = 0; i < element.permissionIds.length; i++) {
-            let permissionData = await getPermissionData(token, element.id, element.permissionIds[i]);
-            let permission = permissionData.data;
-            const newPermission = new Permission({
-              id: permission.id,
-              email: permission.emailAddress,
-              displayName: permission.displayName,
-              roles: [permission.permissionDetails[0].role],
-              inheritedFrom: permission.permissionDetails[0].inheritedFrom? permission.permissionDetails[0].inheritedFrom : null,
-            });
-            newPermission.save();
-            newPermsList.push(newPermission);
-          }
+      } else if (element.shortcutDetails) {
+        let permissions = await getPermissionListByFileId(token, element.shortcutDetails.targetId);
+        permissions = permissions.data.permissions;
+        for (let i = 0; i < permissions.length; i++) {
+          const permissionData = await getPermissionData(token, element.shortcutDetails.targetId, permissions[i].id);
+          const permission = permissionData.data;
+          // console.log(permission);
+          const newPermission = new Permission({
+            id: permission.id,
+            email: permission.emailAddress,
+            displayName: permission.displayName ? permission.displayName : permission.id,
+            roles: [permission.role],
+            inheritedFrom: null,
+          });
+          newPermission.save();
+          newPermsList.push(newPermission);
+        }
+      } else if (element.driveId) {
+        let permissions = await getPermissionListByFileId(token, element.id);
+        permissions = permissions.data.permissions;
+        for (let i = 0; i < permissions.length; i++) {
+          const permissionData = await getPermissionData(token, element.id, permissions[i].id);
+          const permission = permissionData.data;
+          // console.log(permission);
+          const newPermission = new Permission({
+            id: permission.id,
+            email: permission.emailAddress,
+            displayName: permission.displayName ? permission.displayName : permission.id,
+            roles: [permission.permissionDetails[0].role],
+            inheritedFrom: permission.permissionDetails[0].inheritedFrom ? permission.permissionDetails[0].inheritedFrom : null,
+          });
+          newPermission.save();
+          newPermsList.push(newPermission);
         }
       }
       files[element.id] = newPermsList;
@@ -116,8 +149,9 @@ async function getFileData(token, fileid) {
     access_token: token,
     fileId: fileid,
     fields: '*',
-    supportsAllDrives: true
+    supportsAllDrives: true,
   });
+  // console.log(fileData.data);
   return fileData;
 }
 
@@ -128,7 +162,7 @@ async function getDriveData(token, driveid) {
   const drive = google.drive({ version: 'v3' });
   const driveData = await drive.drives.get({
     access_token: token,
-    driveId: driveid
+    driveId: driveid,
   });
   return driveData;
 }
@@ -142,7 +176,7 @@ async function getChildren(token, folderid) {
     access_token: token,
     q: `'${folderid}' in parents`,
     supportsAllDrives: true,
-    includeItemsFromAllDrives: true
+    includeItemsFromAllDrives: true,
   });
   return childrenList;
 }
@@ -156,7 +190,7 @@ async function checkForNestedChildren(nestedFile, token, filesMap) {
   const isFolder = mimeType[mimeType.length - 1] === 'folder';
   const childrenFiles = [];
   if (isFolder) {
-    let children = await getChildren(token, nestedFile.id);
+    const children = await getChildren(token, nestedFile.id);
     for (let i = 0; i < children.data.files.length; i += 1) {
       const nested = await checkForNestedChildren(children.data.files[i], token, filesMap);
       const childIsFolder = nested.isFolder;
@@ -180,14 +214,14 @@ async function checkForNestedChildren(nestedFile, token, filesMap) {
 */
 async function createAndSaveFile(fileData, permissionsList, isFolder, childrenFiles, token) {
   // get all parents of a file
-  let parents = [];
+  const parents = [];
   if (fileData.parents) {
     let parentId = fileData.parents[0];
     while (parentId) {
-      let parentData = await getFileData(token, parentId);
-      let parent = {
+      const parentData = await getFileData(token, parentId);
+      const parent = {
         id: parentData.data.id,
-        name: parentData.data.name
+        name: parentData.data.name,
       };
       parents.push(parent);
       if (parentData.data.parents) {
@@ -197,15 +231,20 @@ async function createAndSaveFile(fileData, permissionsList, isFolder, childrenFi
       }
     }
   }
-  
+
   let owner;
   if (fileData.owners) {
     owner = {
       name: fileData.owners[0].displayName,
       email: fileData.owners[0].emailAddress,
     };
+  } else {
+    owner = {
+      name: '',
+      email: '',
+    };
   }
-  
+
   let sharingUser;
   if (fileData.sharingUser) {
     sharingUser = {
@@ -213,13 +252,13 @@ async function createAndSaveFile(fileData, permissionsList, isFolder, childrenFi
       email: fileData.sharingUser.emailAddress,
     };
   }
-  
-  let drive = "My Drive";
+
+  let drive = 'My Drive';
   if (fileData.driveId) {
     driveData = await getDriveData(token, fileData.driveId);
     drive = driveData.data.name;
   }
-  
+
   const file = new File({
     id: fileData.id,
     name: fileData.name,
@@ -229,9 +268,9 @@ async function createAndSaveFile(fileData, permissionsList, isFolder, childrenFi
     owner,
     sharingUser,
     folder: isFolder,
-    drive: drive,
-    parents: parents,
-    children: childrenFiles
+    drive,
+    parents,
+    children: childrenFiles,
   });
   file.save();
   return file;
@@ -252,10 +291,10 @@ async function getGoogleFiles(token, email) {
 
     const mimeType = fileData.mimeType.split('.');
     const isFolder = mimeType[mimeType.length - 1] === 'folder';
-    
+
     const childrenFiles = [];
     if (isFolder) {
-      let children = await getChildren(token, fileData.id);
+      const children = await getChildren(token, fileData.id);
       for (let i = 0; i < children.data.files.length; i += 1) {
         const nested = await checkForNestedChildren(children.data.files[i], token, filesMap);
         const childIsFolder = nested.isFolder;
@@ -277,8 +316,8 @@ async function getGoogleFiles(token, email) {
   }
   // Remove files that are children from the list
   const fileIdSet = new Set(childrenArr.map((file) => file.id));
-  const files = listFiles.filter(file => !fileIdSet.has(file.id));
-  User.updateOne({ email }, { $set: { files: files } }).then(() => {});
+  const files = listFiles.filter((file) => !fileIdSet.has(file.id));
+  User.updateOne({ email }, { $set: { files } }).then(() => {});
   return true;
 }
 
@@ -323,14 +362,15 @@ async function saveSnapshot(token, email) {
 /*
 Retrieve the list of permissons for a file
 */
-// async function getPermissionListByFileId(accessToken, fileid) {
-//   const drive = google.drive({ version: 'v3' });
-//   const result = await drive.permissions.list({
-//     access_token: accessToken, // req.session.googleToken,
-//     fileId: fileid,
-//   });
-//   return result;
-// }
+async function getPermissionListByFileId(accessToken, fileid) {
+  const drive = google.drive({ version: 'v3' });
+  const result = await drive.permissions.list({
+    access_token: accessToken, // req.session.googleToken,
+    fileId: fileid,
+    supportsAllDrives: true,
+  });
+  return result;
+}
 
 /*
 Retrieve the data for a permission of a file
@@ -342,7 +382,7 @@ async function getPermissionData(accessToken, fileid, permissionid) {
     fileId: fileid,
     permissionId: permissionid,
     fields: '*',
-    supportsAllDrives: true
+    supportsAllDrives: true,
   });
   return result;
 }
