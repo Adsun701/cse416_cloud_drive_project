@@ -676,6 +676,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
     snapshotFiles = fileSnapshot[0].files;
   } else {
     // use file snapshot selected by the user
+    fileSnapshot = snapshot;
     snapshotFiles = snapshot[0].files;
   }
   // iterate through operators

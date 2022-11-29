@@ -74,7 +74,7 @@ export default function SearchPage() {
         permissions: permissionsArray,
         folder: file.folder,
         children: getNestedChildren(file),
-        driveid: file.shared.driveId,
+        driveid: file.shared?.driveId,
       };
       allFiles.push(newFile);
     }
@@ -120,7 +120,7 @@ export default function SearchPage() {
         permissions: getPermissions(file.children[i]),
         folder: file.children[i].folder,
         children: children,
-        driveid: file.shared.driveId,
+        driveid: file.shared?.driveId,
       }
       files.push(nestedFile);
     }
