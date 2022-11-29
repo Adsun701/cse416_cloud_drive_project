@@ -273,9 +273,16 @@ function removeDuplicates(filelist) {
 }
 
 function findIntersection(filelist, searchFiles) {
-  logger.info(`Finding intersection for filelist ${filelist} with search files ${searchfiles}.`);
+  logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
   const files = searchFiles
     .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
+  return files;
+}
+
+function removeNegatedFiles(filelist, searchFiles) {
+  logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
+  const fileIdSet = new Set(searchFiles.map((file) => file.id));
+  const files = filelist.filter((file) => !fileIdSet.has(file.id));
   return files;
 }
 
@@ -724,17 +731,25 @@ async function getSearchResults(searchQuery, snapshot, email) {
     }
 
     let counter = 0;
+    let negate = false;
+    let searchFiles = [];
     for (let i = 0; i < operators.length; i += 1) {
       const opPair = operators[i];
-      const op = opPair.substring(0, opPair.indexOf(':'));
+      let op = opPair.substring(0, opPair.indexOf(':'));
       let val = opPair.substring(opPair.indexOf(':') + 1);
+
+      negate = false;
+      if (op.charAt(0) === '-') {
+        op = op.split('-')[1];
+        negate = true;
+      }
 
       if (val === 'me') {
         val = email;
       }
 
       // get search results for the operator
-      const searchFiles = await searchFilter(
+      searchFiles = await searchFilter(
         op,
         val,
         snapshotFiles,
@@ -752,14 +767,37 @@ async function getSearchResults(searchQuery, snapshot, email) {
         }
         files = removeDuplicates(files);
       } else if (booleans[counter] === 'and' && i > 0) {
-        files = findIntersection(files, searchFiles);
-        counter += 1;
+        if (negate) {
+          files = removeNegatedFiles(files, searchFiles);
+        } else {
+          files = findIntersection(files, searchFiles);
+          counter += 1;
+        }
       } else {
         for (let j = 0; j < searchFiles.length; j += 1) {
           files.push(searchFiles[j]);
         }
         files = removeDuplicates(files);
       }
+    }
+    if (operators.length === 1 && negate) {
+      const fileList = [];
+      const ids = [];
+      snapshotFiles.forEach((val, fileId) => {
+        ids.push(fileId);
+      });
+      for (let i = 0; i < ids.length; i += 1) {
+        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        fileList.push(file);
+      }
+      for (let i = 0; i < fileList.length; i += 1) {
+        const { name } = fileList[i];
+        const reg = new RegExp(searchString, 'gi');
+        if (name.match(reg)) {
+          files.push(fileList[i]);
+        }
+      }
+      files = removeNegatedFiles(files, searchFiles);
     }
   } else {
     // default file name search if no operators
