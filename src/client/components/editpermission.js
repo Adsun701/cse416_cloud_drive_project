@@ -1,4 +1,5 @@
-import React, {useState} from "react";
+import React, {useState, useContext} from "react";
+import { Context } from "../Context";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -17,6 +18,7 @@ import { useStore } from "../store";
 import AxiosClient from "../AxiosClient";
 
 export default function EditPermission(props) {
+  const [context, setContext] = useContext(Context);
   const setEditPermission = useStore((state) => state.setEditPermission);
   const selectedFiles = allSelected(props.files);//props.files.filter((e) => e.selected);
   let fileSnapshot = props.fileSnapshot;
@@ -43,7 +45,6 @@ export default function EditPermission(props) {
         nestedSelectedFiles(file.children[i], selected);
       }
       if (file.children[i].selected) {
-        console.log(file.children[i]);
         selected.push(file.children[i]);
       }
     }
@@ -61,9 +62,9 @@ export default function EditPermission(props) {
                 onClick={setEditPermission}
               />
             </Container>
-            <FilePermission selectedFiles={selectedFiles} />
+            <FilePermission selectedFiles={selectedFiles} clouddrive={context[0]}/>
           </Stack>
-          <AddPermission selectedFiles={selectedFiles} fileSnapshot={fileSnapshot}/>
+          <AddPermission selectedFiles={selectedFiles} fileSnapshot={fileSnapshot} clouddrive={context[0]}/>
           <RemovePermission selectedFiles={selectedFiles}/>
         </Stack>
       </Container>
@@ -73,20 +74,21 @@ export default function EditPermission(props) {
 
 function FilePermission(props) {
   const selectedFiles = props.selectedFiles;
-  const [ role, setRole ] = useState("writer");
+  const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
 
-  let handleDeletePermission = (e, fileid, permid) => {
+  let handleDeletePermission = (e, fileid, permid, driveid = null) => {
     e.preventDefault();
     AxiosClient.post('/deletePermission', {
       fileid: fileid,
-      permid: permid
+      permid: permid,
+      driveid: driveid,
     }).then((res) => {
       console.log("deleted permissions");
     }).catch();
   }
 
-  let handleUpdateSharing = (e, fileid, permid, permName) => {
+  let handleUpdateSharing = (e, fileid, permid, permName, driveid = null) => {
     e.preventDefault();
     let fileids = [fileid];
     AxiosClient.post('/checkaccesscontrol', {
@@ -100,6 +102,7 @@ function FilePermission(props) {
         permid: permid,
         googledata: {"role": role},
         onedriveRole: {"emailAddress": permName, "role": role},
+        driveid: driveid,
       }).then((res) => {
         console.log("successfully updated permissions!");
       }).catch();
@@ -143,20 +146,26 @@ function FilePermission(props) {
                           >
                             {permission.permission}
                           </Dropdown.Toggle>
-
+                          {props.clouddrive === "google" ? (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.name);}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}>writer</Dropdown.Item>
                           <Dropdown.Item onClick={() => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id);}}>fileOrganizer</Dropdown.Item>
                           <Dropdown.Item onClick={() => {setRole("owner");handleUpdateSharing(e, file.id, permission.id);}}>owner</Dropdown.Item>              
                           <Dropdown.Item onClick={() => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id);}}>organizer</Dropdown.Item>              
                           <Dropdown.Item onClick={() => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id);}}>commenter</Dropdown.Item>              
                           <Dropdown.Item onClick={() => {setRole("reader");handleUpdateSharing(e, file.id, permission.id);}}>reader</Dropdown.Item>
-                          </Dropdown.Menu>
+                          </Dropdown.Menu>) : 
+                          (
+                          <Dropdown.Menu>
+                          <Dropdown.Item onClick={() => {setRole("write"); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
+                          <Dropdown.Item onClick={() => {setRole("read");handleUpdateSharing(e, file.id, permission.id, file.driveid);}}>read</Dropdown.Item>
+                          </Dropdown.Menu>)
+                          }
                         </Dropdown>
                       </td>
                       <td>{permission.access}</td>
                       <td>
-                        <MdClose onClick={(e) => {handleDeletePermission(e, file.id, permission.id)}} size={24} style={{ color: "#CFCFCF" }} />
+                        <MdClose onClick={(e) => {handleDeletePermission(e, file.id, permission.id, file.driveid)}} size={24} style={{ color: "#CFCFCF" }} />
                       </td>
                     </tr>
                   ))}
@@ -173,14 +182,16 @@ function FilePermission(props) {
 function AddPermission(props) {
 
   const selectedFiles = props.selectedFiles;
-  const [ role, setRole ] = useState("writer");
+  const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
 
   let handleNewSharing = (e) => {
     e.preventDefault();
     let fileids = [];
+    let driveids = [];
     selectedFiles.forEach((file, index) => {
       fileids.push(file.id);
+      driveids.push(file.driveid);
     })
     AxiosClient.post('/checkaccesscontrol', {
       files: fileids,
@@ -193,6 +204,7 @@ function AddPermission(props) {
         role: role,
         type: "user",
         value: value,
+        driveList: driveids,
       }).then((res) => {
         console.log("successfully added new permission sharing!");
       }).catch();
@@ -238,7 +250,8 @@ function AddPermission(props) {
             >
               {role}
             </Dropdown.Toggle>
-
+            {props.clouddrive === "google" ? 
+            (
           <Dropdown.Menu>
           <Dropdown.Item onClick={() => {setRole("writer")}}>writer</Dropdown.Item>
               <Dropdown.Item onClick={() => {setRole("fileOrganizer")}}>fileOrganizer</Dropdown.Item>
@@ -247,6 +260,14 @@ function AddPermission(props) {
               <Dropdown.Item onClick={() => {setRole("commenter")}}>commenter</Dropdown.Item>              
               <Dropdown.Item onClick={() => {setRole("reader")}}>reader</Dropdown.Item>
           </Dropdown.Menu>
+            ) : 
+            (
+              <Dropdown.Menu>
+              <Dropdown.Item onClick={() => {setRole("write")}}>write</Dropdown.Item>            
+              <Dropdown.Item onClick={() => {setRole("read")}}>read</Dropdown.Item>
+              </Dropdown.Menu>
+            )
+          }
           </Dropdown>
         </Stack>
       </Container>

@@ -57,8 +57,6 @@ export default function AccessControlPage() {
     setShowForm(false);
     e.preventDefault();
     console.log("testing adding new requirement");
-    console.log(requirementStr);
-    console.log(arStr);
     AxiosClient.post("/addnewaccesscontrolpolicies", {
       requirement: requirementStr,
       ar: arStr,
@@ -72,7 +70,6 @@ export default function AccessControlPage() {
 
   let handleDeleteRequirement = async (requirement) => {
     console.log("deleting req");
-    console.log(requirement);
     AxiosClient.post("/deleteaccesscontrolpolicy", {
       requirement: requirement,
     })
@@ -84,9 +81,6 @@ export default function AccessControlPage() {
 
   let handleAddUpdateAccessControl = async (e, requirement, type) => {
     console.log("updating access control");
-    console.log(requirement);
-    console.log(type);
-    console.log(newValue);
     AxiosClient.post("/updateaccesscontrolpolicy", {
       requirement: requirement,
       type: type,
@@ -103,9 +97,6 @@ export default function AccessControlPage() {
 
   let handleEditAccessControl = async (requirement, type, prevControl) => {
     console.log("editing access control");
-    console.log(requirement);
-    console.log(prevControl);
-    console.log(newEdit);
     AxiosClient.post("/editaccesscontrol", {
       requirement: requirement,
       type: type,
@@ -122,9 +113,6 @@ export default function AccessControlPage() {
 
   let handleDeleteSingleAccessControl = async (requirement, type, prevControl) => {
     console.log('deleting single access control');
-    console.log(requirement);
-    console.log(type);
-    console.log(prevControl);
     AxiosClient.post("/deleteoneaccesscontrolpolicy", {
       requirement: requirement,
       type: type,
@@ -334,23 +322,23 @@ export default function AccessControlPage() {
                   <Form style={{ textAlign: "left" }}>
                     <Form.Group className="mb-3" controlId="requirement">
                       <Form.Label>Requirement:</Form.Label>
-                      <Form.Control placeholder={requirementStr} onChange={(event) => setRequirementStr(event.target.value)} />
+                      <Form.Control defaultValue={requirementStr} onChange={(event) => setRequirementStr(event.target.value)} />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="ar">
                       <Form.Label>Allowed Readers:</Form.Label>
-                      <Form.Control placeholder={arStr} onChange={(event) => setarStr(event.target.value)} />
+                      <Form.Control defaultValue={arStr} onChange={(event) => setarStr(event.target.value)} />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="dr">
                       <Form.Label>Denied Readers:</Form.Label>
-                      <Form.Control placeholder={drStr} onChange={(event) => setdrStr(event.target.value)} />
+                      <Form.Control defaultValue={drStr} onChange={(event) => setdrStr(event.target.value)} />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="aw">
                       <Form.Label>Allowed Writers:</Form.Label>
-                      <Form.Control placeholder={awStr} onChange={(event) => setawStr(event.target.value)} />
+                      <Form.Control defaultValue={awStr} onChange={(event) => setawStr(event.target.value)} />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="dw">
                       <Form.Label>Denied Writers:</Form.Label>
-                      <Form.Control placeholder={dwStr} onChange={(event) => setdwStr(event.target.value)} />
+                      <Form.Control defaultValue={dwStr} onChange={(event) => setdwStr(event.target.value)} />
                     </Form.Group>
                   </Form>
                 </Modal.Body>
@@ -372,7 +360,7 @@ export default function AccessControlPage() {
                         <Stack direction="horizontal" gap={1}>
                           {ar != "" &&
                             <>
-                            <Form.Control style={{ marginTop: "5px" }} placeholder={ar} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Form.Control style={{ marginTop: "5px" }} defaultValue={ar} onChange={(e) => setNewEditValue(e.target.value)} />
                             <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "ar", ar)}>Edit</Button>
                             <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "ar", ar)}>Delete</Button>
                             </>
@@ -392,7 +380,7 @@ export default function AccessControlPage() {
                         <Stack direction="horizontal" gap={1}>
                           {dr != "" &&
                             <>
-                            <Form.Control style={{ marginTop: "5px" }} placeholder={dr} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Form.Control style={{ marginTop: "5px" }} defaultValue={dr} onChange={(e) => setNewEditValue(e.target.value)} />
                             <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dr", dr)}>Edit</Button>
                             <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dr", dr)}>Delete</Button>
                             </>
@@ -412,7 +400,7 @@ export default function AccessControlPage() {
                         <Stack direction="horizontal" gap={1}>
                           {aw != "" &&
                             <>
-                            <Form.Control style={{ marginTop: "5px" }}placeholder={aw} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Form.Control style={{ marginTop: "5px" }} defaultValue={aw} onChange={(e) => setNewEditValue(e.target.value)} />
                             <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "aw", aw)}>Edit</Button>
                             <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "aw", aw)}>Delete</Button>
                             </>
@@ -432,7 +420,7 @@ export default function AccessControlPage() {
                         <Stack direction="horizontal" gap={1}>
                           {dw != "" &&
                             <>
-                            <Form.Control style={{ marginTop: "5px" }} placeholder={dw} onChange={(e) => setNewEditValue(e.target.value)} />
+                            <Form.Control style={{ marginTop: "5px" }} defaultValue={dw} onChange={(e) => setNewEditValue(e.target.value)} />
                             <Button style={{ marginTop: "5px" }} onClick={() => handleEditAccessControl(policy.requirement, "dw", dw)}>Edit</Button>
                             <Button style={{ marginTop: "5px", marginRight: "5px" }} onClick={() => handleDeleteSingleAccessControl(policy.requirement, "dw", dw)}>Delete</Button>
                             </>

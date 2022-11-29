@@ -45,22 +45,22 @@ async function takeFileSnapshot(clouddrive, token, email) {
 }
 
 // updatePermission of a file
-async function updatePermission(clouddrive, token, fileid, permid, googledata, onedriveRole) {
+async function updatePermission(clouddrive, token, fileid, permid, googledata, onedriveRole, driveid) {
   if (clouddrive === 'google') {
     googledrive.updatePermission(token, fileid, permid, googledata);
   } else if (clouddrive === 'microsoft') {
-    onedrive.updatePermission(token, onedriveRole, fileid, permid);
+    onedrive.updatePermission(token, onedriveRole, fileid, permid, driveid);
   }
 
   logger.info(`Permission updated for ${clouddrive} file ${fileid} with permission ${permid}`);
 }
 
 // addPermissions for a singular file or multiple files
-async function addPermissions(clouddrive, token, files, value, role, type = '') {
+async function addPermissions(clouddrive, token, files, value, role, type = '', driveid) {
   if (clouddrive === 'google') {
     googledrive.addPermissions(token, files, value, type, role);
   } else if (clouddrive === 'microsoft') {
-    onedrive.addPermissions(token, files, value, role);
+    onedrive.addPermissions(token, files, value, role, driveid);
   }
 
   logger.info(`Permissions (with type ${type} and role ${role}) for user ${value} added for ${clouddrive} files ${files.join(",")}`);
@@ -69,11 +69,11 @@ async function addPermissions(clouddrive, token, files, value, role, type = '') 
 /*
 Delete permissions for a file using file id and permission id
 */
-async function deletePermission(clouddrive, token, fileid, permid) {
+async function deletePermission(clouddrive, token, fileid, permid, driveid) {
   if (clouddrive === 'google') {
     googledrive.removePermission(token, fileid, permid);
   } else if (clouddrive === 'microsoft') {
-    onedrive.removePermission(token, fileid, permid);
+    onedrive.removePermission(token, fileid, permid, driveid);
   }
   logger.info(`Permission ${permid} for ${clouddrive} file ${fileid} deleted`);
 }

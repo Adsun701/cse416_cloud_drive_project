@@ -70,7 +70,8 @@ async function getPermissionData(permissionResponse) {
 /*
   Creates and saves file object to DB, returns file object
 */
-async function createAndSaveFile(fileObject, permissionsList, isFolder, childrenFiles) {
+async function createAndSaveFile(fileObject, permissionsList, isFolder, childrenFiles, isShared = false, driveId = null) {
+  console.log("driveId " + driveId);
   const file = new File({
     id: fileObject.id,
     name: fileObject.name,
@@ -78,6 +79,7 @@ async function createAndSaveFile(fileObject, permissionsList, isFolder, children
     modifiedTime: fileObject.fileSystemInfo.lastModifiedDateTime,
     permissions: permissionsList,
     owner: { name: fileObject.createdBy.user.displayName, email: fileObject.createdBy.user.email },
+    shared: { isShared, driveId },
     folder: isFolder,
     children: childrenFiles,
   });
@@ -124,6 +126,8 @@ async function checkForNestedChildren(nestedFile, accessToken, myDrive, driveId)
         childPermissionsList,
         childIsFolder,
         nestedChildren,
+        !myDrive,
+        driveId,
       );
       childrenFiles.push(childFile);
     }
@@ -164,14 +168,18 @@ async function getFilesAndPerms(accessToken) {
           childPermissionsList,
           childIsFolder,
           nestedChildren,
+          !myDrive,
+          null,
         );
         childrenFiles.push(childFile);
       }
     }
 
-    const file = await createAndSaveFile(files[i], permissionsList, isFolder, childrenFiles);
+    const file = await createAndSaveFile(files[i], permissionsList, isFolder, childrenFiles, false, null);
     listFiles.push(file);
   }
+  console.log("SHARED FILES");
+  console.log(sharedFiles);
   for (let i = 0; i < sharedFiles.length; i += 1) {
     try {
       const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
@@ -200,14 +208,17 @@ async function getFilesAndPerms(accessToken) {
             childPermissionsList,
             childIsFolder,
             nestedChildren,
+            true,
+            sharedFiles[i].remoteItem.parentReference.driveId,
           );
           childrenFiles.push(childFile);
         }
       }
 
-      const file = await createAndSaveFile(sharedFiles[i], permissionsList, isFolder, childrenFiles);
+      const file = await createAndSaveFile(sharedFiles[i], permissionsList, isFolder, childrenFiles, true, sharedFiles[i].remoteItem.parentReference.driveId);
       listFiles.push(file);
     } catch {
+      console.log("some err");
       continue;
     }
   }
@@ -292,27 +303,31 @@ async function saveSnapshot(accessToken, email) {
     }
   }
   for (let i = 0; i < sharedFiles.length; i += 1) {
-    const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
-    const permissionsList = await getPermissionData(permissionResponse);
-    filesMap[sharedFiles[i].id] = permissionsList;
+    try {
+      const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
+      const permissionsList = await getPermissionData(permissionResponse);
+      filesMap[sharedFiles[i].id] = permissionsList;
 
-    const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
-    const children = childrenResponse.value;
-    if (children.length !== 0) {
-      for (let m = 0; m < children.length; m += 1) {
-        const myDrive = false;
-        // eslint-disable-next-line no-unused-vars
-        const added = addNestedFilesToSnapshot(
-          children[m],
-          accessToken,
-          myDrive,
-          sharedFiles[i].remoteItem.parentReference.driveId,
-          filesMap,
-        );
-        const childPermissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
-        const childPermissionsList = await getPermissionData(childPermissionResponse);
-        filesMap[children[m].id] = childPermissionsList;
+      const childrenResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/children/`, accessToken);
+      const children = childrenResponse.value;
+      if (children.length !== 0) {
+        for (let m = 0; m < children.length; m += 1) {
+          const myDrive = false;
+          // eslint-disable-next-line no-unused-vars
+          const added = addNestedFilesToSnapshot(
+            children[m],
+            accessToken,
+            myDrive,
+            sharedFiles[i].remoteItem.parentReference.driveId,
+            filesMap,
+          );
+          const childPermissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
+          const childPermissionsList = await getPermissionData(childPermissionResponse);
+          filesMap[children[m].id] = childPermissionsList;
+        }
       }
+    } catch {
+      continue;
     }
   }
   const fileSnapshot = new FileSnapshot({
@@ -327,19 +342,19 @@ async function saveSnapshot(accessToken, email) {
 /*
 Update a specific file's permission (updating role)
 */
-async function updatePermission(accessToken, role, fileid, permid) {
+async function updatePermission(accessToken, role, fileid, permid, driveid = null) {
   const body = {
     roles: [role],
   };
-  const update = await fetchpatch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken, body);
+  const update = await fetchpatch(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken, body);
   return update;
 }
 
 /*
 Delete the specified file's permissions
 */
-async function removePermission(accessToken, fileid, permid) {
-  const update = await fetchdelete(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
+async function removePermission(accessToken, fileid, permid, driveid = null) {
+  const update = await fetchdelete(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
   return update;
 }
 
@@ -349,7 +364,7 @@ Adding new permissions for a single file or multiple files
 @value = email address for new permission
 @role = new role for the new permissions
 */
-async function addPermissions(accessToken, files, value, role) {
+async function addPermissions(accessToken, files, value, role, driveid = [false]) {
   const body = {
     recipients: [
       { email: value },
@@ -361,7 +376,7 @@ async function addPermissions(accessToken, files, value, role) {
   };
   const ans = [];
   for (let i = 0; i < files.length; i += 1) {
-    const update = await fetchpost(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i]}/invite`, accessToken, body);
+    const update = await fetchpost(driveid[i] ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${files[i]}/invite` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i]}/invite`, accessToken, body);
     ans.push(update.data);
   }
   return ans;
