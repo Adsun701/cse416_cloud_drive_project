@@ -10,7 +10,7 @@ async function fetchdelete(endpoint, accessToken, body) {
     },
   };
   try {
-    const response = await axios.delete(endpoint, body, options);
+    const response = await axios.delete(endpoint, options);
     return await response.data;
   } catch (error) {
     // console.log(error);

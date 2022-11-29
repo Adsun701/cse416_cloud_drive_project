@@ -441,7 +441,7 @@ async function removePermission(accessToken, fileid, permid) {
   console.log(fileid);
   console.log(permid);
   const result = await drive.permissions.delete({
-    accessToken,
+    access_token: accessToken,
     fileId: fileid,
     permissionId: permid,
   });
