@@ -47,6 +47,7 @@ export default function DataTable(props) {
 
   const [recentQueries, setRecentQueries] = useState([]);
   const [incorrectOp, setIncorrectOp] = useState(false);
+  const [missingSnapshot, setMissingSnapshot] = useState(false);
 
   const [builder, setBuilder] = useState(false);
   const [drive, setDrive] = useState("");
@@ -259,6 +260,8 @@ export default function DataTable(props) {
       if (res.data === "Incorrect op") {
         // invalid search operator sent
         setIncorrectOp(true);
+      } else if (res.data === "No Snapshots") {
+        setMissingSnapshot(true);
       } else {
         // get data
         let data = res.data;
@@ -305,12 +308,15 @@ export default function DataTable(props) {
             id: i + 1,
             selected: false,
             expanded: false,
+            showFolder: false,
             name: object.name,
             owner: owner,
             drive: object.drive,
             lastModified: (new Date(object.modifiedTime)).toLocaleString(),
             created: (new Date(object.createdTime)).toLocaleString(),
-            permissions: permissionsArray
+            permissions: permissionsArray,
+            folder: object.folder,
+            children: object.children,
           };
           newFiles.push(file);
         }
@@ -645,7 +651,7 @@ export default function DataTable(props) {
     {file.showFolder ? <>{file.children.map((child) => expandFolder(child))}</> : <></> }</>;
   }
 
-  console.log(files);
+  //console.log(files);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -653,6 +659,9 @@ export default function DataTable(props) {
         <Row>
           <Alert variant="danger" show={incorrectOp} onClose={() => setIncorrectOp(false)} dismissible>
             <Alert.Heading>Search Operator Not Supported! Cannot Perform Search Query!</Alert.Heading>
+          </Alert>
+          <Alert variant="danger" show={missingSnapshot} onClose={() => setMissingSnapshot(false)} dismissible>
+            <Alert.Heading>Search Cannot Be Performed Because No File Snapshots Exist!</Alert.Heading>
           </Alert>
         </Row>
         <Row>

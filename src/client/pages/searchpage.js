@@ -92,7 +92,9 @@ export default function SearchPage() {
 
     // Get the group snapshots from the state and extract the information needed to be passed as props to datatable component
     for (let i = 0; i < location.state.groupSnapshots.length; i++) {
-      allGroupSnapshots[location.state.groupSnapshots[i].groupName] = location.state.groupSnapshots[i].groupMembers;
+      if (!allGroupSnapshots[location.state.groupSnapshots[i].groupName]) {
+        allGroupSnapshots[location.state.groupSnapshots[i].groupName] = location.state.groupSnapshots[i].groupMembers;
+      }
     }
   }
 
