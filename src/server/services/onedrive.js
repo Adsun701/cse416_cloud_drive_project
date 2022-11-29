@@ -354,6 +354,10 @@ async function updatePermission(accessToken, role, fileid, permid, driveid = nul
 Delete the specified file's permissions
 */
 async function removePermission(accessToken, fileid, permid, driveid = null) {
+  console.log(fileid);
+  console.log(permid);
+  const data = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
+  console.log(data);
   const update = await fetchdelete(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
   return update;
 }

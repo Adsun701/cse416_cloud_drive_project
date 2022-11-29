@@ -65,7 +65,7 @@ export default function EditPermission(props) {
             <FilePermission selectedFiles={selectedFiles} clouddrive={context[0]}/>
           </Stack>
           <AddPermission selectedFiles={selectedFiles} fileSnapshot={fileSnapshot} clouddrive={context[0]}/>
-          <RemovePermission selectedFiles={selectedFiles}/>
+          {/* <RemovePermission selectedFiles={selectedFiles}/> */}
         </Stack>
       </Container>
     </div>
