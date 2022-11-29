@@ -831,6 +831,9 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
   switch (role) {
+    case 'read':
+      reader = true;
+      break;
     case 'reader':
       reader = true;
       break;

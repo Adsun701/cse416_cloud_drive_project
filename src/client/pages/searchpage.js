@@ -133,6 +133,7 @@ export default function SearchPage() {
       let entry = {
         id: file.permissions[j].id,
         name: file.permissions[j].displayName,
+        email: file.permissions[j].email,
         permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
         access:
           file.permissions[j].inheritedFrom == null
