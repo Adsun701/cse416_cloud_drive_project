@@ -105,7 +105,7 @@ function FilePermission(props) {
         fileid: fileid,
         permid: permid,
         googledata: {"role": role},
-        onedriveRole: {'roles': [role]},
+        onedriveRole: {"roles": [role]},
         driveid: driveid,
       }).then((res) => {
         console.log("successfully updated permissions!");
@@ -161,8 +161,8 @@ function FilePermission(props) {
                           </Dropdown.Menu>) : 
                           (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {setRole('write'); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole('read');handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>read</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {console.log(permission);setRole("write"); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {setRole("read");handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>read</Dropdown.Item>
                           </Dropdown.Menu>)
                           }
                         </Dropdown>
