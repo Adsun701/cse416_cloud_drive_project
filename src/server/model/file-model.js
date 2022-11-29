@@ -12,6 +12,7 @@ const FileSchema = new Schema(
     modifiedTime: { type: Date },
     permissions: { type: [Permission] },
     owner: { name: { type: String }, email: { type: String } },
+    shared: { isShared: { type: Boolean}, driveId: { type: String } },
     sharingUser: { name: { type: String }, email: { type: String } },
     folder: { type: Boolean },
     children: { type: [this] },

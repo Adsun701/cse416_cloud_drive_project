@@ -34,13 +34,14 @@ export default function SearchPage() {
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
       if (file == null) continue;
-
+      console.log(file);
       let permissionsArray = [];
       if (file.permissions) {
         for (let j = 0; j < file.permissions.length; j++) {
           let entry = {
             id: file.permissions[j].id,
             name: file.permissions[j].displayName,
+            email: file.permissions[j].email,
             permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
             access:
               file.permissions[j].inheritedFrom == null
@@ -73,6 +74,7 @@ export default function SearchPage() {
         permissions: permissionsArray,
         folder: file.folder,
         children: getNestedChildren(file),
+        driveid: file.shared.driveId,
       };
       allFiles.push(newFile);
     }
@@ -118,6 +120,7 @@ export default function SearchPage() {
         permissions: getPermissions(file.children[i]),
         folder: file.children[i].folder,
         children: children,
+        driveid: file.shared.driveId,
       }
       files.push(nestedFile);
     }
