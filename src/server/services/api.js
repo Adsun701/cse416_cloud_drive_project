@@ -279,6 +279,40 @@ function findIntersection(filelist, searchFiles) {
   return files;
 }
 
+async function findFileInSnapshot(id, fileSnapshotTime) {
+  const file1 = await File
+    .find({ id, createdAt: { $gte: fileSnapshotTime } })
+    .sort({ createdAt: 1 })
+    .limit(1);
+  const file2 = await File
+    .find({ id, createdAt: { $lte: fileSnapshotTime } })
+    .sort({ createdAt: -1 })
+    .limit(1);
+  const a = fileSnapshotTime - file1.createdAt;
+  const b = fileSnapshotTime - file2.createdAt;
+  if (a < b) {
+    return file1[0];
+  }
+  return file2[0];
+}
+
+async function findParentFileInSnapshot(name, fileSnapshotTime) {
+  const file1 = await File
+    .find({ name, createdAt: { $gte: fileSnapshotTime } })
+    .sort({ createdAt: 1 })
+    .limit(1);
+  const file2 = await File
+    .find({ name, createdAt: { $lte: fileSnapshotTime } })
+    .sort({ createdAt: -1 })
+    .limit(1);
+  const a = fileSnapshotTime - file1.createdAt;
+  const b = fileSnapshotTime - file2.createdAt;
+  if (a < b) {
+    return file1[0];
+  }
+  return file2[0];
+}
+
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff, email) {
   logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
@@ -320,7 +354,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i += 1) {
@@ -337,7 +371,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i += 1) {
@@ -351,7 +385,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i += 1) {
@@ -372,7 +406,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         }
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         files.push(file);
       }
       break;
@@ -387,7 +421,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           }
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           files.push(file);
         }
       } else {
@@ -402,7 +436,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           }
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           files.push(file);
         }
       }
@@ -430,7 +464,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         });
       }
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         files.push(file);
       }
       break;
@@ -460,7 +494,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         });
       }
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         files.push(file);
       }
       break;
@@ -469,7 +503,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i += 1) {
@@ -485,7 +519,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       // Get files with direct parent that matches query value
@@ -504,7 +538,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       // Get files with any parent (including subfolders) that matches query value
@@ -526,7 +560,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
       const folders = value.split('/').reverse();
@@ -543,7 +577,8 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
               pathMatches = false;
               break;
             }
-            const parentFile = await File.findOne({ name: parent }).sort({ createdAt: -1 });
+            // const parentFile = await File.findOne({ name: parent }).sort({ createdAt: -1 });
+            const parentFile = await findParentFileInSnapshot(parent, fileSnapshotTime);
             parent = parentFile.name;
           }
 
@@ -562,7 +597,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           }
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           files.push(file);
         }
       } else if (value === 'anyone') {
@@ -575,7 +610,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           }
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           files.push(file);
         }
       } else if (value === 'domain') {
@@ -589,7 +624,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           }
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           files.push(file);
         }
       }
@@ -600,7 +635,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           ids.push(fileId);
         });
         for (let i = 0; i < ids.length; i += 1) {
-          const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+          const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
           fileList.push(file);
         }
         for (let i = 0; i < fileList.length; i += 1) {
