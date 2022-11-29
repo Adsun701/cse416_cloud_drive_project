@@ -89,8 +89,12 @@ function FilePermission(props) {
   }
 
   let handleUpdateSharing = (e, fileid, permid, permName, driveid = null) => {
+    console.log("update sharing");
     e.preventDefault();
     let fileids = [fileid];
+    console.log(fileids);
+    console.log(permName);
+    console.log(role);
     AxiosClient.post('/checkaccesscontrol', {
       files: fileids,
       value: permName,
@@ -101,7 +105,7 @@ function FilePermission(props) {
         fileid: fileid,
         permid: permid,
         googledata: {"role": role},
-        onedriveRole: {"emailAddress": permName, "role": role},
+        onedriveRole: {'roles': [role]},
         driveid: driveid,
       }).then((res) => {
         console.log("successfully updated permissions!");
@@ -144,21 +148,21 @@ function FilePermission(props) {
                               color: "black",
                             }}
                           >
-                            {permission.permission}
+                          {permission.permission}
                           </Dropdown.Toggle>
                           {props.clouddrive === "google" ? (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}>writer</Dropdown.Item>
-                          <Dropdown.Item onClick={() => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id);}}>fileOrganizer</Dropdown.Item>
-                          <Dropdown.Item onClick={() => {setRole("owner");handleUpdateSharing(e, file.id, permission.id);}}>owner</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id);}}>organizer</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id);}}>commenter</Dropdown.Item>              
-                          <Dropdown.Item onClick={() => {setRole("reader");handleUpdateSharing(e, file.id, permission.id);}}>reader</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {(e) => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>fileOrganizer</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {setRole("owner");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>owner</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>organizer</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>commenter</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {console.log("reader"); setRole("reader"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}>reader</Dropdown.Item>
                           </Dropdown.Menu>) : 
                           (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => {setRole("write"); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
-                          <Dropdown.Item onClick={() => {setRole("read");handleUpdateSharing(e, file.id, permission.id, file.driveid);}}>read</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {setRole('write'); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {setRole('read');handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>read</Dropdown.Item>
                           </Dropdown.Menu>)
                           }
                         </Dropdown>

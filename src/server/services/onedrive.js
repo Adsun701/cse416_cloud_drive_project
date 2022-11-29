@@ -71,7 +71,7 @@ async function getPermissionData(permissionResponse) {
   Creates and saves file object to DB, returns file object
 */
 async function createAndSaveFile(fileObject, permissionsList, isFolder, childrenFiles, isShared = false, driveId = null) {
-  console.log("driveId " + driveId);
+  // console.log("driveId " + driveId);
   const file = new File({
     id: fileObject.id,
     name: fileObject.name,
@@ -178,8 +178,8 @@ async function getFilesAndPerms(accessToken) {
     const file = await createAndSaveFile(files[i], permissionsList, isFolder, childrenFiles, false, null);
     listFiles.push(file);
   }
-  console.log("SHARED FILES");
-  console.log(sharedFiles);
+  // console.log("SHARED FILES");
+  // console.log(sharedFiles);
   for (let i = 0; i < sharedFiles.length; i += 1) {
     try {
       const permissionResponse = await fetch(`${GRAPH_API_ENDPOINT}v1.0/drives/${sharedFiles[i].remoteItem.parentReference.driveId}/items/${sharedFiles[i].id}/permissions/`, accessToken);
@@ -343,10 +343,10 @@ async function saveSnapshot(accessToken, email) {
 Update a specific file's permission (updating role)
 */
 async function updatePermission(accessToken, role, fileid, permid, driveid = null) {
-  const body = {
-    roles: [role],
-  };
-  const update = await fetchpatch(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken, body);
+  console.log(fileid);
+  console.log(permid);
+  console.log(role);
+  const update = await fetchpatch(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken, role);
   return update;
 }
 
@@ -356,8 +356,8 @@ Delete the specified file's permissions
 async function removePermission(accessToken, fileid, permid, driveid = null) {
   console.log(fileid);
   console.log(permid);
-  const data = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
-  console.log(data);
+  // const data = await fetch(`${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
+  // console.log(data);
   const update = await fetchdelete(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken);
   return update;
 }
