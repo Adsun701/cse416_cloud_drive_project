@@ -354,6 +354,17 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
       groupNames.push(e.groupName.trim());
     }
   });
+
+  // Check all ops that take user as input
+  const userValues = ['creator', 'owner', 'from', 'to', 'readable', 'writable', 'sharable'];
+  if(userValues.includes(op)) {
+    // Default to the same domain as current user if omitted
+    if (!value.includes("@")) {
+      const domain = email.split('@')[1];
+      value = value + "@" + domain;
+    }
+  }
+
   const fileList = [];
   switch (op) {
     case 'drive':
@@ -787,7 +798,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
         ids.push(fileId);
       });
       for (let i = 0; i < ids.length; i += 1) {
-        const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+        const file = await findFileInSnapshot(ids[i], fileSnapshot[0].createdAt);
         fileList.push(file);
       }
       for (let i = 0; i < fileList.length; i += 1) {
@@ -807,7 +818,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
       ids.push(fileId);
     });
     for (let i = 0; i < ids.length; i += 1) {
-      const file = await File.findOne({ id: ids[i] }).sort({ createdAt: -1 });
+      const file = await findFileInSnapshot(ids[i], fileSnapshot[0].createdAt);
       fileList.push(file);
     }
     for (let i = 0; i < fileList.length; i += 1) {
