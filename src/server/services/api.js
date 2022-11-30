@@ -266,21 +266,21 @@ async function getAllFiles(email) {
 }
 
 function removeDuplicates(filelist) {
-  logger.info(`Removing duplicates for filelist ${filelist}.`);
+  // logger.info(`Removing duplicates for filelist ${filelist}.`);
   const fileIdSet = new Set(filelist.map((file) => file.id));
   const files = [...fileIdSet].map((id) => filelist.find((file) => file.id === id)).filter(Boolean);
   return files;
 }
 
 function findIntersection(filelist, searchFiles) {
-  logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
+  // logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
   const files = searchFiles
     .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
   return files;
 }
 
 function removeNegatedFiles(filelist, searchFiles) {
-  logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
+  // logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
   const fileIdSet = new Set(searchFiles.map((file) => file.id));
   const files = filelist.filter((file) => !fileIdSet.has(file.id));
   return files;
@@ -320,9 +320,24 @@ async function findParentFileInSnapshot(name, fileSnapshotTime) {
   return file2[0];
 }
 
+function findFolder(file, folders, level) {
+  if (folders.length === level) {
+    return file;
+  }
+  if (file.folder) {
+    for (let i = 0; i < file.children.length; i ++) {
+      let subfolder = file.children[i];
+      if (subfolder.name === folders[level]) {
+        return findFolder(subfolder, folders, level + 1);
+      }
+    }
+  }
+}
+
+
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff, email) {
-  logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
+  // logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
   const files = [];
   const ids = [];
   const user = await User.find({ email });
@@ -581,28 +596,17 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
-      const folders = value.split('/').reverse();
-      let pathMatches = false;
-      // Get files with direct parent that matches query value
-      for (let i = 0; i < fileList.length; i += 1) {
-        if (fileList[i].parents[0]) {
-          let parent = fileList[i].parents[0];
-          pathMatches = true;
-          // check if parents[0] is equal to first entry in folders.
-          for (let j = 0; j < folders.length; j++) {
-            const folder = folders[j];
-            if (folder !== parent) {
-              pathMatches = false;
-              break;
-            }
-            // const parentFile = await File.findOne({ name: parent }).sort({ createdAt: -1 });
-            const parentFile = await findParentFileInSnapshot(parent, fileSnapshotTime);
-            parent = parentFile.name;
-          }
+      const folders = value.split('/');
 
-          if (pathMatches === true) {
-            files.push(fileList[i]);
-          }
+      let folder;
+      for (let file of fileList) {
+        if (file.name === folders[0] && file.folder) {
+          folder = findFolder(file, folders, 1);
+        }
+      }
+      if (folder) {
+        for (let i = 0; i < folder.children.length; i += 1) {
+          files.push(folder.children[i]);
         }
       }
       break;
@@ -698,7 +702,7 @@ function sortQuery(query) {
 
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
-  logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
+  // logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
@@ -838,7 +842,7 @@ are allowed via the user's access control policies
 */
 // eslint-disable-next-line consistent-return
 async function checkAgainstAccessPolicy(email, files, value, role) {
-  logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
+  // logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
   switch (role) {
