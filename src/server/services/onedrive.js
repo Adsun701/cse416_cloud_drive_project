@@ -345,7 +345,7 @@ Update a specific file's permission (updating role)
 async function updatePermission(accessToken, role, fileid, permid, driveid = null) {
   console.log(fileid);
   console.log(permid);
-  console.log(role);
+  // console.log(role);
   const update = await fetchpatch(driveid ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${fileid}/permissions/${permid}` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${fileid}/permissions/${permid}`, accessToken, role);
   return update;
 }
@@ -368,7 +368,7 @@ Adding new permissions for a single file or multiple files
 @value = email address for new permission
 @role = new role for the new permissions
 */
-async function addPermissions(accessToken, files, value, role, driveid = [false]) {
+async function addPermissions(accessToken, files, value, role, driveid = [false], fileids) {
   const body = {
     recipients: [
       { email: value },
@@ -380,8 +380,20 @@ async function addPermissions(accessToken, files, value, role, driveid = [false]
   };
   const ans = [];
   for (let i = 0; i < files.length; i += 1) {
-    const update = await fetchpost(driveid[i] ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${files[i]}/invite` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i]}/invite`, accessToken, body);
-    ans.push(update.data);
+    const update = await fetchpost(driveid[i] ? `${GRAPH_API_ENDPOINT}v1.0/drives/${driveid}/items/${files[i]}/invite` : `${GRAPH_API_ENDPOINT}v1.0/me/drive/items/${files[i]}/invite`, accessToken, body).then(
+       async (update) => {
+        const newPermission = new Permission({
+          id: update.value[0].id,
+          email: update.value[0].grantedTo.user.email,
+          displayName: update.value[0].grantedTo.user.displayName ? update.value[0].grantedTo.user.displayName : update.value[0].grantedTo.user.id,
+          roles: update.value[0].roles,
+          inheritedFrom: null,
+        });
+        newPermission.save();
+        await File.updateOne({ _id: fileids[i] }, { $push: { permissions: newPermission } })
+        .then(() => {});
+      })
+    ans.push(update);
   }
   return ans;
 }

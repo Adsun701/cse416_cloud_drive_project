@@ -66,6 +66,7 @@ router.post('/deletePermission', isAuthenticated, async (req, res) => {
     req.body.fileid,
     req.body.permid,
     req.body.driveid,
+    req.session.email,
   );
   res.send(response);
 });
@@ -79,6 +80,7 @@ router.post('/addPermission', isAuthenticated, async (req, res) => {
     req.body.role,
     req.body.type,
     req.body.driveList,
+    req.session.email,
   );
   res.send(response);
 });
@@ -92,6 +94,7 @@ router.post('/updatePermission', isAuthenticated, async (req, res) => {
     req.body.googledata,
     req.body.onedriveRole,
     req.body.driveid,
+    req.session.email,
   );
   res.send(response);
 });

@@ -10,7 +10,7 @@ async function fetchpatch(endpoint, accessToken, body) {
     const response = await axios.patch(endpoint, body, options);
     return await response.data;
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     throw new Error(error);
   }
 }

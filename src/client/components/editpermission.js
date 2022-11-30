@@ -90,6 +90,7 @@ function FilePermission(props) {
 
   let handleUpdateSharing = (e, fileid, permid, permName, driveid = null) => {
     console.log("update sharing");
+    console.log(role);
     e.preventDefault();
     let fileids = [fileid];
     console.log(fileids);
