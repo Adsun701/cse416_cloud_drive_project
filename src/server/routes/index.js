@@ -60,7 +60,9 @@ router.get('/allfiles', isAuthenticated, async (req, res) => {
 });
 
 router.post('/deviant', async (req, res) => {
-  const differences = await cloudDriveAPI.getDeviantSharing(req.session.email, req.body.snapshot);
+  const differences = await cloudDriveAPI.getDeviantSharing(req.session.email, req.body.snapshot, req.body.useRecentSnapshot, req.body.threshold);
+  console.log('deviant route');
+  console.log(req.body);
   res.send(JSON.stringify(differences));
 });
 
@@ -105,6 +107,8 @@ router.post('/addPermission', isAuthenticated, async (req, res) => {
 });
 
 router.post('/updatePermission', isAuthenticated, async (req, res) => {
+  // console.log("testing updating perms");
+  // console.log(req.body);
   const response = await cloudDriveAPI.updatePermission(
     req.session.clouddrive,
     req.session.accessToken,
