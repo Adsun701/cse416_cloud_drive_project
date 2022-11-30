@@ -1051,15 +1051,15 @@ function checkDeviantPermDiff(file, fileList) {
     const deviantEmails = perms.map((p) => p[0]);
     emails.forEach((e) => {
       if (!deviantEmails.includes(e)) {
-        deviationsNotHave.push(checkPerms[emails.indexOf(e)]);
+        deviationsNotHave.push([f.id, f.name,...checkPerms[emails.indexOf(e)]]);
       }
     });
     deviantEmails.forEach((e) => {
       if (!emails.includes(e)) {
-        deviationsAdded.push(perms[deviantEmails.indexOf(e)]);
+        deviationsAdded.push([f.id, f.name,...perms[deviantEmails.indexOf(e)]]);
       } else {
         if (perms[deviantEmails.indexOf(e)][1] != emailMap[e]) {
-          deviationsDiffRole.push(perms[deviantEmails.indexOf(e)]);
+          deviationsDiffRole.push([f.id, f.name,...perms[deviantEmails.indexOf(e)]]);
         }
       }
     });
@@ -1138,9 +1138,10 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
         permDiffs[folder] = diffs;
       }
     }
-    // console.log(permDiffs);
-    return permDiffs;
   });
+  console.log("RETURNING");
+  console.log(permDiffs);
+  return permDiffs;
 }
 
 async function getFolderFileDiff(email, snapshotCreatedAt) {

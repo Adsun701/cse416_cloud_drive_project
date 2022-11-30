@@ -33,6 +33,7 @@ export default function SnapshotPage() {
   const [folderFileDiff, setFolderFileDiff] = useState([]);
   const [analysisDone, setAnalysisDone] = useState(false);
   const [threshold, setThreshold] = useState(75);
+  const [deviantList, setDeviantList] = useState([]);
 
   let fileTimestamps = [];
   let groupInfo = [];
@@ -222,10 +223,10 @@ export default function SnapshotPage() {
       }
     }
     AxiosClient.post(routes[sharingOption], body).then((res) => {
-      console.log(res);
+      // console.log(res);
       const data = res.data;
-      console.log("differences");
-      console.log(data);
+      // console.log("differences");
+      // console.log(data);
       if (data == null || data.length == 0) {
         setAnalysis([]);
         return;
@@ -235,8 +236,12 @@ export default function SnapshotPage() {
       let i = 0;
       let newFiles = data.newFiles !== undefined ? data.newFiles : [];
       let differences = data.differences !== undefined ? data.differences : [];
+      let deviants = data !== undefined ? Object.entries(data) : [];
+      console.log("deviants");
+      console.log(deviants);
       let folderFileDiff = data.folderFileDiff !== undefined ? data.folderFileDiff : [];
       let newD = [];
+
       for (const diff of folderFileDiff) {
         const onlyInFolder = [];
         if (diff.onlyInFolder) {
@@ -315,6 +320,7 @@ export default function SnapshotPage() {
       setChanges(diff);
       setFolderFileDiff(newD);
       setAnalysisDone(true);
+      setDeviantList(deviants);
     });
   };
 
@@ -556,33 +562,60 @@ export default function SnapshotPage() {
                     <Table style={{ textAlign: "left" }}>
                       <thead style={{ borderTop: "1px solid #CFCFCF" }}>
                         <tr>
-                          <th>File Name</th>
-                          <th>Metadata</th>
                           <th colSpan={2}>Deviant Permissions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {fileSnapshots.map((snapshot) => (
-                          snapshot?.files[Object.keys(snapshot?.files)[0]]?.map((file) => (
-                            <tr key={file.id} className={"file-snapshot"}>
-                            <td>{file.displayName}</td>
-                            <td>{file.email}</td>
-                            <td colSpan={2}>{file.roles.join(", ")}</td>
+                        {
+                        deviantList.map(([folder, permList]) => {
+                          <>
+                          {console.log(folder)}
+                          <tr>
+                          <th>Folder: {folder?.name} from {folder?.owner?.name}</th>
                           </tr>
-                          ))
-                        ))}
-                        {groupSnapshots.map((snapshot) => (
-                            <tr key={snapshot.id} className={"group-snapshot"}>
-                            <td>{snapshot.groupName}</td>
-                            <td>{snapshot.createdAt}</td>
-                            <td colSpan={2}>{snapshot.groupMembers.join(", ")}</td>
+                          <tr>
+                          <th>Permission Differences Compared to Threshold Files</th>
                           </tr>
-                        ))}
+                          {permList.map(([permDiff1, permDiff2, permDiff3]) => {
+                              {
+                                permDiff1.map((p) => {
+                                  <tr>
+                                  <td>{p[0]}</td>
+                                  <td>{p[1]}</td>
+                                  <td>{p[2]} , {p[3]}</td>
+                                  </tr>
+                                })
+                              }
+                              {
+                                permDiff2.map((p) => {
+                                  <tr>
+                                  <td>{p[0]}</td>
+                                  <td>{p[1]}</td>
+                                  <td>{p[2]} , {p[3]}</td>
+                                  </tr>
+                                })
+                              }
+                              {
+                                permDiff3.map((p) => {
+                                  <tr>
+                                  <td>{p[0]}</td>
+                                  <td>{p[1]}</td>
+                                  <td>{p[2]} , {p[3]}</td>
+                                  </tr>
+                                })
+                              }
+                            })
+                          }
+                          </>
+                        })
+                        
+                        }
                       </tbody>
                     </Table>
                   </Col>
                 </Row>
               }
+              
               {analysisDone && sharingOption === 'folder' && 
                 <Row>
                   <Col style={{justifyContent:'left'}}>
