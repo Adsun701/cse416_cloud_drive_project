@@ -570,39 +570,40 @@ export default function SnapshotPage() {
                         deviantList.map(([folder, permList]) => {
                           <>
                           {console.log(folder)}
-                          <tr>
-                          <th>Folder: {folder?.name} from {folder?.owner?.name}</th>
-                          </tr>
-                          <tr>
-                          <th>Permission Differences Compared to Threshold Files</th>
-                          </tr>
+                          {console.log(permList)}
+                          
+                          <p>Folder: {folder?.name} from {folder?.owner?.name}</p>
+                          
+                          <p>Permission Differences Compared to Threshold Files</p>
+                          
                           {permList.map(([permDiff1, permDiff2, permDiff3]) => {
-                              {permDiff1.length > 0 ? 
+                            {console.log(permDiff2)}
+                              {permDiff1 ? 
                                 permDiff1.map((p) => {
-                                  <tr>
-                                  <td>{p[0]}</td>
-                                  <td>{p[1]}</td>
-                                  <td>{p[2]} , {p[3]}</td>
-                                  </tr>
+                                  <ul>
+                                  <li>{p[0]}</li>
+                                  <li>{p[1]}</li>
+                                  <li>{p[2]} , {p[3]}</li>
+                                  </ul>
                                 }) : <></>
                               }
-                              {permDiff2.length > 0 ? 
+                              {permDiff2 ? 
                                 permDiff2.map((p) => {
-                                  <tr>
-                                  <td>{p[0]}</td>
-                                  <td>{p[1]}</td>
-                                  <td>{p[2]} , {p[3]}</td>
-                                  </tr>
+                                  <ul>
+                                  <li>{p[0]}</li>
+                                  <li>{p[1]}</li>
+                                  <li>{p[2]} , {p[3]}</li>
+                                  </ul>
                                 }) : <></>
                               }
                               {
-                                permDiff3.length > 0 ? 
+                                permDiff3 ? 
                                 permDiff3.map((p) => {
-                                  <tr>
-                                  <td>{p[0]}</td>
-                                  <td>{p[1]}</td>
-                                  <td>{p[2]} , {p[3]}</td>
-                                  </tr> 
+                                  <ul>
+                                  <li>{p[0]}</li>
+                                  <li>{p[1]}</li>
+                                  <li>{p[2]} , {p[3]}</li>
+                                  </ul>
                                 }): <></>
                               }
                             })

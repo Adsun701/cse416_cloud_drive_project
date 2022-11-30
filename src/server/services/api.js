@@ -1105,7 +1105,7 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
     for (let i = 0; i < fileIdList.length; i++) {
       let file = await findFileInSnapshot(fileIdList[i], snapshotTime);
       fileList.push(file);
-      if (file.folder) {
+      if (file?.folder) {
         folderMap.set(file, getAllFilesInFolder(file));
       }
     }
