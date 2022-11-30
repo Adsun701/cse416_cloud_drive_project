@@ -849,6 +849,19 @@ async function getSearchResults(searchQuery, snapshot, email) {
       operators.splice(index, 1);
     }
 
+    // check if path is used in conjunction with drive
+    let ops = [];
+    for (let i = 0; i < operators.length; i += 1) {
+      const opPair = operators[i];
+      let op = opPair.substring(0, opPair.indexOf(':'));
+      ops.push(op);
+    }
+    if (ops.includes('path')) {
+      if (!ops.includes('drive')) {
+        return 'Path error';
+      }
+    }
+
     let counter = 0;
     let negate = false;
     let searchFiles = [];

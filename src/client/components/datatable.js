@@ -48,6 +48,7 @@ export default function DataTable(props) {
   const [recentQueries, setRecentQueries] = useState([]);
   const [incorrectOp, setIncorrectOp] = useState(false);
   const [missingSnapshot, setMissingSnapshot] = useState(false);
+  const [missingDrive, setMissingDrive] = useState(false);
 
   const [builder, setBuilder] = useState(false);
   const [drive, setDrive] = useState("");
@@ -242,6 +243,52 @@ export default function DataTable(props) {
     if (e.key === 'Enter') handleSearch(searchText, snapshotCreatedAt);
   }
 
+  function getNestedChildren(file) {
+    let files = [];
+    let children = []
+    for (let i = 0; i < file.children.length; i++) {
+      if (file.children[i].folder) {
+        children = getNestedChildren(file.children[i]);
+      }
+      let nestedFile = {
+        id: file.children[i].id,
+        selected: false,
+        expanded: false,
+        showFolder: false,
+        name: file.children[i].name,
+        owner: file.children[i].owner,
+        drive: file.children[i].drive,
+        lastModified: new Date(file.children[i].modifiedTime).toLocaleString(),
+        created: new Date(file.children[i].createdTime).toLocaleString(),
+        permissions: getPermissions(file.children[i]),
+        folder: file.children[i].folder,
+        children: children,
+        driveid: file.shared?.driveId,
+      }
+      files.push(nestedFile);
+    }
+    return files;
+  }
+
+  function getPermissions(file) {
+    let permissionsArray = [];
+    for (let j = 0; j < file.permissions.length; j++) {
+      let entry = {
+        id: file.permissions[j].id,
+        name: file.permissions[j].displayName,
+        email: file.permissions[j].email,
+        permission: (file?.permissions[j]?.roles) ? (file?.permissions[j]?.roles[0]) : "None",
+        access:
+          file.permissions[j].inheritedFrom == null
+            ? "Direct"
+            : "Inherited",
+        expanded: false,
+      };
+      permissionsArray.push(entry);
+    }
+    return permissionsArray;
+  }
+
   let handleSearch = (s, snapshotCreated) => {
     s = s?.trim();
     // update recentQueries
@@ -262,6 +309,8 @@ export default function DataTable(props) {
         setIncorrectOp(true);
       } else if (res.data === "No Snapshots") {
         setMissingSnapshot(true);
+      } else if (res.data === "Path error") {
+        setMissingDrive(true);
       } else {
         // get data
         let data = res.data;
@@ -317,7 +366,7 @@ export default function DataTable(props) {
             created: (new Date(object.createdTime)).toLocaleString(),
             permissions: permissionsArray,
             folder: object.folder,
-            children: object.children,
+            children: getNestedChildren(object),
           };
           newFiles.push(file);
         }
@@ -652,8 +701,6 @@ export default function DataTable(props) {
     {file.showFolder ? <>{file.children.map((child) => expandFolder(child))}</> : <></> }</>;
   }
 
-  //console.log(files);
-
   return (
     <div style={{ padding: "20px" }}>
       <Container fluid className={"no-gutters mx-0 px-0"}>
@@ -663,6 +710,9 @@ export default function DataTable(props) {
           </Alert>
           <Alert variant="danger" show={missingSnapshot} onClose={() => setMissingSnapshot(false)} dismissible>
             <Alert.Heading>Search Cannot Be Performed Because No File Snapshots Exist!</Alert.Heading>
+          </Alert>
+          <Alert variant="danger" show={missingDrive} onClose={() => setMissingDrive(false)} dismissible>
+            <Alert.Heading>Path Operators Cannot Be Used Without The Drive Operator!</Alert.Heading>
           </Alert>
           <Alert variant="danger" show={builder && (path !== "" && drive === "")}>
             <Alert.Heading>Path Operators Cannot Be Used Without The Drive Operator!</Alert.Heading>
