@@ -1056,34 +1056,32 @@ async function getFolderFileDiff(email, snapshotCreatedAt) {
     const files = Array.from(snapshot.files.keys());
     for (let i = 0; i < files.length; i += 1) {
       const file = await findFileInSnapshot(files[i], snapshot.createdAt);
-      for (let j = 0; j < file.children.length; j += 1) {
-        const d = await checkFolderFilePermission(file, file.children[j]);
-        if (d !== null) {
-          if (d.diff) {
-            differences.push({ folder: file, file: file.children[j], onlyInFolder: d.onlyInFolder, onlyInFile: d.onlyInFile });
+      if (file.permissions.length > 0) {
+        console.log(file.name);
+        for (let j = 0; j < file.children.length; j += 1) {
+          const d = await checkFolderFilePermission(file, file.children[j]);
+          if (d !== null) {
+            if (d.diff) {
+              differences.push({ folder: file, file: file.children[j], onlyInFolder: d.onlyInFolder, onlyInFile: d.onlyInFile });
+            }
           }
         }
       }
     }
   }
-  console.log(differences);
   return { folderFileDiff: differences };
 }
 
 async function checkFolderFilePermission(folder, file) {
   const folderPerms = folder.permissions;
   const filePerms = file.permissions;
-
+  
   // Find perms that are in folder but not in file
   const permsOnlyInFolder = folderPerms.filter(function(folderPerm) {
     return !filePerms.some(function(filePerm) {
         return folderPerm.id == filePerm.id;
     });
   });
-
-  // console.log("Perms only in folder");
-  // console.log(permsOnlyInFolder);
-
   // Find perms that are in file but not in folder
   const permsOnlyInFile = filePerms.filter(function(filePerm) {
     return !folderPerms.some(function(folderPerm) {
@@ -1091,10 +1089,7 @@ async function checkFolderFilePermission(folder, file) {
     });
   });
 
-  // console.log("Perms only in file");
-  // console.log(permsOnlyInFile);
-
-  const diff = (permsOnlyInFile.length > 0 || permsOnlyInFile.length > 0);
+  const diff = (permsOnlyInFile.length > 0 || permsOnlyInFolder.length > 0);
 
   return { onlyInFolder: permsOnlyInFolder, onlyInFile: permsOnlyInFile, diff: diff};
 }
