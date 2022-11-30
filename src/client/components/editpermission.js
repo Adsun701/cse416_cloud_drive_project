@@ -76,7 +76,7 @@ function FilePermission(props) {
   const selectedFiles = props.selectedFiles;
   const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
-  const [ updated, setUpdated ] = useState(false);
+  const [ updated, setUpdated ] = useState({up: false, id: "", role: ""});
 
   let handleDeletePermission = (e, fileid, permid, driveid = null) => {
     e.preventDefault();
@@ -91,17 +91,15 @@ function FilePermission(props) {
 
   let handleUpdateSharing = (e, fileid, permid, permName, driveid = null, permRole) => {
     console.log("update sharing");
-    console.log(role);
     e.preventDefault();
     let fileids = [fileid];
-    // console.log(fileids);
-    // console.log(permName);
-    // console.log(role);
-    // console.log(permRole);
+    console.log(fileids);
+    console.log(permName);
+    console.log(permRole);
     AxiosClient.post('/checkaccesscontrol', {
       files: fileids,
       value: permName,
-      role: permRole// role
+      role: permRole
     }).then((res) => {
       if (res.data.allowed) {
       AxiosClient.post('/updatePermission', {
@@ -111,7 +109,7 @@ function FilePermission(props) {
         onedriveRole: {"roles": [permRole]},
         driveid: driveid,
       }).then((res) => {
-        setUpdated(true);
+        setUpdated({up: true, id: permid, role: permRole});
         console.log("successfully updated permissions!");
       }).catch();
     } else {
@@ -152,21 +150,21 @@ function FilePermission(props) {
                               color: "black",
                             }}
                           >
-                          {updated ? role : permission.permission}
+                          {updated.up && updated.id === permission.id ? updated.role : permission.permission}
                           </Dropdown.Toggle>
                           {props.clouddrive === "google" ? (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {(e) => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.email, "writer");}}}>writer</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id, permission.email, "file");}}>fileOrganizer</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("owner");handleUpdateSharing(e, file.id, permission.id, permission.email, "owner");}}>owner</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id, permission.email, "organizer");}}>organizer</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id, permission.email, "commenter");}}>commenter</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {console.log("reader"); setRole("reader"); handleUpdateSharing(e, file.id, permission.id, permission.email, "reader");}}>reader</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "writer");}}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "file");}}>fileOrganizer</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "owner");}}>owner</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "organizer");}}>organizer</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "commenter");}}>commenter</Dropdown.Item>              
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "reader");}}>reader</Dropdown.Item>
                           </Dropdown.Menu>) : 
                           (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {console.log(permission);setRole("write"); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "write");}}>write</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("read");handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "read");}}>read</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "write");}}>write</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "read");}}>read</Dropdown.Item>
                           </Dropdown.Menu>)
                           }
                         </Dropdown>
