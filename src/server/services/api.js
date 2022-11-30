@@ -411,6 +411,9 @@ async function findParentFileInSnapshot(name, fileSnapshotTime) {
   return file2[0];
 }
 
+/*
+  Recurse through path to find folder
+*/
 function findFolder(file, folders, level) {
   if (folders.length === level) {
     return file;
@@ -687,12 +690,14 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
+      // Get folders in path
       const folders = value.split('/');
 
       let folder;
       for (let file of fileList) {
         if (file.name === folders[0] && file.folder) {
           folder = findFolder(file, folders, 1);
+          break;
         }
       }
       if (folder) {
@@ -844,6 +849,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
       let op = opPair.substring(0, opPair.indexOf(':'));
       let val = opPair.substring(opPair.indexOf(':') + 1);
 
+      // check if operator is negated
       negate = false;
       if (op.charAt(0) === '-') {
         op = op.split('-')[1];
@@ -886,6 +892,7 @@ async function getSearchResults(searchQuery, snapshot, email) {
         files = removeDuplicates(files);
       }
     }
+    // remove negated files from default file name search
     if (operators.length === 1 && negate) {
       const fileList = [];
       const ids = [];
@@ -995,12 +1002,68 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
-async function getDeviantSharing(snapshot) {
+async function getDeviantSharing(email, snapshot) {
   console.log(snapshot);
 }
 
-async function getFolderFileDiff(snapshot) {
-  console.log(snapshot);
+async function getFolderFileDiff(email, snapshotCreatedAt) {
+  const user = await User.findOne({ email });
+  const filesnapshotList = user?.fileSnapshots;
+  let snapshot = null;
+  if (filesnapshotList && filesnapshotList.length > 0) {
+    for (let i = 0; i < filesnapshotList.length; i += 1) {
+      const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotList[i] });
+      if (filesnapshot.createdAt.getTime() === new Date(snapshotCreatedAt.toLocaleString()).getTime()) {
+         snapshot = filesnapshot;
+      }
+    }
+  }
+  const differences = [];
+  if (snapshot && snapshot.files) {
+    const files = Array.from(snapshot.files.keys());
+    for (let i = 0; i < files.length; i += 1) {
+      const file = await findFileInSnapshot(files[i], snapshot.createdAt);
+      for (let j = 0; j < file.children.length; j += 1) {
+        const d = await checkFolderFilePermission(file, file.children[j]);
+        if (d !== null) {
+          if (d.diff) {
+            differences.push({ folder: file, file: file.children[j], onlyInFolder: d.onlyInFolder, onlyInFile: d.onlyInFile });
+          }
+        }
+      }
+    }
+  }
+  console.log(differences);
+  return { folderFileDiff: differences };
+}
+
+async function checkFolderFilePermission(folder, file) {
+  const folderPerms = folder.permissions;
+  const filePerms = file.permissions;
+
+  // Find perms that are in folder but not in file
+  const permsOnlyInFolder = folderPerms.filter(function(folderPerm) {
+    return !filePerms.some(function(filePerm) {
+        return folderPerm.id == filePerm.id;
+    });
+  });
+
+  // console.log("Perms only in folder");
+  // console.log(permsOnlyInFolder);
+
+  // Find perms that are in file but not in folder
+  const permsOnlyInFile = filePerms.filter(function(filePerm) {
+    return !folderPerms.some(function(folderPerm) {
+        return filePerm.id == folderPerm.id;
+    });
+  });
+
+  // console.log("Perms only in file");
+  // console.log(permsOnlyInFile);
+
+  const diff = (permsOnlyInFile.length > 0 || permsOnlyInFile.length > 0);
+
+  return { onlyInFolder: permsOnlyInFolder, onlyInFile: permsOnlyInFile, diff: diff};
 }
 
 async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) {
@@ -1051,6 +1114,8 @@ async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) 
 }
 
 async function getSharingChanges(email, snapshot1, snapshot2) {
+  console.log(snapshot1);
+  console.log("snap 1");
   const user = await User.findOne({ email });
   const filesnapshotList = user?.fileSnapshots;
   const snapshotList = [];
