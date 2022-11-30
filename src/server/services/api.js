@@ -312,8 +312,8 @@ async function findParentFileInSnapshot(name, fileSnapshotTime) {
     .find({ name, createdAt: { $lte: fileSnapshotTime } })
     .sort({ createdAt: -1 })
     .limit(1);
-  const a = fileSnapshotTime - file1.createdAt;
-  const b = fileSnapshotTime - file2.createdAt;
+  const a = fileSnapshotTime - file1[0].createdAt;
+  const b = fileSnapshotTime - file2[0].createdAt;
   if (a < b) {
     return file1[0];
   }
@@ -889,6 +889,102 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
+async function getDeviantSharing(snapshot) {
+  console.log(snapshot);
+}
+
+async function getFolderFileDiff(snapshot) {
+  console.log(snapshot);
+}
+
+async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) {
+  const perms1 = fileSnapshot1.get(fileid).map((p) => [p.id, p.roles, p.displayName]);
+  const perms2 = fileSnapshot2.get(fileid).map((p) => [p.id, p.roles, p.displayName]);
+  const deletedPerms = [];
+  const addedPerms = [];
+  const updatedPerms = [];
+
+  const ids1 = perms1.map((p) => p[0]);
+  const ids2 = perms2.map((p) => p[0]);
+  const leftOverIds = new Set();
+  ids1.forEach((id) => {
+    if (!ids2.includes(id)) {
+      deletedPerms.push(perms1[ids1.indexOf(id)]);
+    } else {
+      leftOverIds.add(id);
+    }
+  });
+  ids2.forEach((id) => {
+    if (!ids1.includes(id)) {
+      addedPerms.push(perms2[ids2.indexOf(id)]);
+    } else {
+      leftOverIds.add(id);
+    }
+  });
+  leftOverIds.forEach((id) => {
+    const p1 = perms1[ids1.indexOf(id)][1];
+    const p2 = perms2[ids2.indexOf(id)][1];
+    if (p1.length !== p2.length) {
+      for (let i = 0; i < ((p1.length < p2.length) ? p1.length : p2.length); i += 1) {
+        if (p1[i] !== p2[i]) {
+          updatedPerms.push([perms1[ids1.indexOf(id)], perms2[ids2.indexOf(id)]]);
+        }
+      }
+    } else {
+      for (let i = 0; i < p1.length; i += 1) {
+        if (p1[i] !== p2[i]) {
+          updatedPerms.push([perms1[ids1.indexOf(id)], perms2[ids2.indexOf(id)]]);
+        }
+      }
+    }
+  });
+  if (deletedPerms.length === 0 && addedPerms.length === 0 && updatedPerms.length === 0) {
+    return null;
+  }
+  return { deleted: deletedPerms, added: addedPerms, updated: updatedPerms };
+}
+
+async function getSharingChanges(email, snapshot1, snapshot2) {
+  const user = await User.findOne({ email });
+  const filesnapshotList = user?.fileSnapshots;
+  const snapshotList = [];
+  if (filesnapshotList && filesnapshotList.length > 0) {
+    for (let i = 0; i < filesnapshotList.length; i += 1) {
+      const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotList[i] });
+      if (filesnapshot.createdAt.getTime() === new Date(snapshot1.toLocaleString()).getTime()) {
+        snapshotList.push(filesnapshot);
+      } else if (filesnapshot.createdAt.getTime()
+         === new Date(snapshot2.toLocaleString()).getTime()) {
+        snapshotList.push(filesnapshot);
+      }
+    }
+  }
+  const earlier = snapshotList[0] < snapshotList[1];
+  const fileSnapshot1 = earlier ? snapshotList[0] : snapshotList[1];
+  const fileSnapshot2 = earlier ? snapshotList[1] : snapshotList[1];
+  const files1 = Array.from(fileSnapshot1.files.keys());
+  const files2 = Array.from(fileSnapshot2.files.keys());
+  const newFiles = [];
+  const differences = [];
+  for (let i = 0; i < files2.length; i += 1) {
+    if (!files1.includes(files2[i])) {
+      const f = await findFileInSnapshot(files2[i], fileSnapshot2.createdAt);
+      newFiles.push(f);
+    } else {
+      const d = await checkPermissionDifferences(
+        files2[i],
+        fileSnapshot1.files,
+        fileSnapshot2.files,
+      );
+      if (d !== null) {
+        const f = await findFileInSnapshot(files2[i], fileSnapshot2.createdAt);
+        differences.push({ file: f, diff: d });
+      }
+    }
+  }
+  return { newFiles, differences };
+}
+
 module.exports = {
   auth,
   takeFileSnapshot,
@@ -906,4 +1002,7 @@ module.exports = {
   deletingAccessControlsInRequirement,
   editAccessControl,
   checkAgainstAccessPolicy,
+  getDeviantSharing,
+  getFolderFileDiff,
+  getSharingChanges,
 };

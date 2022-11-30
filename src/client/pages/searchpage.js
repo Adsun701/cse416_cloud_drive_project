@@ -34,7 +34,7 @@ export default function SearchPage() {
     for (let i = 0; i < location.state.files.length; i++) {
       let file = location.state.files[i];
       if (file == null) continue;
-      console.log(file);
+      // console.log(file);
       let permissionsArray = [];
       if (file.permissions) {
         for (let j = 0; j < file.permissions.length; j++) {
