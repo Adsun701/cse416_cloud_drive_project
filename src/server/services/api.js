@@ -30,17 +30,6 @@ const logger = createLogger({
   transports: [new winston.transports.File({ filename: 'changes.log' }), new winston.transports.File({ filename: 'debug.log', level: 'debug' })],
 });
 
-// const logger = winston.createLogger({
-//   level: 'info',
-//   format: combine(
-//     winston.format.json(),
-//     timestamp({
-//       format: "MMM-DD-YYYY HH:mm:ss",
-//     }),
-//   ),
-//   transports: [new winston.transports.File({ filename: 'changes.log' }), new winston.transports.Console()],
-// });
-
 /*
 Handling the aftermath of authentication for the specifc clouddrive
 */
