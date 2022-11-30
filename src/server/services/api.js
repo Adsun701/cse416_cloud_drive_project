@@ -4,6 +4,7 @@
 Main interface to act as cloud drive adapter and to perform database operations
 */
 const winston = require('winston');
+const { format, createLogger, transports } = require('winston');
 const googledrive = require('./googledrive');
 const onedrive = require('./onedrive');
 const User = require('../model/user-model');
@@ -14,10 +15,19 @@ const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
 const Permission = require('../model/permission-model');
 
-const logger = winston.createLogger({
+const {
+  combine, timestamp, prettyPrint,
+} = format;
+
+const logger = createLogger({
   level: 'info',
-  format: winston.format.json(),
-  transports: [new winston.transports.Console()],
+  format: combine(
+    timestamp({
+      format: 'MMM-DD-YYYY HH:mm:ss',
+    }),
+    prettyPrint(),
+  ),
+  transports: [new winston.transports.File({ filename: 'changes.log' }), new winston.transports.File({ filename: 'debug.log', level: 'debug' })],
 });
 
 /*
@@ -29,7 +39,7 @@ async function auth(clouddrive, token, email) {
   } else if (clouddrive === 'microsoft') {
     onedrive.microsoftAuth(token, email);
   }
-  logger.info(`${clouddrive} account ${email} authenticated.`);
+  logger.debug(`${clouddrive} account ${email} authenticated.`);
 }
 
 // saveSnapshot - take and save a file snapshot to the DB
@@ -40,7 +50,7 @@ async function takeFileSnapshot(clouddrive, token, email) {
   } else if (clouddrive === 'microsoft') {
     snapshot = onedrive.saveSnapshot(token, email);
   }
-  logger.info(`file snapshot taken for ${clouddrive} account ${email}`);
+  logger.debug(`file snapshot taken for ${clouddrive} account ${email}`);
   return snapshot;
 }
 
@@ -65,13 +75,12 @@ async function getMostRecentFileSnapshot(email) {
   const user = await User.findOne({ email });
   const filesnapshotList = user?.fileSnapshots;
   if (filesnapshotList && filesnapshotList.length > 0) {
-    const filesnapshotid = filesnapshotList[filesnapshotList.length -1];
+    const filesnapshotid = filesnapshotList[filesnapshotList.length - 1];
     const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotid });
     return filesnapshot;
-  } else {
-    console.log("no file snapshots available");
-    return null;
   }
+  console.log('no file snapshots available');
+  return null;
 }
 
 // updatePermission of a file
@@ -81,14 +90,14 @@ async function updatePermission(clouddrive, token, fileid, permid, googledata, o
   } else if (clouddrive === 'microsoft') {
     onedrive.updatePermission(token, onedriveRole, fileid, permid, driveid);
   }
-  let filesnapshot = await getMostRecentFileSnapshot(email);
+  const filesnapshot = await getMostRecentFileSnapshot(email);
   // console.log(filesnapshot);
-  let filesnapshotTime = filesnapshot.createdAt;
+  const filesnapshotTime = filesnapshot.createdAt;
   // console.log(filesnapshotTime);
-  let updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
+  const updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
   // console.log(updatedFile);
   if (updatedFile?.permissions && updatedFile.permissions.length > 0) {
-    let permList = [];
+    const permList = [];
     let newPermId = null;
     let newRole = [];
     for (let i = 0; i < updatedFile.permissions.length; i += 1) {
@@ -97,7 +106,7 @@ async function updatePermission(clouddrive, token, fileid, permid, googledata, o
       // console.log(permid);
       // console.log(updatedFile._id);
       if (updatedFile.permissions[i].id === permid) {
-        if (clouddrive === "google") {
+        if (clouddrive === 'google') {
           newRole = [googledata?.role];
         } else {
           newRole = onedriveRole?.roles;
@@ -107,30 +116,30 @@ async function updatePermission(clouddrive, token, fileid, permid, googledata, o
         permList.push(updatedFile.permissions[i]);
       }
     }
-    await Permission.updateOne({ _id: newPermId }, { roles: newRole }).then(async ()=>{
-    await Permission.findOne({_id: newPermId}).then(async (newPerms) => {
-      if (newPerms) {
-        permList.push(newPerms);
-      }
-      await File.updateOne({ _id: updatedFile._id }, { permissions : permList }).then(()=>{})
-    });
+    await Permission.updateOne({ _id: newPermId }, { roles: newRole }).then(async () => {
+      await Permission.findOne({ _id: newPermId }).then(async (newPerms) => {
+        if (newPerms) {
+          permList.push(newPerms);
+        }
+        await File.updateOne({ _id: updatedFile._id }, { permissions: permList }).then(() => {});
+      });
     // console.log(newPerms);
-  });
-  logger.info(`Permission updated for ${clouddrive} file ${fileid} with permission ${permid}`);
-}
+    });
+    logger.info(`Permission updated for ${clouddrive} file ${fileid} with permission ${permid}`);
+  }
 }
 
 // addPermissions for a singular file or multiple files
 async function addPermissions(clouddrive, token, files, value, role, type = '', driveid, email) {
   // let newPerms = new Set();
-  let filesnapshot = await getMostRecentFileSnapshot(email);
-  let filesnapshotTime = filesnapshot.createdAt;
-  let fileids = [];
+  const filesnapshot = await getMostRecentFileSnapshot(email);
+  const filesnapshotTime = filesnapshot.createdAt;
+  const fileids = [];
   // console.log(files);
-  for (let i = 0; i < files.length; i+= 1) {
+  for (let i = 0; i < files.length; i += 1) {
     await findFileInSnapshot(files[i], filesnapshotTime).then(async (updatedFile) => {
       fileids.push(updatedFile._id);
-    })
+    });
   }
   console.log(fileids);
   if (clouddrive === 'google') {
@@ -141,7 +150,7 @@ async function addPermissions(clouddrive, token, files, value, role, type = '', 
   // console.log(newPerms);
   // let filesnapshot = await getMostRecentFileSnapshot(email);
   // let filesnapshotTime = filesnapshot.createdAt;
-  // files.forEach(async (fileid) => { 
+  // files.forEach(async (fileid) => {
   //   await findFileInSnapshot(fileid, filesnapshotTime). then (async (updatedFile) => {
   //     // const newPermission = new Permission({
   //     //   id: element.permissions[i].id,
@@ -165,11 +174,11 @@ async function deletePermission(clouddrive, token, fileid, permid, driveid, emai
   } else if (clouddrive === 'microsoft') {
     onedrive.removePermission(token, fileid, permid, driveid);
   }
-  let filesnapshot = await getMostRecentFileSnapshot(email);
-  let filesnapshotTime = filesnapshot.createdAt;
-  let updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
+  const filesnapshot = await getMostRecentFileSnapshot(email);
+  const filesnapshotTime = filesnapshot.createdAt;
+  const updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
   if (updatedFile?.permissions && updatedFile.permissions.length > 0) {
-    let permList = [];
+    const permList = [];
     let deletePermId = null;
     for (let i = 0; i < updatedFile.permissions.length; i += 1) {
       if (updatedFile.permissions[i].id === permid) {
@@ -178,8 +187,8 @@ async function deletePermission(clouddrive, token, fileid, permid, driveid, emai
         permList.push(updatedFile.permissions[i]);
       }
     }
-    await Permission.deleteOne({ _id: deletePermId }).then(async ()=>{
-      await File.updateOne({ _id: updatedFile._id }, { permissions : permList }).then(()=>{})
+    await Permission.deleteOne({ _id: deletePermId }).then(async () => {
+      await File.updateOne({ _id: updatedFile._id }, { permissions: permList }).then(() => {});
     });
   }
   logger.info(`Permission ${permid} for ${clouddrive} file ${fileid} deleted`);
@@ -194,7 +203,7 @@ async function getAccessControlPolicies(email) {
     ids.push(element._id);
   });
   const allPolicies = await AccessPolicy.find({ _id: { $in: ids } });
-  logger.info(`Obtained access control policies for account ${email}.`);
+  logger.debug(`Obtained access control policies for account ${email}.`);
   return allPolicies;
 }
 
@@ -212,7 +221,7 @@ async function getOneAccessControlPolicy(email, requirement) {
   }
   console.log('getting one access control policy');
   console.log(id);
-  logger.info(`Obtained access control policy for account ${email} and requirement ${requirement}: ${id}.`);
+  logger.debug(`Obtained access control policy for account ${email} and requirement ${requirement}: ${id}.`);
   return id;
 }
 
@@ -222,7 +231,7 @@ Updating access policy in the DB
 */
 // eslint-disable-next-line consistent-return
 async function updateAccessPolicy(type, requirement, newValue, email) {
-  logger.info(`Updating access policy of type ${type}, with requirement ${requirement}, a new value of ${newValue}, for account ${email}.`);
+  logger.debug(`Updating access policy of type ${type}, with requirement ${requirement}, a new value of ${newValue}, for account ${email}.`);
   const id = await getOneAccessControlPolicy(email, requirement);
   if (type === 'ar') {
     AccessPolicy.updateOne({ _id: id }, { $push: { ar: newValue } })
@@ -248,7 +257,7 @@ async function deletingAccessPolicyRequirement(requirement, email) {
   const accessControls = user[0].accessPolicies;
   const newControls = accessControls.filter((policy) => policy._id !== id);
   await User.updateOne({ email }, { accessPolicies: newControls });
-  logger.info(`Deleting access policy requirement ${requirement} for account ${email}.`);
+  logger.debug(`Deleting access policy requirement ${requirement} for account ${email}.`);
   return newControls;
 }
 
@@ -273,7 +282,7 @@ async function editAccessControl(requirement, type, prevControl, newControl, ema
     default:
       break;
   }
-  logger.info(`Edited access control with requirement ${requirement}, type ${type}, changed from ${prevControl} to ${newControl}, for account ${email}.`);
+  logger.debug(`Edited access control with requirement ${requirement}, type ${type}, changed from ${prevControl} to ${newControl}, for account ${email}.`);
   return newControls;
 }
 
@@ -297,7 +306,7 @@ async function deletingAccessControlsInRequirement(requirement, type, prevContro
     default:
       break;
   }
-  logger.info(`Deleted access controls in requirement ${requirement} of type ${type} for account ${email}.`);
+  logger.debug(`Deleted access controls in requirement ${requirement} of type ${type} for account ${email}.`);
   return newControls;
 }
 
@@ -320,7 +329,7 @@ async function addNewAccessPolicy(email, requirement, arStr, drStr, awStr, dwStr
   accessPolicy.save().then(() => {});
   User.updateOne({ email }, { $push: { accessPolicies: accessPolicy } })
     .then(() => {});
-  logger.info(`Added new access policy for account ${email} with requirement ${requirement}, with arStr ${arStr}, drStr ${drStr}, awStr ${awStr}, and dwStr ${dwStr}.`);
+  logger.debug(`Added new access policy for account ${email} with requirement ${requirement}, with arStr ${arStr}, drStr ${drStr}, awStr ${awStr}, and dwStr ${dwStr}.`);
   return accessPolicy;
 }
 
@@ -335,7 +344,7 @@ async function addQuery(email, query) {
   searchQuery.save().then(() => {});
   User.updateOne({ email }, { $push: { recentQueries: searchQuery } })
     .then(() => {});
-  logger.info(`Added query ${query} for account ${email}.`);
+  logger.debug(`Added query ${query} for account ${email}.`);
   return searchQuery;
 }
 
@@ -351,7 +360,7 @@ async function getRecentQueries(email) {
   });
   const recentQueries = await SearchQuery.find({ _id: { $in: ids } })
     .sort({ createdAt: -1 }).limit(5);
-  logger.info(`Retrieved ${email}'s recent queries.`);
+  logger.debug(`Retrieved ${email}'s recent queries.`);
   return recentQueries;
 }
 
@@ -369,26 +378,26 @@ async function getAllFiles(email) {
     ids.push(element._id);
   });
   const allFiles = await File.find({ _id: { $in: ids } });
-  logger.info(`Retrieved all files for account ${email}.`);
+  logger.debug(`Retrieved all files for account ${email}.`);
   return allFiles;
 }
 
 function removeDuplicates(filelist) {
-  // logger.info(`Removing duplicates for filelist ${filelist}.`);
+  logger.debug(`Removing duplicates for filelist ${filelist}.`);
   const fileIdSet = new Set(filelist.map((file) => file.id));
   const files = [...fileIdSet].map((id) => filelist.find((file) => file.id === id)).filter(Boolean);
   return files;
 }
 
 function findIntersection(filelist, searchFiles) {
-  // logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
+  logger.debug(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
   const files = searchFiles
     .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
   return files;
 }
 
 function removeNegatedFiles(filelist, searchFiles) {
-  // logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
+  logger.debug(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
   const fileIdSet = new Set(searchFiles.map((file) => file.id));
   const files = filelist.filter((file) => !fileIdSet.has(file.id));
   return files;
@@ -419,8 +428,8 @@ function findFolder(file, folders, level) {
     return file;
   }
   if (file.folder) {
-    for (let i = 0; i < file.children.length; i ++) {
-      let subfolder = file.children[i];
+    for (let i = 0; i < file.children.length; i++) {
+      const subfolder = file.children[i];
       if (subfolder.name === folders[level]) {
         return findFolder(subfolder, folders, level + 1);
       }
@@ -428,10 +437,9 @@ function findFolder(file, folders, level) {
   }
 }
 
-
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff, email) {
-  // logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
+  logger.debug(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
   const files = [];
   const ids = [];
   const user = await User.find({ email });
@@ -466,11 +474,11 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
 
   // Check all ops that take user as input
   const userValues = ['creator', 'owner', 'from', 'to', 'readable', 'writable', 'sharable'];
-  if(userValues.includes(op)) {
+  if (userValues.includes(op)) {
     // Default to the same domain as current user if omitted
-    if (!value.includes("@")) {
+    if (!value.includes('@')) {
       const domain = email.split('@')[1];
-      value = value + "@" + domain;
+      value = `${value}@${domain}`;
     }
   }
 
@@ -694,7 +702,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
       const folders = value.split('/');
 
       let folder;
-      for (let file of fileList) {
+      for (const file of fileList) {
         if (file.name === folders[0] && file.folder) {
           folder = findFolder(file, folders, 1);
           break;
@@ -770,7 +778,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
 }
 
 function sortQuery(query) {
-  logger.info(`Sorting query ${query}.`);
+  logger.debug(`Sorting query ${query}.`);
   const words = query.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
   words.sort((a, b) => {
     if (a.includes(':') && !b.includes(':')) return 1;
@@ -798,7 +806,7 @@ function sortQuery(query) {
 
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
-  // logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
+  logger.debug(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
@@ -953,7 +961,7 @@ are allowed via the user's access control policies
 */
 // eslint-disable-next-line consistent-return
 async function checkAgainstAccessPolicy(email, files, value, role) {
-  // logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
+  logger.debug(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
   switch (role) {
@@ -1015,6 +1023,71 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
+
+// get all files including nested children from a folder
+function getAllFilesInFolder(folder) {
+  for (let i = 0; i < folder?.children?.length; i+=1) {
+    let file = folder.children[i];
+    if (file?.folder) {
+      return [...folder.children, getAllFilesInFolder(file.children)];
+    }
+  }
+  return [];
+}
+
+// building permission map with count based on list of files
+function getPermMapCount(fileList) {
+  let permMap = {} // permission
+  let fileMap = {}
+  let totalCount = fileList.length;
+  fileList.forEach((file) => {
+    if (file && file.permissions) {
+      let permList = file.permissions.map((p) => [p.email +"*"+p.roles[0]+"|"]).sort();
+      if (permMap[permList]) {
+        permMap[permList] = permMap[permList] + 1;
+        fileMap[permList] = [...fileMap[permList], file];
+      } else {
+        permMap[permList] = 1;
+        fileMap[permList] = [file];
+      }
+    }
+  });
+  console.log(permMap);
+  return [permMap, fileMap, totalCount];
+} 
+
+// return list of files and their differences
+function checkDeviantPermDiff(file, fileList) {
+  let checkPerms = file.permissions.map((p) => [p.email, p.roles]);
+  emailMap = {};
+  checkPerms.forEach(([email, role]) => {
+    emailMap[email] = role[0];
+  });
+  let emails = checkPerms.map((p) => p[0]);
+  let deviationsNotHave = [];
+  let deviationsAdded = [];
+  let deviationsDiffRole = [];
+  fileList.forEach((f) => {
+    let perms = f.permissions.map((p) => [p.email, p.roles]);
+    const deviantEmails = perms.map((p) => p[0]);
+    emails.forEach((e) => {
+      if (!deviantEmails.includes(e)) {
+        deviationsNotHave.push([f.id, f.name,...checkPerms[emails.indexOf(e)]]);
+      }
+    });
+    deviantEmails.forEach((e) => {
+      if (!emails.includes(e)) {
+        deviationsAdded.push([f.id, f.name,...perms[deviantEmails.indexOf(e)]]);
+      } else {
+        if (perms[deviantEmails.indexOf(e)][1] != emailMap[e]) {
+          deviationsDiffRole.push([f.id, f.name,...perms[deviantEmails.indexOf(e)]]);
+        }
+      }
+    });
+  });
+  return [deviationsNotHave, deviationsAdded, deviationsDiffRole];
+}
+
 // perform a deviant sharing analysis for a snapshot and a threshold
 async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, threshold) {
   let snapshot = null;
@@ -1038,18 +1111,58 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
       }
     }
   }
-  let folderList = {}; // map of folders and all their children (including nested)
+  let folderMap = new Map; // map of folders and all their children (including nested)
+  let fileList = [];
   if (snapshot && snapshot.files) { // go through the file map to build folderList
-    let fileIdList = Array.from(snapshot.files.keys());
+    const fileIdList = Array.from(snapshot.files.keys());
     for (let i = 0; i < fileIdList.length; i++) {
       let file = await findFileInSnapshot(fileIdList[i], snapshotTime);
-      if (file.folder) {
-        console.log("is folder");
-        folderList[fileIdList[i]] = file.children;
+      fileList.push(file);
+      if (file?.folder) {
+        folderMap.set(file, getAllFilesInFolder(file));
       }
-    };
-    console.log(folderList); // todo: nested folders => check perms in folder mapping => return list of deviants
+    }
   }
+  let permDiffs = {};
+  [...folderMap.entries()].map(([folder, files]) => {
+    console.log("FOLDER");
+    if (files.length > 0) {
+      let deviantMap = getPermMapCount(files);
+      let permissionDifferences = deviantMap[0];
+      let deviantFiles = deviantMap[1];
+      let deviantCount = deviantMap[2];
+      let deviants = [];
+      let thresholdPerms = [];
+      // console.log(deviantFiles);
+      Object.entries(permissionDifferences).map(([perms, count]) => {
+        // console.log("entries!");
+        // console.log(perms);
+        // console.log(count);
+        if ((count / deviantCount)*100 > threshold) {
+          thresholdPerms = deviantFiles[perms];
+        } else {
+          if (deviantFiles[perms]) {
+            // console.log(deviantFiles[perms]);
+            deviants = [...deviants, ...deviantFiles[perms]];
+          }
+        }
+      })
+      if (thresholdPerms.length === 0) {
+        deviants = [];
+        thresholdPerms = [];
+      } else {
+        // console.log("threshold");
+        // console.log(thresholdPerms);
+        // console.log("deviants");
+        // console.log(deviants);
+        let diffs = checkDeviantPermDiff(thresholdPerms[0], deviants);
+        permDiffs[folder] = diffs;
+      }
+    }
+  });
+  console.log("RETURNING");
+  console.log(permDiffs);
+  return permDiffs;
 }
 
 async function getFolderFileDiff(email, snapshotCreatedAt) {
@@ -1060,7 +1173,7 @@ async function getFolderFileDiff(email, snapshotCreatedAt) {
     for (let i = 0; i < filesnapshotList.length; i += 1) {
       const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotList[i] });
       if (filesnapshot.createdAt.getTime() === new Date(snapshotCreatedAt.toLocaleString()).getTime()) {
-         snapshot = filesnapshot;
+        snapshot = filesnapshot;
       }
     }
   }
@@ -1075,7 +1188,9 @@ async function getFolderFileDiff(email, snapshotCreatedAt) {
           const d = await checkFolderFilePermission(file, file.children[j]);
           if (d !== null) {
             if (d.diff) {
-              differences.push({ folder: file, file: file.children[j], onlyInFolder: d.onlyInFolder, onlyInFile: d.onlyInFile });
+              differences.push({
+                folder: file, file: file.children[j], onlyInFolder: d.onlyInFolder, onlyInFile: d.onlyInFile,
+              });
             }
           }
         }
@@ -1088,23 +1203,15 @@ async function getFolderFileDiff(email, snapshotCreatedAt) {
 async function checkFolderFilePermission(folder, file) {
   const folderPerms = folder.permissions;
   const filePerms = file.permissions;
-  
+
   // Find perms that are in folder but not in file
-  const permsOnlyInFolder = folderPerms.filter(function(folderPerm) {
-    return !filePerms.some(function(filePerm) {
-        return folderPerm.id == filePerm.id;
-    });
-  });
+  const permsOnlyInFolder = folderPerms.filter((folderPerm) => !filePerms.some((filePerm) => folderPerm.id == filePerm.id));
   // Find perms that are in file but not in folder
-  const permsOnlyInFile = filePerms.filter(function(filePerm) {
-    return !folderPerms.some(function(folderPerm) {
-        return filePerm.id == folderPerm.id;
-    });
-  });
+  const permsOnlyInFile = filePerms.filter((filePerm) => !folderPerms.some((folderPerm) => filePerm.id == folderPerm.id));
 
   const diff = (permsOnlyInFile.length > 0 || permsOnlyInFolder.length > 0);
 
-  return { onlyInFolder: permsOnlyInFolder, onlyInFile: permsOnlyInFile, diff: diff};
+  return { onlyInFolder: permsOnlyInFolder, onlyInFile: permsOnlyInFile, diff };
 }
 
 async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) {
@@ -1156,7 +1263,7 @@ async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) 
 
 async function getSharingChanges(email, snapshot1, snapshot2) {
   console.log(snapshot1);
-  console.log("snap 1");
+  console.log('snap 1');
   const user = await User.findOne({ email });
   const filesnapshotList = user?.fileSnapshots;
   const snapshotList = [];

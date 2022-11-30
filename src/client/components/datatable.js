@@ -712,7 +712,10 @@ export default function DataTable(props) {
             <Alert.Heading>Search Cannot Be Performed Because No File Snapshots Exist!</Alert.Heading>
           </Alert>
           <Alert variant="danger" show={missingDrive} onClose={() => setMissingDrive(false)} dismissible>
-            <Alert.Heading>Search Cannot Be Performed Because "path:" Operator Must Be Used In Conjunction With "drive:" Operator!</Alert.Heading>
+            <Alert.Heading>Path Operators Cannot Be Used Without The Drive Operator!</Alert.Heading>
+          </Alert>
+          <Alert variant="danger" show={builder && (path !== "" && drive === "")}>
+            <Alert.Heading>Path Operators Cannot Be Used Without The Drive Operator!</Alert.Heading>
           </Alert>
         </Row>
         <Row>
