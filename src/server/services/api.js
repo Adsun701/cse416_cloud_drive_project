@@ -12,6 +12,7 @@ const FileSnapshot = require('../model/file-snapshot-model');
 const GroupSnapshot = require('../model/group-snapshot-model');
 const AccessPolicy = require('../model/access-policy-model');
 const SearchQuery = require('../model/search-query-model');
+const Permission = require('../model/permission-model');
 
 const logger = winston.createLogger({
   level: 'info',
@@ -43,36 +44,143 @@ async function takeFileSnapshot(clouddrive, token, email) {
   return snapshot;
 }
 
+async function findFileInSnapshot(id, fileSnapshotTime) {
+  const file1 = await File
+    .find({ id, createdAt: { $gte: fileSnapshotTime } })
+    .sort({ createdAt: 1 })
+    .limit(1);
+  const file2 = await File
+    .find({ id, createdAt: { $lte: fileSnapshotTime } })
+    .sort({ createdAt: -1 })
+    .limit(1);
+  const a = fileSnapshotTime - file1.createdAt;
+  const b = fileSnapshotTime - file2.createdAt;
+  if (a < b) {
+    return file1[0];
+  }
+  return file2[0];
+}
+
+async function getMostRecentFileSnapshot(email) {
+  const user = await User.findOne({ email });
+  const filesnapshotList = user?.fileSnapshots;
+  if (filesnapshotList && filesnapshotList.length > 0) {
+    const filesnapshotid = filesnapshotList[filesnapshotList.length -1];
+    const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotid });
+    return filesnapshot;
+  } else {
+    console.log("no file snapshots available");
+    return null;
+  }
+}
+
 // updatePermission of a file
-async function updatePermission(clouddrive, token, fileid, permid, googledata, onedriveRole, driveid) {
+async function updatePermission(clouddrive, token, fileid, permid, googledata, onedriveRole, driveid, email) {
   if (clouddrive === 'google') {
     googledrive.updatePermission(token, fileid, permid, googledata);
   } else if (clouddrive === 'microsoft') {
     onedrive.updatePermission(token, onedriveRole, fileid, permid, driveid);
   }
-
+  let filesnapshot = await getMostRecentFileSnapshot(email);
+  // console.log(filesnapshot);
+  let filesnapshotTime = filesnapshot.createdAt;
+  // console.log(filesnapshotTime);
+  let updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
+  // console.log(updatedFile);
+  if (updatedFile?.permissions && updatedFile.permissions.length > 0) {
+    let permList = [];
+    let newPermId = null;
+    let newRole = [];
+    for (let i = 0; i < updatedFile.permissions.length; i += 1) {
+      // console.log(updatedFile.permissions[i].id === permid);
+      // console.log(updatedFile.permissions[i].id);
+      // console.log(permid);
+      console.log(updatedFile._id);
+      if (updatedFile.permissions[i].id === permid) {
+        if (clouddrive === "google") {
+          newRole = [googledata?.role];
+        } else {
+          newRole = onedriveRole?.roles;
+        }
+        newPermId = updatedFile.permissions[i]._id;
+      } else {
+        permList.push(updatedFile.permissions[i]);
+      }
+    }
+    await Permission.updateOne({ _id: newPermId }, { roles: newRole }).then(async ()=>{
+    await Permission.findOne({_id: newPermId}).then(async (newPerms) => {
+      if (newPerms) {
+        permList.push(newPerms);
+      }
+      await File.updateOne({ _id: updatedFile._id }, { permissions : permList }).then(()=>{})
+    });
+    // console.log(newPerms);
+  });
   logger.info(`Permission updated for ${clouddrive} file ${fileid} with permission ${permid}`);
+}
 }
 
 // addPermissions for a singular file or multiple files
-async function addPermissions(clouddrive, token, files, value, role, type = '', driveid) {
-  if (clouddrive === 'google') {
-    googledrive.addPermissions(token, files, value, type, role);
-  } else if (clouddrive === 'microsoft') {
-    onedrive.addPermissions(token, files, value, role, driveid);
+async function addPermissions(clouddrive, token, files, value, role, type = '', driveid, email) {
+  // let newPerms = new Set();
+  let filesnapshot = await getMostRecentFileSnapshot(email);
+  let filesnapshotTime = filesnapshot.createdAt;
+  let fileids = [];
+  // console.log(files);
+  for (let i = 0; i < files.length; i+= 1) {
+    await findFileInSnapshot(files[i], filesnapshotTime).then(async (updatedFile) => {
+      fileids.push(updatedFile._id);
+    })
   }
-
+  console.log(fileids);
+  if (clouddrive === 'google') {
+    googledrive.addPermissions(token, files, value, type, role, fileids);
+  } else if (clouddrive === 'microsoft') {
+    onedrive.addPermissions(token, files, value, role, driveid, fileids);
+  }
+  // console.log(newPerms);
+  // let filesnapshot = await getMostRecentFileSnapshot(email);
+  // let filesnapshotTime = filesnapshot.createdAt;
+  // files.forEach(async (fileid) => { 
+  //   await findFileInSnapshot(fileid, filesnapshotTime). then (async (updatedFile) => {
+  //     // const newPermission = new Permission({
+  //     //   id: element.permissions[i].id,
+  //     //   email: element.permissions[i].emailAddress,
+  //     //   displayName: element.permissions[i].displayName ? element.permissions[i].displayName : element.permissions[i].id,
+  //     //   roles: [element.permissions[i].role],
+  //     //   inheritedFrom: null,
+  //     // });
+  //     // newPermission.save();
+  //   });
+  // })
   logger.info(`Permissions (with type ${type} and role ${role}) for user ${value} added for ${clouddrive} files ${files.join(',')}`);
 }
 
 /*
 Delete permissions for a file using file id and permission id
 */
-async function deletePermission(clouddrive, token, fileid, permid, driveid) {
+async function deletePermission(clouddrive, token, fileid, permid, driveid, email) {
   if (clouddrive === 'google') {
     googledrive.removePermission(token, fileid, permid);
   } else if (clouddrive === 'microsoft') {
     onedrive.removePermission(token, fileid, permid, driveid);
+  }
+  let filesnapshot = await getMostRecentFileSnapshot(email);
+  let filesnapshotTime = filesnapshot.createdAt;
+  let updatedFile = await findFileInSnapshot(fileid, filesnapshotTime);
+  if (updatedFile?.permissions && updatedFile.permissions.length > 0) {
+    let permList = [];
+    let deletePermId = null;
+    for (let i = 0; i < updatedFile.permissions.length; i += 1) {
+      if (updatedFile.permissions[i].id === permid) {
+        deletePermId = updatedFile.permissions[i]._id;
+      } else {
+        permList.push(updatedFile.permissions[i]);
+      }
+    }
+    await Permission.deleteOne({ _id: deletePermId }).then(async ()=>{
+      await File.updateOne({ _id: updatedFile._id }, { permissions : permList }).then(()=>{})
+    });
   }
   logger.info(`Permission ${permid} for ${clouddrive} file ${fileid} deleted`);
 }
@@ -80,7 +188,7 @@ async function deletePermission(clouddrive, token, fileid, permid, driveid) {
 // get all the user's access control policies
 async function getAccessControlPolicies(email) {
   const user = await User.findOne({ email });
-  const accessControls = user.accessPolicies;
+  const accessControls = user?.accessPolicies;
   const ids = [];
   accessControls.forEach((element) => {
     ids.push(element._id);
@@ -284,23 +392,6 @@ function removeNegatedFiles(filelist, searchFiles) {
   const fileIdSet = new Set(searchFiles.map((file) => file.id));
   const files = filelist.filter((file) => !fileIdSet.has(file.id));
   return files;
-}
-
-async function findFileInSnapshot(id, fileSnapshotTime) {
-  const file1 = await File
-    .find({ id, createdAt: { $gte: fileSnapshotTime } })
-    .sort({ createdAt: 1 })
-    .limit(1);
-  const file2 = await File
-    .find({ id, createdAt: { $lte: fileSnapshotTime } })
-    .sort({ createdAt: -1 })
-    .limit(1);
-  const a = fileSnapshotTime - file1.createdAt;
-  const b = fileSnapshotTime - file2.createdAt;
-  if (a < b) {
-    return file1[0];
-  }
-  return file2[0];
 }
 
 async function findParentFileInSnapshot(name, fileSnapshotTime) {

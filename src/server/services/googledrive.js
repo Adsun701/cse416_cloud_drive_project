@@ -394,7 +394,7 @@ Add a new permission for a single file or multiple files
 @type = user, group, etc
 @role = new role for the new permissions
 */
-async function addPermissions(accessToken, files, value, type, role) {
+async function addPermissions(accessToken, files, value, type, role, fileids) {
   const body = {
     emailAddress: value,
     type,
@@ -409,6 +409,22 @@ async function addPermissions(accessToken, files, value, type, role) {
       fileId: files[i],
       resource: body,
       emailMessage: 'Hello!',
+    }).then(async (update) => {
+      const permid = update.data.id;
+      await getPermissionData(accessToken, files[i], permid).then(async (ans) => {
+        const permission = ans.data;
+        console.log(permission);
+        const newPermission = new Permission({
+          id: permission.id,
+          email: permission.emailAddress,
+          displayName: permission.displayName ? permission.displayName : permission.id,
+          roles: [permission.role],
+          inheritedFrom: null,
+        });
+        newPermission.save();
+        await File.updateOne({ _id: fileids[i] }, { $push: { permissions: newPermission } })
+        .then(() => {});
+      });
     });
     ret.push(result);
   }
