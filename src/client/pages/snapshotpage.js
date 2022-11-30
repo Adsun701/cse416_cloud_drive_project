@@ -30,6 +30,7 @@ export default function SnapshotPage() {
   const [analysis, setAnalysis] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [changes, setChanges] = useState([]);
+  const [folderFileDiff, setFolderFileDiff] = useState([]);
   const [analysisDone, setAnalysisDone] = useState(false);
   const [threshold, setThreshold] = useState(75);
 
@@ -156,6 +157,28 @@ export default function SnapshotPage() {
     setNewFiles(temp);
   };
 
+  let onExpandFilePerm = (e, item) => {
+    let temp = [...folderFileDiff];
+    temp.map((diff) => {
+      if (diff.file.id === item.id) {
+        diff.filePermExpanded = !diff.filePermExpanded;
+      }
+      return diff;
+    });
+    setFolderFileDiff(temp);
+  };
+
+  let onExpandFolderPerm = (e, item) => {
+    let temp = [...folderFileDiff];
+    temp.map((diff) => {
+      if (diff.file.id === item.id) {
+        diff.folderPermExpanded = !diff.folderPermExpanded;
+      }
+      return diff;
+    });
+    setFolderFileDiff(temp);
+  };
+
   // handle select sharing option.
   let handleSelectSharingOption = (e) => {
     setSharingOption(e?.target?.value);
@@ -176,7 +199,7 @@ export default function SnapshotPage() {
       setTwoSnapshots(body);
     } else {
       body = {
-        snapshot: snapshotCreatedAt,
+        snapshot: temp[0].timestamp,
       }
     }
     if (sharingOption === "deviant") {
@@ -212,11 +235,49 @@ export default function SnapshotPage() {
       let i = 0;
       let newFiles = data.newFiles !== undefined ? data.newFiles : [];
       let differences = data.differences !== undefined ? data.differences : [];
+      let folderFileDiff = data.folderFileDiff !== undefined ? data.folderFileDiff : [];
+      let newD = [];
+      for (const diff of folderFileDiff) {
+        const onlyInFolder = [];
+        if (diff.onlyInFolder) {
+          for (let j = 0; j < diff.onlyInFolder.length; j++) {
+            let entry = {
+              id: j + 1,
+              name: diff.onlyInFolder[j].displayName,
+              email: diff.onlyInFolder[j].email,
+              permission: diff.onlyInFolder[j].roles[0],
+              access: diff.onlyInFolder[j].inheritedFrom == null ? "Direct" : "Inherited"
+            };
+            onlyInFolder.push(entry);
+          }
+        }
+        const onlyInFile = [];
+        if (diff.onlyInFile) {
+          for (let j = 0; j < diff.onlyInFile.length; j++) {
+            let entry = {
+              id: j + 1,
+              name: diff.onlyInFile[j].displayName,
+              email: diff.onlyInFile[j].email,
+              permission: diff.onlyInFile[j].roles[0],
+              access: diff.onlyInFile[j].inheritedFrom == null ? "Direct" : "Inherited"
+            };
+            onlyInFile.push(entry);
+          }
+        }
+        let d = {
+          folder: diff.folder,
+          file: diff.file,
+          onlyInFolder: onlyInFolder,
+          onlyInFile: onlyInFile,
+          folderPermExpanded: false,
+          filePermExpanded: false
+        }
+        newD.push(d);
+      }
       for (const file of newFiles) {
         const permissionsArray = [];
         if (file.permissions) {
           for (let j = 0; j < file.permissions.length; j++) {
-            console.log(file.permissions[j]);
             let entry = {
               id: j + 1,
               name: file.permissions[j].displayName,
@@ -250,11 +311,10 @@ export default function SnapshotPage() {
         };
         diff.push(change);
       }
-      console.log(diff);
       setNewFiles(newF);
       setChanges(diff);
+      setFolderFileDiff(newD);
       setAnalysisDone(true);
-
     });
   };
 
@@ -529,16 +589,121 @@ export default function SnapshotPage() {
                     <Table style={{ textAlign: "left" }}>
                       <thead style={{ borderTop: "1px solid #CFCFCF" }}>
                         <tr>
-                          <th>File Name</th>
-                          <th>Owner</th>
+                          <th>File</th>
+                          <th>Folder</th>
                           {context[0] === "google" ? <th>Drive</th> : <></>}
-                          <th>Created</th>
-                          <th colSpan={2}>Permission Differences</th>
+                          <th colSpan={2}>Permissions Only In File</th>
+                          <th colSpan={2}>Permissions Only In Folder</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                        </tr>
+                      {folderFileDiff.map((diff) => (<><tr>
+                        <td>{diff.file.name}</td>
+                        <td>{diff.folder.name}</td>
+                        {context[0] === "google" ? <td>{diff.file.drive}</td> : <></>}
+                        {diff.filePermExpanded ? 
+                            ( <>
+                              <td>
+                                  {diff.onlyInFile.map((permission, index) => (
+                                    <React.Fragment key={index}>
+                                        {permission.name +
+                                        ", " +
+                                        permission.permission +
+                                        ", " +
+                                        permission.access}
+                                        <br />
+                                    </React.Fragment>
+                                  ))}
+                              </td>
+                              <td>
+                                  {diff.onlyInFile.length > 2 && 
+                                  <MdArrowDropUp
+                                      size={24}
+                                      style={{ color: "#CFCFCF" }}
+                                      onClick={(e) => onExpandFilePerm(e, diff.file)}
+                                  />
+                                  }
+                              </td>
+                            </> )
+                            :
+                            ( <>
+                              <td>
+                                  {diff.onlyInFile
+                                  .slice(0, 2)
+                                  .map((permission, index) => (
+                                      <React.Fragment key={index}>
+                                      {permission.name +
+                                          ", " +
+                                          permission.permission +
+                                          ", " +
+                                          permission.access}
+                                      <br />
+                                      </React.Fragment>
+                                  ))}
+                              </td>
+                              <td>
+                                  {diff.onlyInFile.length > 2 && 
+                                  <MdArrowDropDown
+                                      size={24}
+                                      style={{ color: "#CFCFCF" }}
+                                      onClick={(e) => onExpandFilePerm(e, diff.file)}
+                                  />
+                                  }
+                              </td>
+                            </>)
+                        }
+                        {diff.folderPermExpanded ? 
+                            ( <>
+                              <td>
+                                  {diff.onlyInFolder.map((permission, index) => (
+                                    <React.Fragment key={index}>
+                                        {permission.name +
+                                        ", " +
+                                        permission.permission +
+                                        ", " +
+                                        permission.access}
+                                        <br />
+                                    </React.Fragment>
+                                  ))}
+                              </td>
+                              <td>
+                                  {diff.onlyInFolder.length > 2 && 
+                                  <MdArrowDropUp
+                                      size={24}
+                                      style={{ color: "#CFCFCF" }}
+                                      onClick={(e) => onExpandFolderPerm(e, diff.file)}
+                                  />
+                                  }
+                              </td>
+                            </> )
+                            :
+                            ( <>
+                              <td>
+                                  {diff.onlyInFolder
+                                  .slice(0, 2)
+                                  .map((permission, index) => (
+                                      <React.Fragment key={index}>
+                                      {permission.name +
+                                          ", " +
+                                          permission.permission +
+                                          ", " +
+                                          permission.access}
+                                      <br />
+                                      </React.Fragment>
+                                  ))}
+                              </td>
+                              <td>
+                                  {diff.onlyInFolder.length > 2 && 
+                                  <MdArrowDropDown
+                                      size={24}
+                                      style={{ color: "#CFCFCF" }}
+                                      onClick={(e) => onExpandFolderPerm(e, diff.file)}
+                                  />
+                                  }
+                              </td>
+                            </>)
+                        }
+                        </tr></>))}
                       </tbody>
                     </Table>
                   </Col>
