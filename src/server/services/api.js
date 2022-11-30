@@ -1007,7 +1007,7 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
 function getAllFilesInFolder(folder) {
   for (let i = 0; i < folder?.children?.length; i+=1) {
     let file = folder.children[i];
-    if (file.folder) {
+    if (file?.folder) {
       return [...folder.children, getAllFilesInFolder(file.children)];
     }
   }

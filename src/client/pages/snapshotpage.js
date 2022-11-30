@@ -577,32 +577,33 @@ export default function SnapshotPage() {
                           <th>Permission Differences Compared to Threshold Files</th>
                           </tr>
                           {permList.map(([permDiff1, permDiff2, permDiff3]) => {
-                              {
+                              {permDiff1.length > 0 ? 
                                 permDiff1.map((p) => {
                                   <tr>
                                   <td>{p[0]}</td>
                                   <td>{p[1]}</td>
                                   <td>{p[2]} , {p[3]}</td>
                                   </tr>
-                                })
+                                }) : <></>
                               }
-                              {
+                              {permDiff2.length > 0 ? 
                                 permDiff2.map((p) => {
                                   <tr>
                                   <td>{p[0]}</td>
                                   <td>{p[1]}</td>
                                   <td>{p[2]} , {p[3]}</td>
                                   </tr>
-                                })
+                                }) : <></>
                               }
                               {
+                                permDiff3.length > 0 ? 
                                 permDiff3.map((p) => {
                                   <tr>
                                   <td>{p[0]}</td>
                                   <td>{p[1]}</td>
                                   <td>{p[2]} , {p[3]}</td>
-                                  </tr>
-                                })
+                                  </tr> 
+                                }): <></>
                               }
                             })
                           }
