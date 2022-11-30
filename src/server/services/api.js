@@ -374,21 +374,21 @@ async function getAllFiles(email) {
 }
 
 function removeDuplicates(filelist) {
-  logger.info(`Removing duplicates for filelist ${filelist}.`);
+  // logger.info(`Removing duplicates for filelist ${filelist}.`);
   const fileIdSet = new Set(filelist.map((file) => file.id));
   const files = [...fileIdSet].map((id) => filelist.find((file) => file.id === id)).filter(Boolean);
   return files;
 }
 
 function findIntersection(filelist, searchFiles) {
-  logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
+  // logger.info(`Finding intersection for filelist ${filelist} with search files ${searchFiles}.`);
   const files = searchFiles
     .filter((file) => filelist.some((otherFile) => file.id === otherFile.id));
   return files;
 }
 
 function removeNegatedFiles(filelist, searchFiles) {
-  logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
+  // logger.info(`Removing negated files for filelist ${filelist} with search files ${searchFiles}.`);
   const fileIdSet = new Set(searchFiles.map((file) => file.id));
   const files = filelist.filter((file) => !fileIdSet.has(file.id));
   return files;
@@ -403,17 +403,32 @@ async function findParentFileInSnapshot(name, fileSnapshotTime) {
     .find({ name, createdAt: { $lte: fileSnapshotTime } })
     .sort({ createdAt: -1 })
     .limit(1);
-  const a = fileSnapshotTime - file1.createdAt;
-  const b = fileSnapshotTime - file2.createdAt;
+  const a = fileSnapshotTime - file1[0].createdAt;
+  const b = fileSnapshotTime - file2[0].createdAt;
   if (a < b) {
     return file1[0];
   }
   return file2[0];
 }
 
+function findFolder(file, folders, level) {
+  if (folders.length === level) {
+    return file;
+  }
+  if (file.folder) {
+    for (let i = 0; i < file.children.length; i ++) {
+      let subfolder = file.children[i];
+      if (subfolder.name === folders[level]) {
+        return findFolder(subfolder, folders, level + 1);
+      }
+    }
+  }
+}
+
+
 // Filter list of files based on given operator and value
 async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff, email) {
-  logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
+  // logger.info(`Doing search filtering with op ${op}, value ${value}, snapshotFiles ${snapshotFiles}, groupOff ${groupOff}, and email ${email}.`);
   const files = [];
   const ids = [];
   const user = await User.find({ email });
@@ -672,28 +687,17 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         const file = await findFileInSnapshot(ids[i], fileSnapshotTime);
         fileList.push(file);
       }
-      const folders = value.split('/').reverse();
-      let pathMatches = false;
-      // Get files with direct parent that matches query value
-      for (let i = 0; i < fileList.length; i += 1) {
-        if (fileList[i].parents[0]) {
-          let parent = fileList[i].parents[0];
-          pathMatches = true;
-          // check if parents[0] is equal to first entry in folders.
-          for (let j = 0; j < folders.length; j++) {
-            const folder = folders[j];
-            if (folder !== parent) {
-              pathMatches = false;
-              break;
-            }
-            // const parentFile = await File.findOne({ name: parent }).sort({ createdAt: -1 });
-            const parentFile = await findParentFileInSnapshot(parent, fileSnapshotTime);
-            parent = parentFile.name;
-          }
+      const folders = value.split('/');
 
-          if (pathMatches === true) {
-            files.push(fileList[i]);
-          }
+      let folder;
+      for (let file of fileList) {
+        if (file.name === folders[0] && file.folder) {
+          folder = findFolder(file, folders, 1);
+        }
+      }
+      if (folder) {
+        for (let i = 0; i < folder.children.length; i += 1) {
+          files.push(folder.children[i]);
         }
       }
       break;
@@ -789,7 +793,7 @@ function sortQuery(query) {
 
 // Get search results from file snapshots given search query
 async function getSearchResults(searchQuery, snapshot, email) {
-  logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
+  // logger.info(`Getting search results for searchQuery ${searchQuery} with snapshot ${snapshot} and email ${email}.`);
   if (searchQuery == null || searchQuery.query == null) return [];
 
   /* extract default string and operators from query */
@@ -929,7 +933,7 @@ are allowed via the user's access control policies
 */
 // eslint-disable-next-line consistent-return
 async function checkAgainstAccessPolicy(email, files, value, role) {
-  logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
+  // logger.info(`Checking against access policy with email ${email}, files ${files}, value ${value}, and role ${role}.`);
   const policies = await getAccessControlPolicies(email);
   let reader; // true for reader and false for writer
   switch (role) {
@@ -991,6 +995,102 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
+async function getDeviantSharing(snapshot) {
+  console.log(snapshot);
+}
+
+async function getFolderFileDiff(snapshot) {
+  console.log(snapshot);
+}
+
+async function checkPermissionDifferences(fileid, fileSnapshot1, fileSnapshot2) {
+  const perms1 = fileSnapshot1.get(fileid).map((p) => [p.id, p.roles, p.displayName]);
+  const perms2 = fileSnapshot2.get(fileid).map((p) => [p.id, p.roles, p.displayName]);
+  const deletedPerms = [];
+  const addedPerms = [];
+  const updatedPerms = [];
+
+  const ids1 = perms1.map((p) => p[0]);
+  const ids2 = perms2.map((p) => p[0]);
+  const leftOverIds = new Set();
+  ids1.forEach((id) => {
+    if (!ids2.includes(id)) {
+      deletedPerms.push(perms1[ids1.indexOf(id)]);
+    } else {
+      leftOverIds.add(id);
+    }
+  });
+  ids2.forEach((id) => {
+    if (!ids1.includes(id)) {
+      addedPerms.push(perms2[ids2.indexOf(id)]);
+    } else {
+      leftOverIds.add(id);
+    }
+  });
+  leftOverIds.forEach((id) => {
+    const p1 = perms1[ids1.indexOf(id)][1];
+    const p2 = perms2[ids2.indexOf(id)][1];
+    if (p1.length !== p2.length) {
+      for (let i = 0; i < ((p1.length < p2.length) ? p1.length : p2.length); i += 1) {
+        if (p1[i] !== p2[i]) {
+          updatedPerms.push([perms1[ids1.indexOf(id)], perms2[ids2.indexOf(id)]]);
+        }
+      }
+    } else {
+      for (let i = 0; i < p1.length; i += 1) {
+        if (p1[i] !== p2[i]) {
+          updatedPerms.push([perms1[ids1.indexOf(id)], perms2[ids2.indexOf(id)]]);
+        }
+      }
+    }
+  });
+  if (deletedPerms.length === 0 && addedPerms.length === 0 && updatedPerms.length === 0) {
+    return null;
+  }
+  return { deleted: deletedPerms, added: addedPerms, updated: updatedPerms };
+}
+
+async function getSharingChanges(email, snapshot1, snapshot2) {
+  const user = await User.findOne({ email });
+  const filesnapshotList = user?.fileSnapshots;
+  const snapshotList = [];
+  if (filesnapshotList && filesnapshotList.length > 0) {
+    for (let i = 0; i < filesnapshotList.length; i += 1) {
+      const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotList[i] });
+      if (filesnapshot.createdAt.getTime() === new Date(snapshot1.toLocaleString()).getTime()) {
+        snapshotList.push(filesnapshot);
+      } else if (filesnapshot.createdAt.getTime()
+         === new Date(snapshot2.toLocaleString()).getTime()) {
+        snapshotList.push(filesnapshot);
+      }
+    }
+  }
+  const earlier = snapshotList[0] < snapshotList[1];
+  const fileSnapshot1 = earlier ? snapshotList[0] : snapshotList[1];
+  const fileSnapshot2 = earlier ? snapshotList[1] : snapshotList[1];
+  const files1 = Array.from(fileSnapshot1.files.keys());
+  const files2 = Array.from(fileSnapshot2.files.keys());
+  const newFiles = [];
+  const differences = [];
+  for (let i = 0; i < files2.length; i += 1) {
+    if (!files1.includes(files2[i])) {
+      const f = await findFileInSnapshot(files2[i], fileSnapshot2.createdAt);
+      newFiles.push(f);
+    } else {
+      const d = await checkPermissionDifferences(
+        files2[i],
+        fileSnapshot1.files,
+        fileSnapshot2.files,
+      );
+      if (d !== null) {
+        const f = await findFileInSnapshot(files2[i], fileSnapshot2.createdAt);
+        differences.push({ file: f, diff: d });
+      }
+    }
+  }
+  return { newFiles, differences };
+}
+
 module.exports = {
   auth,
   takeFileSnapshot,
@@ -1008,4 +1108,7 @@ module.exports = {
   deletingAccessControlsInRequirement,
   editAccessControl,
   checkAgainstAccessPolicy,
+  getDeviantSharing,
+  getFolderFileDiff,
+  getSharingChanges,
 };

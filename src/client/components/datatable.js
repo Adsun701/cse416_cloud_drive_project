@@ -288,6 +288,7 @@ export default function DataTable(props) {
               let entry = {
                 id: j + 1,
                 name: object.permissions[j].displayName,
+                email: object.permissions[j].email,
                 permission: object.permissions[j].roles[0],
                 access: object.permissions[j].inheritedFrom == null ? "Direct" : "Inherited"
               };

@@ -59,6 +59,25 @@ router.get('/allfiles', isAuthenticated, async (req, res) => {
   res.send(JSON.stringify(files));
 });
 
+router.post('/deviant', async (req, res) => {
+  const differences = await cloudDriveAPI.getDeviantSharing(req.session.email, req.body.snapshot);
+  res.send(JSON.stringify(differences));
+});
+
+router.post('/folderfile', async (req, res) => {
+  const differences = await cloudDriveAPI.getFolderFileDiff(req.session.email, req.body.snapshot);
+  res.send(JSON.stringify(differences));
+});
+
+router.post('/sharingchanges', async (req, res) => {
+  const differences = await cloudDriveAPI.getSharingChanges(
+    req.session.email,
+    req.body.snapshot1,
+    req.body.snapshot2,
+  );
+  res.send(JSON.stringify(differences));
+});
+
 router.post('/deletePermission', isAuthenticated, async (req, res) => {
   const response = await cloudDriveAPI.deletePermission(
     req.session.clouddrive,
