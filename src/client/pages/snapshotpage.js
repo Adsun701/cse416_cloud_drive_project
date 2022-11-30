@@ -197,10 +197,12 @@ export default function SnapshotPage() {
           threshold: threshold,
         }
       }
-      console.log(threshold);
     }
     AxiosClient.post(routes[sharingOption], body).then((res) => {
+      console.log(res);
       const data = res.data;
+      console.log("differences");
+      console.log(data);
       if (data == null || data.length == 0) {
         setAnalysis([]);
         return;
@@ -315,6 +317,7 @@ export default function SnapshotPage() {
                   }
                   <Col style={{textAlign: 'left', justifyContent:'left', paddingTop: '25px'}}>
                     <Button
+                      disabled={sharingOption === "changes" ? fileSnapshots.filter((f) => f.selected).length !== 2 : fileSnapshots.filter((f) => f.selected).length > 1}
                       onClick={handleSelectAnalysisDone}>
                       Analyze
                     </Button>

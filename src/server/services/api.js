@@ -995,6 +995,71 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
+
+// get all files including nested children from a folder
+function getAllFilesInFolder(folder) {
+  for (let i = 0; i < folder?.children?.length; i+=1) {
+    let file = folder.children[i];
+    if (file.folder) {
+      return [...folder.children, getAllFilesInFolder(file.children)];
+    }
+  }
+  return [];
+}
+
+// building permission map with count based on list of files
+function getPermMapCount(fileList) {
+  let permMap = {} // permission
+  let fileMap = {}
+  let totalCount = fileList.length;
+  fileList.forEach((file) => {
+    if (file && file.permissions) {
+      let permList = file.permissions.map((p) => [p.email +"*"+p.roles[0]+"|"]).sort();
+      if (permMap[permList]) {
+        permMap[permList] = permMap[permList] + 1;
+        fileMap[permList] = [...fileMap[permList], file];
+      } else {
+        permMap[permList] = 1;
+        fileMap[permList] = [file];
+      }
+    }
+  });
+  console.log(permMap);
+  return [permMap, fileMap, totalCount];
+} 
+
+// return list of files and their differences
+function checkDeviantPermDiff(file, fileList) {
+  let checkPerms = file.permissions.map((p) => [p.email, p.roles]);
+  emailMap = {};
+  checkPerms.forEach(([email, role]) => {
+    emailMap[email] = role[0];
+  });
+  let emails = checkPerms.map((p) => p[0]);
+  let deviationsNotHave = [];
+  let deviationsAdded = [];
+  let deviationsDiffRole = [];
+  fileList.forEach((f) => {
+    let perms = f.permissions.map((p) => [p.email, p.roles]);
+    const deviantEmails = perms.map((p) => p[0]);
+    emails.forEach((e) => {
+      if (!deviantEmails.includes(e)) {
+        deviationsNotHave.push(checkPerms[emails.indexOf(e)]);
+      }
+    });
+    deviantEmails.forEach((e) => {
+      if (!emails.includes(e)) {
+        deviationsAdded.push(perms[deviantEmails.indexOf(e)]);
+      } else {
+        if (perms[deviantEmails.indexOf(e)][1] != emailMap[e]) {
+          deviationsDiffRole.push(perms[deviantEmails.indexOf(e)]);
+        }
+      }
+    });
+  });
+  return [deviationsNotHave, deviationsAdded, deviationsDiffRole];
+}
+
 // perform a deviant sharing analysis for a snapshot and a threshold
 async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, threshold) {
   let snapshot = null;
@@ -1018,18 +1083,57 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
       }
     }
   }
-  let folderList = {}; // map of folders and all their children (including nested)
+  let folderMap = new Map; // map of folders and all their children (including nested)
+  let fileList = [];
   if (snapshot && snapshot.files) { // go through the file map to build folderList
     let fileIdList = Array.from(snapshot.files.keys());
     for (let i = 0; i < fileIdList.length; i++) {
       let file = await findFileInSnapshot(fileIdList[i], snapshotTime);
+      fileList.push(file);
       if (file.folder) {
-        console.log("is folder");
-        folderList[fileIdList[i]] = file.children;
+        folderMap.set(file, getAllFilesInFolder(file));
       }
-    };
-    console.log(folderList); // todo: nested folders => check perms in folder mapping => return list of deviants
+    }
   }
+  let permDiffs = {};
+  [...folderMap.entries()].map(([folder, files]) => {
+    console.log("FOLDER");
+    if (files.length > 0) {
+      let deviantMap = getPermMapCount(files);
+      let permissionDifferences = deviantMap[0];
+      let deviantFiles = deviantMap[1];
+      let deviantCount = deviantMap[2];
+      let deviants = [];
+      let thresholdPerms = [];
+      // console.log(deviantFiles);
+      Object.entries(permissionDifferences).map(([perms, count]) => {
+        // console.log("entries!");
+        // console.log(perms);
+        // console.log(count);
+        if ((count / deviantCount)*100 > threshold) {
+          thresholdPerms = deviantFiles[perms];
+        } else {
+          if (deviantFiles[perms]) {
+            // console.log(deviantFiles[perms]);
+            deviants = [...deviants, ...deviantFiles[perms]];
+          }
+        }
+      })
+      if (thresholdPerms.length === 0) {
+        deviants = [];
+        thresholdPerms = [];
+      } else {
+        // console.log("threshold");
+        // console.log(thresholdPerms);
+        // console.log("deviants");
+        // console.log(deviants);
+        let diffs = checkDeviantPermDiff(thresholdPerms[0], deviants);
+        permDiffs[folder] = diffs;
+      }
+    }
+    // console.log(permDiffs);
+    return permDiffs;
+  });
 }
 
 async function getFolderFileDiff(snapshot) {
