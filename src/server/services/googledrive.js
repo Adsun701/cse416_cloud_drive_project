@@ -437,6 +437,7 @@ Basically, updating permissions for a file
 @data = JSON format to include role, etc
 */
 async function updatePermission(accessToken, fileid, permid, data) {
+  console.log("updating permission");
   console.log(data);
   const drive = google.drive({ version: 'v3' });
   const result = await drive.permissions.update({

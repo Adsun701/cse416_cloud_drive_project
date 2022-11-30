@@ -32,6 +32,7 @@ export default function SnapshotPage() {
   const [changes, setChanges] = useState([]);
   const [folderFileDiff, setFolderFileDiff] = useState([]);
   const [analysisDone, setAnalysisDone] = useState(false);
+  const [threshold, setThreshold] = useState(75);
 
   let fileTimestamps = [];
   let groupInfo = [];
@@ -201,6 +202,26 @@ export default function SnapshotPage() {
         snapshot: temp[0].timestamp,
       }
     }
+    if (sharingOption === "deviant") {
+      const snapshot = fileSnapshots.filter((s) => s.selected);
+      if (snapshot.length > 1) {
+        console.log("too many snapshots");
+        return;
+      } else if (snapshot.length == 1) {
+        body = {
+          snapshot: snapshot[0].timestamp,
+          useRecentSnapshot: false,
+          threshold: threshold,
+        }
+      } else {
+        body = {
+          snapshot: null,
+          useRecentSnapshot: true,
+          threshold: threshold,
+        }
+      }
+      console.log(threshold);
+    }
     AxiosClient.post(routes[sharingOption], body).then((res) => {
       const data = res.data;
       if (data == null || data.length == 0) {
@@ -309,6 +330,9 @@ export default function SnapshotPage() {
                 <Alert variant="danger" show={sharingOption == "changes" && fileSnapshots.filter((f) => f.selected).length !== 2}>
                   <Alert.Heading>Must Select Only Two File Snapshots To Analyze Sharing Changes!</Alert.Heading>
                 </Alert>
+                <Alert variant="danger" show={sharingOption == "deviant" && fileSnapshots.filter((f) => f.selected).length > 1}>
+                  <Alert.Heading>Must Select Only One File Snapshot To Analyze Deviant Sharing!</Alert.Heading>
+                </Alert>
               </Row>
               {!analysisDone && (<>
                 <Row>
@@ -323,7 +347,7 @@ export default function SnapshotPage() {
                       </Form.Select>
                     </FloatingLabel>
                   </Col>
-                  {sharingOption !== "changes" ? 
+                  {(sharingOption !== "changes" && sharingOption !== "deviant") ? 
                     <Col style={{justifyContent:'left', padding: '15px'}}>
                       <FloatingLabel controlId="floatingSelect" label="Selected File Snapshot">
                         <Form.Select value={selectSnapshot} onChange={handleSelectSnapshot}>
@@ -336,6 +360,18 @@ export default function SnapshotPage() {
                       </FloatingLabel>
                     </Col>
                     : <></>
+                  }
+                  {
+                    sharingOption === "deviant" ? 
+                    <>
+                      <Col style={{justifyContent:'left', padding: '15px'}}>
+                        <label>Threshold</label>
+                        <form name="myform" oninput="range1value.value = range1.valueAsNumber">
+                        <input type="range" min="51" max="100" defaultValue={threshold} onChange={(e) => {setThreshold(e.target.value)}} ></input>
+                      <output name="range1value" for="range1" >{threshold}%</output>
+                    </form>
+                      </Col>
+                    </> : <></>
                   }
                   <Col style={{textAlign: 'left', justifyContent:'left', paddingTop: '25px'}}>
                     <Button

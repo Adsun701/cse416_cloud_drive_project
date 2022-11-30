@@ -95,7 +95,7 @@ async function updatePermission(clouddrive, token, fileid, permid, googledata, o
       // console.log(updatedFile.permissions[i].id === permid);
       // console.log(updatedFile.permissions[i].id);
       // console.log(permid);
-      console.log(updatedFile._id);
+      // console.log(updatedFile._id);
       if (updatedFile.permissions[i].id === permid) {
         if (clouddrive === "google") {
           newRole = [googledata?.role];
@@ -542,7 +542,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'read') && perms[i].email === value) {
               ids.push(fileId);
             }
           }
@@ -555,9 +555,9 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'read') && perms[i].email === value) {
               ids.push(fileId);
-            } else if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer') && groupNames.includes(perms[i].displayName)) {
+            } else if ((perms[i].roles[0] === 'reader' || perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'read') && groupNames.includes(perms[i].displayName)) {
               ids.push(fileId);
             }
           }
@@ -573,7 +573,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if (perms[i].roles[0] === 'writer' && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'owner') && perms[i].email === value) {
               ids.push(fileId);
             }
           }
@@ -582,9 +582,9 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
         snapshotFiles.forEach((val, fileId) => {
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
-            if (perms[i].roles[0] === 'writer' && perms[i].email === value) {
+            if ((perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'owner') && perms[i].email === value) {
               ids.push(fileId);
-            } else if (perms[i].roles[0] === 'writer' && groupNames.includes(perms[i].displayName)) {
+            } else if ((perms[i].roles[0] === 'writer' || perms[i].roles[0] === 'write' || perms[i].roles[0] === 'owner') && groupNames.includes(perms[i].displayName)) {
               ids.push(fileId);
             }
           }
@@ -602,7 +602,7 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
             const role = perms[i].roles[0];
-            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner' || role === 'write')) {
               ids.push(fileId);
             }
           }
@@ -612,9 +612,9 @@ async function searchFilter(op, value, snapshotFiles, fileSnapshotTime, groupOff
           const perms = val;
           for (let i = 0; i < perms.length; i += 1) {
             const role = perms[i].roles[0];
-            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+            if (perms[i].email === value && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner' || role === 'write')) {
               ids.push(fileId);
-            } else if (groupNames.includes(perms[i].displayName) && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner')) {
+            } else if (groupNames.includes(perms[i].displayName) && (role === 'writer' || role === 'fileOrganizer' || role === 'organizer' || role === 'owner' || role === 'write')) {
               ids.push(fileId);
             }
           }
@@ -1002,8 +1002,41 @@ async function checkAgainstAccessPolicy(email, files, value, role) {
   }
 }
 
-async function getDeviantSharing(email, snapshot) {
-  console.log(snapshot);
+// perform a deviant sharing analysis for a snapshot and a threshold
+async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, threshold) {
+  let snapshot = null;
+  if (useRecentSnapshot) { // get the most recent file snapshot to use for analysis
+    snapshot = await getMostRecentFileSnapshot(email);
+  } else { // get the selected file snapshot to use for analysis
+    const user = await User.findOne({ email });
+    const filesnapshotList = user?.fileSnapshots;
+    // console.log(filesnapshotList);
+    if (filesnapshotList && filesnapshotList.length > 0) {
+      for (let i = 0; i < filesnapshotList.length; i += 1) {
+        // console.log(filesnapshotList[i]);
+        const filesnapshot = await FileSnapshot.findOne({ _id: filesnapshotList[i] });
+        // console.log(filesnapshot);
+        if (!filesnapshot) {
+          continue;
+        }
+        if (filesnapshot.createdAt.getTime() === new Date(snapshotTime.toLocaleString()).getTime()) {
+          snapshot = filesnapshot;
+        }
+      }
+    }
+  }
+  let folderList = {}; // map of folders and all their children (including nested)
+  if (snapshot && snapshot.files) { // go through the file map to build folderList
+    let fileIdList = Array.from(snapshot.files.keys());
+    for (let i = 0; i < fileIdList.length; i++) {
+      let file = await findFileInSnapshot(fileIdList[i], snapshotTime);
+      if (file.folder) {
+        console.log("is folder");
+        folderList[fileIdList[i]] = file.children;
+      }
+    };
+    console.log(folderList); // todo: nested folders => check perms in folder mapping => return list of deviants
+  }
 }
 
 async function getFolderFileDiff(email, snapshotCreatedAt) {

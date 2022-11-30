@@ -11,6 +11,7 @@ import Dropdown from "react-bootstrap/Dropdown";
 import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Modal from 'react-bootstrap/Modal';
 import { MdClose, MdAdd } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -76,6 +77,41 @@ function FilePermission(props) {
   const selectedFiles = props.selectedFiles;
   const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
+  const [ updated, setUpdated ] = useState({up: false, id: "", role: ""});
+  const [ show, setShow ] = useState(false);
+  const [ showEdit, setShowEdit ] = useState(false);
+  const [ showDelete, setShowDelete ] = useState(false);
+  const [ editUpdate, setEditUpdate ] = useState([]);
+  const [ editRemove, setEditRemove ] = useState([]);
+
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  const handleCloseEdit = () => setShowEdit(false);
+  let handleShowEdit = (e, fileid, permid, permName, permRole, driveid = null) => {
+    e.preventDefault();
+
+    setEditUpdate([e, fileid, permid, permName, permRole, driveid]);
+    setShowEdit(true);
+  } 
+  let handleConfirmEdit = () => {
+    handleUpdateSharing(editUpdate[0], editUpdate[1], editUpdate[2], editUpdate[3], editUpdate[4], editUpdate[5]);
+    setShowEdit(false);
+  }
+
+  const handleCloseDelete = () => setShowDelete(false);
+  let handleShowDelete = (e, fileid, permid, driveid = null) => {
+    e.preventDefault();
+
+    setEditRemove([e, fileid, permid, driveid]);
+    setShowDelete(true);
+  } 
+  let handleConfirmDelete = () => {
+    handleDeletePermission(editRemove[0], editRemove[1], editRemove[2], editRemove[3])
+    setShowDelete(false);
+  }
+
 
   let handleDeletePermission = (e, fileid, permid, driveid = null) => {
     e.preventDefault();
@@ -88,30 +124,31 @@ function FilePermission(props) {
     }).catch();
   }
 
-  let handleUpdateSharing = (e, fileid, permid, permName, driveid = null) => {
+  let handleUpdateSharing = (e, fileid, permid, permName, permRole, driveid = null) => {
     console.log("update sharing");
-    console.log(role);
     e.preventDefault();
     let fileids = [fileid];
     console.log(fileids);
     console.log(permName);
-    console.log(role);
+    console.log(permRole);
     AxiosClient.post('/checkaccesscontrol', {
       files: fileids,
       value: permName,
-      role: role
+      role: permRole
     }).then((res) => {
       if (res.data.allowed) {
       AxiosClient.post('/updatePermission', {
         fileid: fileid,
         permid: permid,
-        googledata: {"role": role},
-        onedriveRole: {"roles": [role]},
+        googledata: {"role": permRole},
+        onedriveRole: {"roles": [permRole]},
         driveid: driveid,
       }).then((res) => {
+        setUpdated({up: true, id: permid, role: permRole});
         console.log("successfully updated permissions!");
       }).catch();
     } else {
+      setShow(true);
       console.log("NOT ALLOWED VIA ACCESS CONTROL!")
     }
     }).catch();
@@ -119,6 +156,45 @@ function FilePermission(props) {
 
   return (
     <Container>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Permission Error</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Action Not Allowed via Access Control!</Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={handleClose}>
+            Ok, Got it.
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showEdit} onHide={handleCloseEdit}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Edit Permission</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to update this permission?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseEdit}>
+            No
+          </Button>
+          <Button variant="primary" onClick={handleConfirmEdit}>
+            Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showDelete} onHide={handleCloseDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete Permission</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this permission?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseDelete}>
+            No
+          </Button>
+          <Button variant="primary" onClick={handleConfirmDelete}>
+            Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Tabs defaultActiveKey="0" className="mb-0" fill>
         {selectedFiles.map((file, index) => (
           <Tab eventKey={index} title={file.name} key={index}>
@@ -149,28 +225,28 @@ function FilePermission(props) {
                               color: "black",
                             }}
                           >
-                          {permission.permission}
+                          {updated.up && updated.id === permission.id ? updated.role : permission.permission}
                           </Dropdown.Toggle>
                           {props.clouddrive === "google" ? (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {(e) => {setRole("writer"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}}>writer</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("fileOrganizer");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>fileOrganizer</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("owner");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>owner</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {setRole("organizer");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>organizer</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {setRole("commenter");handleUpdateSharing(e, file.id, permission.id, permission.email);}}>commenter</Dropdown.Item>              
-                          <Dropdown.Item onClick={(e) => {console.log("reader"); setRole("reader"); handleUpdateSharing(e, file.id, permission.id, permission.email);}}>reader</Dropdown.Item>
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "writer");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "writer");*/}}>writer</Dropdown.Item>
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "file");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "file");*/}}>fileOrganizer</Dropdown.Item>
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "owner");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "owner");*/}}>owner</Dropdown.Item>              
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "organizer");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "organizer");*/}}>organizer</Dropdown.Item>              
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "commenter");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "commenter");*/}}>commenter</Dropdown.Item>              
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "reader");/*handleUpdateSharing(e, file.id, permission.id, permission.email, "reader");*/}}>reader</Dropdown.Item>
                           </Dropdown.Menu>) : 
                           (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {console.log(permission);setRole("write"); handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>write</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {setRole("read");handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid);}}>read</Dropdown.Item>
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "write", file.driveid);/*handleUpdateSharing(e, file.id, permission.id, permission.email, "write", file.driveid);*/}}>write</Dropdown.Item>
+                            <Dropdown.Item onClick={(e) => {handleShowEdit(e, file.id, permission.id, permission.email, "read", file.driveid);/*handleUpdateSharing(e, file.id, permission.id, permission.email, "read", file.driveid);*/}}>read</Dropdown.Item>
                           </Dropdown.Menu>)
                           }
                         </Dropdown>
                       </td>
                       <td>{permission.access}</td>
                       <td>
-                        <MdClose onClick={(e) => {handleDeletePermission(e, file.id, permission.id, file.driveid)}} size={24} style={{ color: "#CFCFCF" }} />
+                        <MdClose onClick={(e) => {handleShowDelete(e, file.id, permission.id, file.driveid)/*handleDeletePermission(e, file.id, permission.id, file.driveid)*/}} size={24} style={{ color: "#CFCFCF" }} />
                       </td>
                     </tr>
                   ))}
@@ -189,6 +265,23 @@ function AddPermission(props) {
   const selectedFiles = props.selectedFiles;
   const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
+  const [ showError, setShowError ] = useState(false);
+  const [ show, setShow ] = useState(false);
+  const [ add, setAdd] = useState(null);
+  
+  const handleCloseError = () => setShowError(false);
+  const handleShowError = () => setShowError(true);
+
+  const handleClose = () => setShow(false);
+  const handleShowAdd = (e) => {
+    setShow(true);
+    setAdd(e);
+  }
+
+  let handleConfirmAdd = () => {
+    handleNewSharing(add);
+    setShow(false);
+  }
 
   let handleNewSharing = (e) => {
     e.preventDefault();
@@ -214,6 +307,7 @@ function AddPermission(props) {
         console.log("successfully added new permission sharing!");
       }).catch();
     } else {
+      setShowError(true);
       console.log("NOT ALLOWED VIA ACCESS CONTROL!")
     }
     }).catch();
@@ -222,6 +316,31 @@ function AddPermission(props) {
   return (
     <Container fluid className={"no-gutters"}>
       <Container style={{ border: "1px solid #CFCFCF", borderRadius: "10px" }}>
+        <Modal show={showError} onHide={handleCloseError}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add Permission Error</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>Action Not Allowed via Access Control!</Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={handleCloseError}>
+              Ok, Got it.
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        <Modal show={show} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Add Permission</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>Are you sure you want to add this permission?</Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              No
+            </Button>
+            <Button variant="primary" onClick={handleConfirmAdd}>
+              Yes
+            </Button>
+          </Modal.Footer>
+        </Modal>
         <Row
           style={{
             borderBottom: "1px solid #CFCFCF",
@@ -232,7 +351,7 @@ function AddPermission(props) {
         </Row>
         <Stack direction="horizontal" gap={3} className="pt-3">
           <Form.Control onChange={(e) => setValue(e.target.value)} style={{ background: "#E9ECEF" }} />
-          <Button onClick={(e) => handleNewSharing(e)}
+          <Button onClick={(e) => handleShowAdd(e)/*handleNewSharing(e)*/}
             style={{
               background: "#3484FD",
               borderColor: "#CFCFCF",
