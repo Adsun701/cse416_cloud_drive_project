@@ -11,6 +11,7 @@ import Dropdown from "react-bootstrap/Dropdown";
 import InputGroup from "react-bootstrap/InputGroup";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Modal from 'react-bootstrap/Modal';
 import { MdClose, MdAdd } from "react-icons/md";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../app.css";
@@ -77,6 +78,11 @@ function FilePermission(props) {
   const [ role, setRole ] = useState(props.clouddrive === "google" ? "writer" : "write");
   const [ value, setValue ] = useState("");
   const [ updated, setUpdated ] = useState({up: false, id: "", role: ""});
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
 
   let handleDeletePermission = (e, fileid, permid, driveid = null) => {
     e.preventDefault();
@@ -89,7 +95,7 @@ function FilePermission(props) {
     }).catch();
   }
 
-  let handleUpdateSharing = (e, fileid, permid, permName, driveid = null, permRole) => {
+  let handleUpdateSharing = (e, fileid, permid, permName, permRole, driveid = null) => {
     console.log("update sharing");
     e.preventDefault();
     let fileids = [fileid];
@@ -113,6 +119,7 @@ function FilePermission(props) {
         console.log("successfully updated permissions!");
       }).catch();
     } else {
+      setShow(true);
       console.log("NOT ALLOWED VIA ACCESS CONTROL!")
     }
     }).catch();
@@ -120,6 +127,17 @@ function FilePermission(props) {
 
   return (
     <Container>
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Error</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Action Not Allowed via Access Control!</Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={handleClose}>
+            Ok, Got it.
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Tabs defaultActiveKey="0" className="mb-0" fill>
         {selectedFiles.map((file, index) => (
           <Tab eventKey={index} title={file.name} key={index}>
@@ -154,7 +172,7 @@ function FilePermission(props) {
                           </Dropdown.Toggle>
                           {props.clouddrive === "google" ? (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "writer");}}}>writer</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "writer");}}>writer</Dropdown.Item>
                           <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "file");}}>fileOrganizer</Dropdown.Item>
                           <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "owner");}}>owner</Dropdown.Item>              
                           <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "organizer");}}>organizer</Dropdown.Item>              
@@ -163,8 +181,8 @@ function FilePermission(props) {
                           </Dropdown.Menu>) : 
                           (
                           <Dropdown.Menu>
-                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "write");}}>write</Dropdown.Item>
-                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, file.driveid, "read");}}>read</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "write", file.driveid);}}>write</Dropdown.Item>
+                          <Dropdown.Item onClick={(e) => {handleUpdateSharing(e, file.id, permission.id, permission.email, "read", file.driveid);}}>read</Dropdown.Item>
                           </Dropdown.Menu>)
                           }
                         </Dropdown>
