@@ -71,7 +71,10 @@ async function getPermissionData(permissionResponse) {
   Creates and saves file object to DB, returns file object
 */
 async function createAndSaveFile(fileObject, permissionsList, isFolder, childrenFiles, isShared = false, driveId = null) {
-  // console.log("driveId " + driveId);
+  let drive = "My Drive";
+  if (isShared) {
+    drive = "Shared With Me";
+  }
   const file = new File({
     id: fileObject.id,
     name: fileObject.name,
@@ -80,6 +83,7 @@ async function createAndSaveFile(fileObject, permissionsList, isFolder, children
     permissions: permissionsList,
     owner: { name: fileObject.createdBy.user.displayName, email: fileObject.createdBy.user.email },
     shared: { isShared, driveId },
+    drive: drive,
     folder: isFolder,
     children: childrenFiles,
   });
