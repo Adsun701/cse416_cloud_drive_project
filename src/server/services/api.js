@@ -1032,7 +1032,7 @@ function getAllFilesInFolder(folder) {
       return [...folder.children, getAllFilesInFolder(file.children)];
     }
   }
-  return [];
+  return folder.children;
 }
 
 // building permission map with count based on list of files
@@ -1058,7 +1058,7 @@ function getPermMapCount(fileList) {
 
 // return list of files and their differences
 function checkDeviantPermDiff(file, fileList) {
-  let checkPerms = file.permissions.map((p) => [p.email, p.roles]);
+  let checkPerms = file.permissions.map((p) => [p.email ? p.email : p.id, p.roles]);
   emailMap = {};
   checkPerms.forEach(([email, role]) => {
     emailMap[email] = role[0];
@@ -1068,7 +1068,7 @@ function checkDeviantPermDiff(file, fileList) {
   let deviationsAdded = [];
   let deviationsDiffRole = [];
   fileList.forEach((f) => {
-    let perms = f.permissions.map((p) => [p.email, p.roles]);
+    let perms = f.permissions.map((p) => [p.email ? p.email : p.id, p.roles]);
     const deviantEmails = perms.map((p) => p[0]);
     emails.forEach((e) => {
       if (!deviantEmails.includes(e)) {
@@ -1126,6 +1126,11 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
   let permDiffs = {};
   [...folderMap.entries()].map(([folder, files]) => {
     console.log("FOLDER");
+    console.log(folder.name);
+    if (folder.name === "deviant1") {
+      console.log(folder);
+    }
+    console.log(files);
     if (files.length > 0) {
       let deviantMap = getPermMapCount(files);
       let permissionDifferences = deviantMap[0];
@@ -1135,9 +1140,6 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
       let thresholdPerms = [];
       // console.log(deviantFiles);
       Object.entries(permissionDifferences).map(([perms, count]) => {
-        // console.log("entries!");
-        // console.log(perms);
-        // console.log(count);
         if ((count / deviantCount)*100 > threshold) {
           thresholdPerms = deviantFiles[perms];
         } else {
@@ -1151,10 +1153,6 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
         deviants = [];
         thresholdPerms = [];
       } else {
-        // console.log("threshold");
-        // console.log(thresholdPerms);
-        // console.log("deviants");
-        // console.log(deviants);
         let diffs = checkDeviantPermDiff(thresholdPerms[0], deviants);
         if (!(diffs[0].length === 0 && diffs[1].length === 0 && diffs[2].length === 0)) {
           permDiffs[[folder.name, folder.owner.name]] = diffs;
