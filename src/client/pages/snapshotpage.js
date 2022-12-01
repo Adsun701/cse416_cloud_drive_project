@@ -562,56 +562,41 @@ export default function SnapshotPage() {
                     <Table style={{ textAlign: "left" }}>
                       <thead style={{ borderTop: "1px solid #CFCFCF" }}>
                         <tr>
-                          <th colSpan={2}>Deviant Permissions</th>
+                          <th>Folder</th>
+                          <th>Owner</th>
+                          <th>File</th>
+                          <th>Permission Different From Threshold Files</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {
-                        deviantList.map(([folder, permList]) => {
-                          <>
-                          {console.log(folder)}
-                          {console.log(permList)}
-                          
-                          <p>Folder: {folder?.name} from {folder?.owner?.name}</p>
-                          
-                          <p>Permission Differences Compared to Threshold Files</p>
-                          
-                          {permList.map(([permDiff1, permDiff2, permDiff3]) => {
-                            {console.log(permDiff2)}
-                              {permDiff1 ? 
-                                permDiff1.map((p) => {
-                                  <ul>
-                                  <li>{p[0]}</li>
-                                  <li>{p[1]}</li>
-                                  <li>{p[2]} , {p[3]}</li>
-                                  </ul>
-                                }) : <></>
-                              }
-                              {permDiff2 ? 
-                                permDiff2.map((p) => {
-                                  <ul>
-                                  <li>{p[0]}</li>
-                                  <li>{p[1]}</li>
-                                  <li>{p[2]} , {p[3]}</li>
-                                  </ul>
-                                }) : <></>
-                              }
-                              {
-                                permDiff3 ? 
-                                permDiff3.map((p) => {
-                                  <ul>
-                                  <li>{p[0]}</li>
-                                  <li>{p[1]}</li>
-                                  <li>{p[2]} , {p[3]}</li>
-                                  </ul>
-                                }): <></>
-                              }
-                            })
-                          }
-                          </>
-                        })
-                        
-                        }
+                          {deviantList.map((d) => (<><tr>
+                            <td>{d[0].split(',')[0]} </td>
+                            <td>{d[0].split(',')[1]}</td>
+                            <td>
+                              {d[1].map((p) => ( p.length !== 0 ?
+                                p.map((e) => (
+                                  <>
+                                    <React.Fragment>
+                                      {e[1]}
+                                      <br />
+                                    </React.Fragment>
+                                  </>))
+                                  : <></>
+                              ))}
+                            </td>
+                            <td>
+                            {d[1].map((p) => ( p.length !== 0 ?
+                              p.map((e) => (
+                                <>
+                                  <React.Fragment>
+                                    {e[2] + ", " + e[3]}
+                                    <br />
+                                  </React.Fragment>
+                                </>))
+                                  : <></>
+                            ))}</td>
+                          </tr></>
+                          ))}
                       </tbody>
                     </Table>
                   </Col>

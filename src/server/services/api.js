@@ -1156,12 +1156,14 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
         // console.log("deviants");
         // console.log(deviants);
         let diffs = checkDeviantPermDiff(thresholdPerms[0], deviants);
-        permDiffs[folder.name] = diffs;
+        if (!(diffs[0].length === 0 && diffs[1].length === 0 && diffs[2].length === 0)) {
+          permDiffs[[folder.name, folder.owner.name]] = diffs;
+        }
       }
     }
   });
   console.log("RETURNING");
-  console.log(permDiffs);
+  //console.log(permDiffs);
   return permDiffs;
 }
 
