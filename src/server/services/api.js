@@ -1156,7 +1156,7 @@ async function getDeviantSharing(email, snapshotTime, useRecentSnapshot, thresho
         // console.log("deviants");
         // console.log(deviants);
         let diffs = checkDeviantPermDiff(thresholdPerms[0], deviants);
-        permDiffs[folder] = diffs;
+        permDiffs[folder.name] = diffs;
       }
     }
   });

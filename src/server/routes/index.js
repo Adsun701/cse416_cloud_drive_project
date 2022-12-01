@@ -63,7 +63,7 @@ router.post('/deviant', async (req, res) => {
   const differences = await cloudDriveAPI.getDeviantSharing(req.session.email, req.body.snapshot, req.body.useRecentSnapshot, req.body.threshold);
   console.log("post call");
   console.log(differences);
-  res.send(differences);
+  res.send(JSON.stringify(differences));
 });
 
 router.post('/folderfile', async (req, res) => {
